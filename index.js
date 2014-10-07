@@ -9,6 +9,7 @@ start(function (err) {
     error('unable to start', err);
     process.exit(1);
   }
+  app.listen(process.env.PORT);
 });
 
 module.exports = app;
