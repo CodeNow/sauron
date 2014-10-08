@@ -25,6 +25,7 @@
   "homepage": "https://github.com/codenow/sauron",
   "dependencies": {
     "async": "^0.9.0",
+    "boom": "^2.5.1",
     "ip": "^0.3.2",
     "which": "^1.0.5"
   }
