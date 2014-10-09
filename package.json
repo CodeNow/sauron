@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "lab"
+    "test": "NODE_ENV=test lab -v -c ./test/*"
   },
   "repository": {
     "type": "git",
@@ -30,7 +30,11 @@
     "eson": "^0.5.0",
     "express": "^4.9.5",
     "ip": "^0.3.2",
+    "lab": "^4.6.1",
     "redis": "^0.12.1",
     "which": "^1.0.5"
+  },
+  "devDependencies": {
+    "callback-count": "^0.1.0"
   }
 }
