@@ -37,6 +37,20 @@ lab.experiment('/lib/models/network.js unit test', function () {
         });
       });
     });
+    lab.test('fill network cidr 9', function (done) {
+      var old = process.env.WEAVE_NETWORK_CIDR;
+      process.env.WEAVE_NETWORK_CIDR = 9;
+      network.createNetworkAddress('test', function(err, addr) {
+        if (err) { return done(err); }
+        Lab.expect(addr).to.equal('10.128.0.0');
+        network.createNetworkAddress('test', function(err) {
+          if (!err) { return done(new Error('should not be created')); }
+          Lab.expect(err.message).to.equal('could not create new network');
+          process.env.WEAVE_NETWORK_CIDR = old;
+          done();
+        });
+      });
+    });
     lab.test('2 in a row with gap', function (done) {
       redis.hset(process.env.WEAVE_NETWORKS, '10.255.248.0', 'test', function(err) {
         if (err) { return done(err); }
@@ -51,7 +65,7 @@ lab.experiment('/lib/models/network.js unit test', function () {
         });
       });
     });
-  }); // createHostAddress
+  }); // createNetworkAddress
   lab.experiment('removeNetworkAddress', function () {
     lab.test('remove 1 addr', function (done) {
       network.createNetworkAddress('test', function(err, addr) {
@@ -96,7 +110,7 @@ lab.experiment('/lib/models/network.js unit test', function () {
       });
     });
     lab.test('invalid param', function (done) {
-      network.createHostAddress('invalid', function(err) {
+      network.createHostAddress({an:'and'}, function(err) {
         if (err && err.message === 'network not allocated') {
           return done();
         }
@@ -126,6 +140,24 @@ lab.experiment('/lib/models/network.js unit test', function () {
           if (err) { return done(err); }
           Lab.expect(naddr).to.equal('10.255.252.2');
           done();
+        });
+      });
+    });
+    lab.test('fill network with cidr 30', function (done) {
+      var old = process.env.WEAVE_NETWORK_CIDR;
+      process.env.WEAVE_NETWORK_CIDR = 30;
+      network.createHostAddress(networkIp, function(err, addr) {
+        if (err) { return done(err); }
+        Lab.expect(addr).to.equal('10.255.252.1');
+        network.createHostAddress(networkIp, function(err, naddr) {
+          if (err) { return done(err); }
+          Lab.expect(naddr).to.equal('10.255.252.2');
+          network.createHostAddress(networkIp, function(err) {
+            if (!err) { return done(new Error('should not be created')); }
+            Lab.expect(err.message).to.equal('could not get new router IP');
+            process.env.WEAVE_NETWORK_CIDR = old;
+            done();
+          });
         });
       });
     });
