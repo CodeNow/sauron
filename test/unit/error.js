@@ -29,5 +29,17 @@ lab.experiment('/lib/helpers/error.js unit test', function () {
       error.log(new Error('error is good'));
       done();
     });
+    lab.test('print error data', function (done) {
+      process.env.NODE_ENV = '';
+      error.create('I should print', 'I am data');
+      process.env.NODE_ENV = 'test';
+      done();
+    });
+    lab.test('print error', function (done) {
+      process.env.NODE_ENV = '';
+      error.create('I should print and i am alone');
+      process.env.NODE_ENV = 'test';
+      done();
+    });
   });
 });

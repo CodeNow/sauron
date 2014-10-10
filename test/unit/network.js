@@ -257,8 +257,8 @@ lab.experiment('/lib/models/network.js unit test', function () {
         if (err) { return done(err); }
         network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function(err, addr) {
           if (err) { return done(err); }
-          network.getRouterMapping(addr, function(err, host) {
-            Lab.expect(host).to.equal(ip.address());
+          network.getRouterMapping(ip.address(), function(err, host) {
+            Lab.expect(host).to.equal(addr);
             done();
           });
         });
