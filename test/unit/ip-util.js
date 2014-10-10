@@ -5,6 +5,29 @@ var ipu = require('../../lib/helpers/ip-utils.js');
 var ip = require('ip');
 
 lab.experiment('/lib/helpers/ip-utils.js unit test', function () {
+  lab.experiment('isValidIp', function () {
+    lab.experiment('valid ips', function () {
+      lab.test('10.10.1.1, 10.255.255.255, 10.0.0.0, 10.17.71.26', function (done) {
+        ['10.10.1.1', '10.255.255.255', '10.0.0.0', '10.17.71.26']
+          .forEach(function(item) {
+            Lab.expect(ipu.isValidIp(item)).to.equal(true);
+          });
+        done();
+      });
+    });
+    lab.experiment('invalid ips', function () {
+      lab.test('10.10.1.1, 10.255.255.255, 10.0.0.0, 10.17.71.26', function (done) {
+        ['192.10.1.1', 'asdf', {}, [], true, false, '10.10.10', '10', '....', 'a.a.a.a', '10.0.0.a',
+        '10.0.0.0.a', '10.0.0.0.0.0.0', '10.0.0.12521525', '22.2222.22.2', '2222.22.22.22',
+        '999.10.10.20', '222.222.2.999', '10.10.10.256', '10.10.256.10', '10.256.10.10',
+        '256.10.10.10', null, '', NaN]
+          .forEach(function(item) {
+            Lab.expect(ipu.isValidIp(item)).to.equal(false);
+          });
+        done();
+      });
+    });
+  });
   lab.experiment('getSmallestAvailableHost', function () {
     lab.experiment('base addr 10.0.0.0', function () {
       lab.test('1 used. lowest', function (done) {
