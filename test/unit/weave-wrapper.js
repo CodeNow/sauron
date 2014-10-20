@@ -1,40 +1,13 @@
 'use strict';
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
-var weaveWrapper = require('../../lib/models/weave-wrapper.js');
+var weaveWrapper = require('../../lib/engines/weave-wrapper.js');
 
-lab.experiment('/lib/models/weave-wrapper.js unit test', function () {
-  lab.experiment('runCmd', function () {
-    lab.test('echo hello', function (done) {
-      weaveWrapper.runCmd('echo hello', function (err, stdout) {
-        if (err) { return done(err); }
-        Lab.expect(stdout).to.contain('hello');
-        done();
-      });
-    });
-    lab.test('invalid command should Error', function (done) {
-      weaveWrapper.runCmd('this_is_an_invalid_command', function (err) {
-        if (!err) { return done(new Error('should not run invalid command')); }
-        Lab.expect(err.stderr).to.be.a('string');
-        done();
-      });
-    });
-  }); // runCmd
+lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
   lab.experiment('sudo weave depended command', function () {
-    var oldRun = require('child_process').exec;
-    lab.before(function (done) {
-      require('child_process').exec = function (cmd, cb) {
-        cb(cmd);
-      };
-      done();
-    });
-    lab.after(function (done) {
-      require('child_process').exec = oldRun;
-      done();
-    });
     lab.experiment('status', function () {
       lab.test('get status', function (done) {
-        weaveWrapper.status(function (data) {
+        weaveWrapper.status(function (err, data) {
           Lab.expect(data).to.equal('sudo weave status');
           done();
         });
@@ -48,7 +21,7 @@ lab.experiment('/lib/models/weave-wrapper.js unit test', function () {
           password: 'pass',
           peers: ['10.0.0.1', '10.0.0.2']
         };
-        weaveWrapper.launch(options, function (data) {
+        weaveWrapper.launch(options, function (err, data) {
           Lab.expect(data).to.equal(
             'sudo weave launch 10.0.0.0/32 -password pass 10.0.0.1 10.0.0.2');
           done();
@@ -61,7 +34,7 @@ lab.experiment('/lib/models/weave-wrapper.js unit test', function () {
           password: 'pass',
           peers: []
         };
-        weaveWrapper.launch(options, function (data) {
+        weaveWrapper.launch(options, function (err, data) {
           Lab.expect(data).to.equal(
             'sudo weave launch 10.0.0.0/32 -password pass');
           done();
@@ -126,7 +99,7 @@ lab.experiment('/lib/models/weave-wrapper.js unit test', function () {
           subnet: '32',
           containerId: 'container_id'
         };
-        weaveWrapper.attach(options, function (data) {
+        weaveWrapper.attach(options, function (err, data) {
           Lab.expect(data).to.equal(
             'sudo weave attach 10.0.0.0/32 container_id');
           done();
@@ -177,7 +150,7 @@ lab.experiment('/lib/models/weave-wrapper.js unit test', function () {
           subnet: '32',
           containerId: 'container_id'
         };
-        weaveWrapper.detach(options, function (data) {
+        weaveWrapper.detach(options, function (err, data) {
           Lab.expect(data).to.equal(
             'sudo weave detach 10.0.0.0/32 container_id');
           done();

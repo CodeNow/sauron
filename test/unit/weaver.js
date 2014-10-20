@@ -1,6 +1,7 @@
 'use strict';
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
+var mock = require('../../lib/executors/mock');
 var weaver = require('../../lib/models/weaver.js');
 var redis = require('../../lib/models/redis.js');
 var createCount = require('callback-count');
@@ -18,17 +19,6 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
     });
   });
   lab.experiment('normal commands', function () {
-    var oldexec = require('child_process').exec;
-    lab.before(function (done) {
-      require('child_process').exec = function (cmd, cb) {
-        cb(null, cmd);
-      };
-      done();
-    });
-    lab.after(function (done) {
-      require('child_process').exec = oldexec;
-      done();
-    });
     lab.experiment('setup', function () {
       lab.test('already on', function (done) {
         weaver.setup(function (err) {
@@ -37,34 +27,31 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
         });
       });
       lab.test('start with network already allocated', function (done) {
-        var old = require('child_process').exec;
         // mock weaver
-        require('child_process').exec = function (cmd, cb) {
+       mock.set(function (cmd, cb) {
           if (~cmd.indexOf('sudo weave status')) { return cb('up'); }
-          if (~cmd.indexOf('launch')) { return cb(null, 'container_id'); }
-          cb();
-        };
+          cb(null, cmd);
+        });
         network.initRouters(function () {
           weaver.setup(function (err) {
-            require('child_process').exec = old;
+            mock.reset();
             if (err) { return done(err);}
             done();
           });
         });
       });
       lab.test('should clear ip if failed to launch', function (done) {
-        var old = require('child_process').exec;
         // mock weaver
-        require('child_process').exec = function (cmd, cb) {
+        mock.set(function (cmd, cb) {
           if (~cmd.indexOf('sudo weave status')) { return cb('up'); }
           if (~cmd.indexOf('launch')) { return cb('some launch err'); }
-          cb();
-        };
+          cb(null, cmd);
+        });
         network.initRouters(function () {
           weaver.setup(function (err) {
             Lab.expect(err).to.have.equal('some launch err');
 
-            require('child_process').exec = old;
+            mock.reset();
             redis.hvals(process.env.WEAVE_NETWORKS+':'+process.env.WEAVE_ROUTER_NETWORK,
               function (err, data) {
                 if (err) { return done(err); }
@@ -77,19 +64,17 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
         });
       });
       lab.test('restart after already started', function (done) {
-        var old = require('child_process').exec;
         // mock weaver
-        require('child_process').exec = function (cmd, cb) {
+        mock.set(function (cmd, cb) {
           if (~cmd.indexOf('sudo weave status')) { return cb('up'); }
-          if (~cmd.indexOf('launch')) { return cb(null, 'container_id'); }
-          cb();
-        };
+          cb(null, cmd);
+        });
         network.initRouters(function (err) {
           if (err) { return done(err); }
           weaver.setup(function (err) {
             if (err) { return done(err); }
             weaver.setup(function (err) {
-              require('child_process').exec = old;
+              mock.reset();
               if (err) { return done(err);}
                 redis.hvals(process.env.WEAVE_NETWORKS+':'+process.env.WEAVE_ROUTER_NETWORK,
                   function (err, data) {
