@@ -8,8 +8,6 @@ var supertest = require('supertest');
 var app = require('../../lib/app.js');
 var createCount = require('callback-count');
 
-
-
 lab.experiment('/networks', function () {
   lab.beforeEach(function (done) {
     redis.keys(process.env.WEAVE_NETWORKS+'*', function (err, list) {
@@ -48,6 +46,18 @@ lab.experiment('/networks', function () {
               Lab.expect(res.body.networkIp).to.equal('10.255.248.0');
               done();
           });
+        });
+    });
+    lab.test('cause alloc error due to invalid NETOWORK CIDR', function (done) {
+      var old = process.env.WEAVE_NETWORK_CIDR;
+      process.env.WEAVE_NETWORK_CIDR = 0;
+      supertest(app)
+        .post('/networks')
+        .expect(500)
+        .end(function (err, res) {
+          process.env.WEAVE_NETWORK_CIDR = old;
+          if (err) { return done(err); }
+          done();
         });
     });
   });

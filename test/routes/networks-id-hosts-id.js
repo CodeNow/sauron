@@ -60,5 +60,13 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp', function () {
           supertest(app).delete('/networks/10.255.252.0/hosts/10.0.0.a').expect(400, done);
         });
     });
+    lab.test('malformed network ip', function (done) {
+      supertest(app).post('/networks').expect(200).end(
+        function (err, res) {
+          if (err) { return done(err); }
+          Lab.expect(res.body.networkIp).to.equal('10.255.252.0');
+          supertest(app).delete('/networks/10.a.252.0/hosts/10.0.0.a').expect(400, done);
+        });
+    });
   });
 }); // networks
