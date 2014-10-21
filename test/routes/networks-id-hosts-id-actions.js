@@ -59,7 +59,6 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
         .send({ containerId: 'container_id' })
         .expect(500, function(err, res) {
           mock.reset();
-          console.log('anand', res.body, res);
           if (err) { return done(err); }
           Lab.expect(res.body.error).to.equal('some weave err');
           done();
