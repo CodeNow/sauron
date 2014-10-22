@@ -29,6 +29,11 @@ Sauron is the greatest and most trusted servant of Runnable during Two Point O. 
   * remove allocated host ip from a container
   * return: no content
 
+* get /networks/:networkIp/hosts/:hostIp/containers/:containerId
+  * get ip attached to container
+  * return: {ip: 'ip.ip.ip.ip'}
+
+
 
 ## How He Works
 * on startup:
