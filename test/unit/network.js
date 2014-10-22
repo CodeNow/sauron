@@ -277,5 +277,5 @@ lab.experiment('/lib/models/network.js unit test', function () {
         });
       });
     });
-  });
+  }); // initRouters
 }); //lib/models/network.js unit test

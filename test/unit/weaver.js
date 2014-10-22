@@ -1,4 +1,4 @@
-'use strict';
+ 'use strict';
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var mock = require('../../lib/executors/mock');
@@ -6,6 +6,7 @@ var weaver = require('../../lib/models/weaver.js');
 var redis = require('../../lib/models/redis.js');
 var createCount = require('callback-count');
 var network = require('../../lib/models/network.js');
+var containerIp = require('../../lib/models/network/container-ip.js');
 
 lab.experiment('/lib/models/weaver.js unit test', function () {
   lab.beforeEach(function (done) {
@@ -89,9 +90,13 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
     });
     lab.experiment('attachContainer', function () {
       lab.test('normal', function (done) {
-        weaver.attachContainer('container_id', '10.0.0.0', '32', function (err, data) {
-          Lab.expect(data).to.equal('sudo weave attach 10.0.0.0/32 container_id');
-          done();
+        weaver.attachContainer('container_id', '10.0.0.0', '32', function (err) {
+          if (err) { return done(err); }
+          containerIp.getContainerIp('container_id', function(err, data) {
+            if (err) { return done(err); }
+            Lab.expect(data).to.equal('10.0.0.0');
+            done();
+          });
         });
       });
       lab.test('missing ipaddr', function (done) {
@@ -122,33 +127,32 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
 
     lab.experiment('detachContainer', function () {
       lab.test('normal', function (done) {
-        weaver.detachContainer('container_id', '10.0.0.0', '32', function (err, data) {
-          Lab.expect(data).to.equal(
-            'sudo weave detach 10.0.0.0/32 container_id');
+        weaver.detachContainer('container_id', '10.0.0.0', '32', function (err) {
+          Lab.expect(err.message).to.equal('container ip does not exist');
           done();
         });
       });
       lab.test('missing ipaddr', function (done) {
         weaver.detachContainer('container_id', null, '32', function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+          Lab.expect(err.message).to.equal('container ip does not exist');
           done();
         });
       });
       lab.test('missing subnet', function (done) {
         weaver.detachContainer('container_id', '32', null, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+          Lab.expect(err.message).to.equal('container ip does not exist');
           done();
         });
       });
       lab.test('missing containerId', function (done) {
         weaver.detachContainer(null, '10.0.0.0', '32', function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+          Lab.expect(err.message).to.equal('container ip does not exist');
           done();
         });
       });
       lab.test('missing all', function (done) {
         weaver.detachContainer(null, null, null, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+          Lab.expect(err.message).to.equal('container ip does not exist');
           done();
         });
       });
