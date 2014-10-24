@@ -7,7 +7,7 @@ var redis = require('../../lib/models/redis.js');
 var supertest = require('supertest');
 var app = require('../../lib/app.js');
 
-lab.experiment('/networks/:networkIp/hosts/:hostIp/containers/:containerId', function () {
+lab.experiment('/containers/:containerId', function () {
   lab.beforeEach(function (done) {
     redis.flushdb(done);
   });
@@ -28,7 +28,7 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/containers/:containerId', fun
                 .expect(200, function(err) {
                   if (err) {return done(err); }
                   supertest(app)
-                    .get('/networks/10.255.252.0/hosts/10.255.252.1/containers/container_id')
+                    .get('/containers/container_id')
                     .expect(200, function(err, res) {
                       if (err) {return done(err); }
                       Lab.expect(res.body.ip).to.equal('10.255.252.1');
@@ -40,18 +40,8 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/containers/:containerId', fun
     });
     lab.test('should error if container not allocated', function (done) {
       supertest(app)
-        .get('/networks/10.255.252.0/hosts/10.255.252.1/containers/container_id')
+        .get('/containers/container_id')
         .expect(404, done);
-    });
-    lab.test('should error if invalid network', function (done) {
-      supertest(app)
-        .get('/networks/10.255.252.a/hosts/10.255.252.1/containers/container_id')
-        .expect(400, done);
-    });
-    lab.test('should error if invalid host', function (done) {
-      supertest(app)
-        .get('/networks/10.255.252.10/hosts/10.255.1111.1/containers/container_id')
-        .expect(400, done);
     });
   }); //GET
 }); // networks
