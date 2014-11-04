@@ -20,24 +20,17 @@ lab.experiment('/lib/models/network/container-ip.js unit test', function () {
         });
       });
     });
-    lab.test('should error set twice', function (done) {
+    lab.test('should not error if set twice with same value', function (done) {
       containerIp.setContainerIp('container_id', '10.222.231.9', function (err) {
         if (err) { return done(err); }
-        containerIp.setContainerIp('container_id', '10.222.231.9', function (err) {
-          Lab.expect(err.message).to.equal('container already mapped to ip');
-          Lab.expect(err.data.oldIp).to.equal('10.222.231.9');
-          Lab.expect(err.data.newContainerId).to.equal('container_id');
-          Lab.expect(err.data.oldContainerId).to.equal('container_id');
-          Lab.expect(err.data.newIp).to.equal('10.222.231.9');
-          done();
-        });
+        containerIp.setContainerIp('container_id', '10.222.231.9', done);
       });
     });
     lab.test('should error if container was set to diff ip', function (done) {
       containerIp.setContainerIp('container_id', '10.222.231.9', function (err) {
         if (err) { return done(err); }
         containerIp.setContainerIp('container_id', '10.222.231.10', function (err) {
-          Lab.expect(err.message).to.equal('container already mapped to ip');
+          Lab.expect(err.message).to.equal('container is mapped to a different IP');
           Lab.expect(err.data.oldIp).to.equal('10.222.231.9');
           Lab.expect(err.data.newContainerId).to.equal('container_id');
           Lab.expect(err.data.oldContainerId).to.equal('container_id');
