@@ -221,21 +221,20 @@ lab.experiment('/lib/models/network.js unit test', function () {
     });
   }); // removeHostAddress
 
-  lab.experiment('getRouters', function () {
-    lab.test('list routers', function (done) {
+  lab.experiment('getPeers', function () {
+    lab.test('list peers', function (done) {
       network.initRouters(function (err) {
         if (err) { return done(err); }
-        network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err, addr1) {
+        network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err) {
           if (err) { return done(err); }
-          network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err, addr2) {
+          network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err) {
             if (err) { return done(err); }
-            network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err, addr3) {
+            network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err) {
               if (err) { return done(err); }
-              network.getRouters(function (err, addrs) {
-                Lab.expect(addrs).to.contain(process.env.WEAVE_ROUTER_NETWORK);
-                Lab.expect(addrs).to.contain(addr1);
-                Lab.expect(addrs).to.contain(addr2);
-                Lab.expect(addrs).to.contain(addr3);
+              network.getPeers(function (err, addrs) {
+                Lab.expect(addrs.length).to.equal(3);
+                Lab.expect(addrs).to.not.contain(process.env.WEAVE_ROUTER_NETWORK);
+                Lab.expect(addrs).to.contain(ip.address());
                 done();
               });
             });
@@ -244,12 +243,12 @@ lab.experiment('/lib/models/network.js unit test', function () {
       });
     });
     lab.test('list empty routers', function (done) {
-      network.getRouters(function (err, addrs) {
+      network.getPeers(function (err, addrs) {
         Lab.expect(addrs.length).to.equal(0);
         done();
       });
     });
-  }); // getRouters
+  }); // getPeers
 
   lab.experiment('getRouterMapping', function () {
     lab.test('get correct mapping', function (done) {
@@ -270,9 +269,8 @@ lab.experiment('/lib/models/network.js unit test', function () {
     lab.test('list initial router', function (done) {
       network.initRouters(function (err) {
         if (err) { return done(err); }
-        network.getRouters(function (err, addrs) {
-          Lab.expect(addrs.length).to.equal(1);
-          Lab.expect(addrs).to.contain(process.env.WEAVE_ROUTER_NETWORK);
+        network.getPeers(function (err, addrs) {
+          Lab.expect(addrs.length).to.equal(0);
           done();
         });
       });
