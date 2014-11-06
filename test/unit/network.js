@@ -232,8 +232,8 @@ lab.experiment('/lib/models/network.js unit test', function () {
             network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err) {
               if (err) { return done(err); }
               network.getPeers(function (err, addrs) {
-                Lab.expect(addrs.length).to.equal(4);
-                Lab.expect(addrs).to.contain(process.env.WEAVE_ROUTER_NETWORK);
+                Lab.expect(addrs.length).to.equal(3);
+                Lab.expect(addrs).to.not.contain(process.env.WEAVE_ROUTER_NETWORK);
                 Lab.expect(addrs).to.contain(ip.address());
                 done();
               });
@@ -270,8 +270,7 @@ lab.experiment('/lib/models/network.js unit test', function () {
       network.initRouters(function (err) {
         if (err) { return done(err); }
         network.getPeers(function (err, addrs) {
-          Lab.expect(addrs.length).to.equal(1);
-          Lab.expect(addrs).to.contain(process.env.WEAVE_ROUTER_NETWORK);
+          Lab.expect(addrs.length).to.equal(0);
           done();
         });
       });
