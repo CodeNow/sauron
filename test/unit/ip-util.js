@@ -7,27 +7,26 @@ var ip = require('ip');
 lab.experiment('/lib/helpers/ip-utils.js unit test', function() {
   lab.experiment('isValidIp', function() {
     lab.experiment('valid ips', function() {
-      lab.test('10.10.1.1, 10.255.255.255, 10.0.0.0, 10.17.71.26', function(done) {
-        ['10.10.1.1', '10.255.255.255', '10.0.0.0', '10.17.71.26']
-          .forEach(function(item) {
-            Lab.expect(ipu.isValidIp(item)).to.equal(true);
-          });
-        done();
+      ['10.10.1.1', '10.255.255.255', '10.0.0.0', '10.17.71.26']
+        .forEach(function(item) {
+          lab.test(item + ' should be true', function(done) {
+          Lab.expect(ipu.isValidIp(item)).to.equal(true);
+          done();
+        });
       });
     });
     lab.experiment('invalid ips', function() {
-      lab.test('10.10.1.1, 10.255.255.255, 10.0.0.0, 10.17.71.26', function(done) {
-        ['192.10.1.1', 'asdf', {},
-          [], true, false, '10.10.10', '10', '....', 'a.a.a.a', '10.0.0.a',
-          '10.0.0.0.a', '10.0.0.0.0.0.0', '10.0.0.12521525', '22.2222.22.2', '2222.22.22.22',
-          '999.10.10.20', '222.222.2.999', '10.10.10.256', '10.10.256.10', '10.256.10.10',
-          '10.10.10.-10', '10.10.10.a10', '256.10.10.10',
-          null, '', NaN
-        ]
-        .forEach(function(item) {
-            Lab.expect(ipu.isValidIp(item)).to.equal(false);
-          });
-        done();
+      ['asdf', {}, [], true, false,  null, '', NaN, '10', '....', 'a.a.a.a', '10.0.0.a',
+        '10.10.10', '10.10', '1000.10.0.0', '123412512512', '><}{', '\n', '""', '+',
+        '10.0.0.0.a', '10.0.0.0.0.0.0', '10.0.0.12521525', '22.2222.22.2', '2222.22.22.22',
+        '999.10.10.20', '222.222.2.999', '10.10.10.256', '10.10.256.10', '10.256.10.10',
+        '10.10.10.-10', '10.10.10.a10', '256.10.10.10', '10.0.0.+5', '.'
+      ]
+      .forEach(function(item) {
+        lab.test(item + ' should be false', function(done) {
+          Lab.expect(ipu.isValidIp(item)).to.equal(false);
+          done();
+        });
       });
     });
   });
@@ -136,7 +135,6 @@ lab.experiment('/lib/helpers/ip-utils.js unit test', function() {
             base, process.env.WEAVE_NETWORK_CIDR);
 
           if (~hosts.indexOf(host)) {
-            console.error('already allocated', hosts, host, newHost, base);
             return done(new Error('already allocated'));
           }
 
@@ -219,7 +217,6 @@ lab.experiment('/lib/helpers/ip-utils.js unit test', function() {
         host = ipu.getLargestAvailableNetwork(hosts, routerCidr, networkCidr);
 
         if (~hosts.indexOf(host)) {
-          console.error('already allocated', hosts, host, newHost, routerCidr);
           return done(new Error('already allocated'));
         }
 

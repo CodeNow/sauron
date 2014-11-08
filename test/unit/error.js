@@ -86,6 +86,19 @@ lab.experiment('/lib/helpers/error.js unit test', function() {
       process.env.LOG_ERRORS = null;
       done();
     });
-
-  });
+    lab.test('should return 500 if 400 error', function(done) {
+      error.errorResponder(1235678, null, {
+        status: function(s) {
+          Lab.expect(s).to.equal(500);
+          return this;
+        },
+        json: function(s) {
+          Lab.expect(s.message).to.equal('An internal server error occurred');
+          Lab.expect(s.error).to.equal(1235678);
+          return this;
+        }
+      });
+      done();
+    });
+  }); // errorResponder
 });

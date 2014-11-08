@@ -54,7 +54,7 @@ lab.experiment('/networks', function () {
       supertest(app)
         .post('/networks')
         .expect(500)
-        .end(function (err, res) {
+        .end(function (err) {
           process.env.WEAVE_NETWORK_CIDR = old;
           if (err) { return done(err); }
           done();

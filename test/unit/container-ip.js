@@ -98,14 +98,14 @@ lab.experiment('/lib/models/network/container-ip.js unit test', function () {
       containerIp.setContainerIp('container_id', '10.222.231.9', function (err) {
         if (err) { return done(err); }
         containerIp.removeContainerIp('container_id', '10.222.231.10', function(err){
-          Lab.expect(err.message).to.equal('container ip does not exist');
+          Lab.expect(err.message).to.equal('container is not mapped to an ip');
           done();
         });
       });
     });
     lab.test('should error deleteing non existing ip', function (done) {
       containerIp.removeContainerIp('container_id', '10.222.231.10', function(err){
-        Lab.expect(err.message).to.equal('container ip does not exist');
+        Lab.expect(err.message).to.equal('container is not mapped to an ip');
         done();
       });
     });

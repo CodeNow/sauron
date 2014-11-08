@@ -4,6 +4,7 @@ var lab = exports.lab = Lab.script();
 var network = require('../../lib/models/network.js');
 var redis = require('../../lib/models/redis.js');
 var ip = require('ip');
+var docker = require('../fixtures/docker.js');
 
 var createCount = require('callback-count');
 
@@ -18,6 +19,8 @@ lab.experiment('/lib/models/network.js unit test', function () {
       count.inc().next();
     });
   });
+  lab.beforeEach(docker.start);
+  lab.afterEach(docker.stop);
   lab.experiment('createNetworkAddress', function () {
     lab.test('empty redis', function (done) {
       network.createNetworkAddress('test', function (err, addr) {
@@ -223,20 +226,16 @@ lab.experiment('/lib/models/network.js unit test', function () {
 
   lab.experiment('getPeers', function () {
     lab.test('list peers', function (done) {
-      network.initRouters(function (err) {
+      network.addPeer(ip.address(), function (err) {
         if (err) { return done(err); }
-        network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err) {
+        network.addPeer(ip.address(), function (err) {
           if (err) { return done(err); }
-          network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err) {
+          network.addPeer(ip.address(), function (err) {
             if (err) { return done(err); }
-            network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err) {
-              if (err) { return done(err); }
-              network.getPeers(function (err, addrs) {
-                Lab.expect(addrs.length).to.equal(3);
-                Lab.expect(addrs).to.not.contain(process.env.WEAVE_ROUTER_NETWORK);
-                Lab.expect(addrs).to.contain(ip.address());
-                done();
-              });
+            network.getPeers(function (err, addrs) {
+              Lab.expect(addrs.length).to.equal(1);
+              Lab.expect(addrs).to.contain(ip.address());
+              done();
             });
           });
         });
@@ -250,30 +249,16 @@ lab.experiment('/lib/models/network.js unit test', function () {
     });
   }); // getPeers
 
-  lab.experiment('getRouterMapping', function () {
-    lab.test('get correct mapping', function (done) {
-      network.initRouters(function (err) {
+  lab.experiment('addPeer', function () {
+    lab.test('add this to peer list', function (done) {
+      network.addPeer(ip.address(), function (err) {
         if (err) { return done(err); }
-        network.createHostAddress(process.env.WEAVE_ROUTER_NETWORK, function (err, addr) {
-          if (err) { return done(err); }
-          network.getRouterMapping(ip.address(), function (err, host) {
-            Lab.expect(host).to.equal(addr);
-            done();
-          });
-        });
-      });
-    });
-  }); // getRouterMapping
-
-  lab.experiment('initRouters', function () {
-    lab.test('list initial router', function (done) {
-      network.initRouters(function (err) {
-        if (err) { return done(err); }
-        network.getPeers(function (err, addrs) {
-          Lab.expect(addrs.length).to.equal(0);
+        network.getPeers(function (err, host) {
+          Lab.expect(host.length).to.equal(1);
+          Lab.expect(host).to.contain(ip.address());
           done();
         });
       });
     });
-  }); // initRouters
+  }); // addPeer
 }); //lib/models/network.js unit test
