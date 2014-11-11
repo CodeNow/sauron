@@ -45,9 +45,9 @@ lab.experiment('/networks/:networkIp', function () {
         .delete('/networks/asdf')
         .expect(400, done);
     });
-    lab.test('invalid network ip, 20.20.20.20', function (done) {
+    lab.test('invalid network ip, 20.20.20.20.20', function (done) {
       supertest(app)
-        .delete('/networks/20.20.20.20')
+        .delete('/networks/20.20.20.20.20')
         .expect(400, done);
     });
   });

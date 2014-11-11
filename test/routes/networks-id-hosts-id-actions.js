@@ -7,12 +7,25 @@ var redis = require('../../lib/models/redis.js');
 var supertest = require('supertest');
 var app = require('../../lib/app.js');
 var mock = require('../../lib/executors/mock');
+var docker = require('../fixtures/docker.js');
+var dockerClient = docker.client;
 
 lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
   lab.beforeEach(function (done) {
     redis.flushdb(done);
   });
-
+  lab.beforeEach(mock.reset);
+  lab.beforeEach(docker.start);
+  var containerId;
+  lab.beforeEach(function(done) {
+    dockerClient.createContainer({Image: 'ubuntu', Cmd: ['/bin/bash'], name: 'ubuntu-test'},
+      function (err, container) {
+        if (err) { return done(err); }
+        containerId = container.id;
+        container.start(done);
+      });
+  });
+  lab.afterEach(docker.stop);
   lab.experiment('POST /actions/attach', function () {
     lab.test('attach host to container', function (done) {
       supertest(app).post('/networks').expect(200).end(
@@ -25,7 +38,7 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
               Lab.expect(res.body.hostIp).to.equal('10.255.252.1');
               supertest(app)
                 .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
-                .send({ containerId: 'container_id' })
+                .send({ containerId: containerId })
                 .expect(200, function(err) {
                   if (err) {return done(err); }
                   done();
@@ -36,7 +49,7 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
     lab.test('invalid host ip', function (done) {
       supertest(app)
         .put('/networks/10.255.10.0/hosts/10.255.b.1/actions/attach')
-        .send({ containerId: 'container_id' })
+        .send({ containerId: containerId })
         .expect(400, done);
     });
     lab.test('invalid container ID', function (done) {
@@ -45,16 +58,10 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
         .expect(400, done);
     });
     lab.test('should error if connecting to non existing container', function (done) {
-      mock.set(function(data, cb) { return cb('some weave err'); });
       supertest(app)
         .put('/networks/10.255.10.0/hosts/10.255.252.1/actions/attach')
-        .send({ containerId: 'container_id' })
-        .expect(500, function(err, res) {
-          mock.reset();
-          if (err) { return done(err); }
-          Lab.expect(res.body.error).to.equal('some weave err');
-          done();
-        });
+        .send({ containerId: 'fakeId' })
+        .expect(500, done);
     });
   }); //POST /actions/attach
 
@@ -68,12 +75,12 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
             Lab.expect(res.body.hostIp).to.equal('10.255.252.1');
             supertest(app)
               .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
-              .send({ containerId: 'container_id' })
+              .send({ containerId: containerId })
               .expect(200, function(err) {
                 if (err) {return done(err); }
                 supertest(app)
                   .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/detach')
-                  .send({ containerId: 'container_id' })
+                  .send({ containerId: containerId })
                   .expect(200, function(err) {
                     if (err) {return done(err); }
                     done();
@@ -85,7 +92,7 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
     lab.test('invalid host ip', function (done) {
       supertest(app)
         .put('/networks/10.255.10.0/hosts/10.255.b.1/actions/detach')
-        .send({ containerId: 'container_id' })
+        .send({ containerId: containerId })
         .expect(400, done);
     });
     lab.test('invalid container ID', function (done) {
@@ -94,14 +101,12 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
         .expect(400, done);
     });
     lab.test('should error if detach non attached ip', function (done) {
-      mock.set(function(data, cb) { return cb('some weave err'); });
       supertest(app)
         .put('/networks/10.255.10.0/hosts/10.255.252.1/actions/detach')
-        .send({ containerId: 'container_id' })
+        .send({ containerId: containerId })
         .expect(409, function(err, res) {
-          mock.reset();
           if (err) { return done(err); }
-          Lab.expect(res.body.message).to.equal('container ip does not exist');
+          Lab.expect(res.body.message).to.equal('container is not mapped to an ip');
           done();
         });
     });
