@@ -146,7 +146,7 @@ lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
           containerId: 'FAKEID'
         };
         weaveWrapper.attach(options, function(err) {
-          Lab.expect(err.message).to.equal('Error: No such image or container: FAKEID');
+          Lab.expect(err.message).to.match(/Error: No such image or container: FAKEID/);
           done();
         });
       });
@@ -159,7 +159,7 @@ lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
             containerId: containerId
           };
           weaveWrapper.attach(options, function(err) {
-            Lab.expect(err.message).to.equal('Container '+containerId+' not running');
+            Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
             done();
           });
         });
@@ -227,7 +227,7 @@ lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
           containerId: 'FAKEID'
         };
         weaveWrapper.detach(options, function(err) {
-          Lab.expect(err.message).to.equal('Error: No such image or container: FAKEID');
+          Lab.expect(err.message).to.match(/Error: No such image or container: FAKEID/);
           done();
         });
       });
@@ -240,7 +240,7 @@ lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
             containerId: containerId
           };
           weaveWrapper.detach(options, function(err) {
-            Lab.expect(err.message).to.equal('Container '+containerId+' not running');
+            Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
             done();
           });
         });

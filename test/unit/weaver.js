@@ -28,7 +28,7 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
           cb('some start err');
         });
         weaver.setup(function(err) {
-          Lab.expect(err).to.equal('some start err');
+          Lab.expect(err.message).to.equal('weave launch failed');
           done();
         });
       });
@@ -162,7 +162,7 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
       });
       lab.test('attach to non existing container', function (done) {
         weaver.attachContainer('FAKEID', '10.0.0.0', '32', function(err) {
-          Lab.expect(err.message).to.equal('Error: No such image or container: FAKEID');
+          Lab.expect(err.message).to.match(new RegExp('Error: No such image or container: FAKEID'));
           done();
         });
       });
@@ -170,7 +170,7 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
         dockerClient.getContainer(containerId).stop(function(err) {
           if (err) { return done(err); }
           weaver.attachContainer(containerId, '10.0.0.0', '32', function(err) {
-            Lab.expect(err.message).to.equal('Container '+containerId+' not running');
+            Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
             done();
           });
         });
@@ -223,7 +223,8 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
           dockerClient.getContainer(containerId).remove(function(err) {
             if (err) { return done(err); }
             weaver.detachContainer(containerId, '10.0.0.0', '32', function(err) {
-              Lab.expect(err.message).to.equal('Error: No such image or container: '+containerId);
+              Lab.expect(err.message)
+                .to.match(new RegExp('Error: No such image or container: '+containerId));
               done();
             });
           });
@@ -235,7 +236,7 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
           dockerClient.getContainer(containerId).stop(function(err) {
             if (err) { return done(err); }
             weaver.detachContainer(containerId, '10.0.0.0', '32', function(err) {
-              Lab.expect(err.message).to.equal('Container '+containerId+' not running');
+              Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
               done();
             });
           });
