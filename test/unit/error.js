@@ -50,7 +50,8 @@ lab.experiment('/lib/helpers/error.js unit test', function() {
           return this;
         },
         json: function(s) {
-          Lab.expect(s.message).to.equal('An internal server error occurred');
+          Lab.expect(s.message).to.equal('the err');
+          Lab.expect(s.error).to.equal('Internal Server Error');
           return this;
         }
       });
@@ -71,7 +72,7 @@ lab.experiment('/lib/helpers/error.js unit test', function() {
       });
       done();
     });
-    lab.test('should return 500 if 400 error with error print', function(done) {
+    lab.test('should return 500 with err.message if error', function(done) {
       process.env.LOG_ERRORS = 'yes';
       error.errorResponder(new Error('the err'), null, {
         status: function(s) {
@@ -79,22 +80,23 @@ lab.experiment('/lib/helpers/error.js unit test', function() {
           return this;
         },
         json: function(s) {
-          Lab.expect(s.message).to.equal('An internal server error occurred');
+          Lab.expect(s.message).to.equal('the err');
+          Lab.expect(s.error).to.equal('Internal Server Error');
           return this;
         }
       });
       process.env.LOG_ERRORS = null;
       done();
     });
-    lab.test('should return 500 if 400 error', function(done) {
+    lab.test('should return 500 if primitive error', function(done) {
       error.errorResponder(1235678, null, {
         status: function(s) {
           Lab.expect(s).to.equal(500);
           return this;
         },
         json: function(s) {
-          Lab.expect(s.message).to.equal('An internal server error occurred');
-          Lab.expect(s.error).to.equal(1235678);
+          Lab.expect(s.message).to.equal(1235678);
+          Lab.expect(s.error).to.equal('Internal Server Error');
           return this;
         }
       });
