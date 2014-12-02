@@ -2,6 +2,8 @@
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var error = require('../../lib/helpers/error.js');
+var noop = require('101/noop');
+var rollbar = require('rollbar');
 
 lab.experiment('/lib/helpers/error.js unit test', function() {
   lab.experiment('error creation', function() {
@@ -101,6 +103,36 @@ lab.experiment('/lib/helpers/error.js unit test', function() {
         }
       });
       done();
+    });
+    lab.experiment('non-test env', function() {
+      var env;
+      var handleErrorWithPayloadData;
+      lab.beforeEach(function (done) {
+        env = process.env.NODE_ENV;
+        handleErrorWithPayloadData = rollbar.handleErrorWithPayloadData;
+        process.env.NODE_ENV = 'staging'; // set env to not be test
+        rollbar.handleErrorWithPayloadData = noop; // to be safe
+        done();
+      });
+      lab.afterEach(function (done) {
+        process.env.NODE_ENV = env; // restore env
+        rollbar.handleErrorWithPayloadData = handleErrorWithPayloadData; // restore method
+        done();
+      });
+      lab.test('random error causes report to be called', function (done) {
+        var err = new Error('test');
+        var mockRes = {
+          status: function () {
+            return this;
+          },
+          json: noop,
+        };
+        rollbar.handleErrorWithPayloadData = function (error) {
+          Lab.expect(error.message).to.equal(err.message);
+          done(); // make sure report is called
+        };
+        error.errorResponder(err, null, mockRes, null);
+      });
     });
   }); // errorResponder
 });
