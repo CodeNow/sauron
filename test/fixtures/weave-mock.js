@@ -1,12 +1,14 @@
 'use strict';
 var ip = require('ip');
 var docker = require('../../test/fixtures/docker.js').client;
+var networkMap = {};
 
 // checks if weave was launched or not
 var launched = false;
 
 // holds all the mock functions
 var mocks = {
+  setup: mockSetup,
   launch: mockLaunch,
   attach: mockAttach,
   detach: mockDetach,
@@ -27,6 +29,29 @@ var weave = function (cmd, cb) {
 };
 
 // mock functions
+function mockSetup (cb) {
+  cb(null, "Pulling repository zettio/weave" +
+  "d125837cefa1: Download complete" +
+  "511136ea3c5a: Download complete" +
+  "f68ba68c4708: Download complete" +
+  "4b67b7bcc993: Download complete" +
+  "1227576fa113: Download complete" +
+  "Status: Image is up to date for zettio/weave:0.8.0" +
+  "Pulling repository zettio/weavedns" +
+  "4e94948cd710: Download complete" +
+  "511136ea3c5a: Download complete" +
+  "f68ba68c4708: Download complete" +
+  "4b67b7bcc993: Download complete" +
+  "8a3e7492759a: Download complete" +
+  "ad14632b52e3: Download complete" +
+  "Status: Image is up to date for zettio/weavedns:0.8.0" +
+  "Pulling repository zettio/weavetools" +
+  "6e956e3a67c6: Download complete" +
+  "511136ea3c5a: Download complete" +
+  "f68ba68c4708: Download complete" +
+  "Status: Image is up to date for zettio/weavetools:0.8.0");
+}
+
 function mockLaunch () {
   var cb = arguments[arguments.length-1];
   if(launched) {
@@ -60,6 +85,7 @@ function mockAttach (cidr, containerId, cb) {
     if(!data.State.Running) {
       return cb(new Error('Container '+containerId+' not running'));
     }
+    networkMap[containerId] = cidr;
     return cb();
   });
 }
@@ -87,13 +113,17 @@ function mockDetach (cidr, containerId, cb) {
     if(!data.State.Running) {
       return cb(new Error('Container '+containerId+' not running'));
     }
+    if (!networkMap[containerId]) {
+      return cb(new Error('Device "ethwe" does not exist.'));
+    }
+    delete networkMap[containerId];
     return cb();
   });
 }
 
 function mockStatus(cb) {
   if (!launched) {
-    return cb(new Error('weave is not running.'));
+    return cb(new Error('weave container is not present; have you launched it?'));
   }
   return cb(null, 'Our name is 7a:19:f6:1d:5e:d4 ' +
     'Sniffing traffic on &{311 65535 ethwe 62:45:cb:53:a1:6a up|broadcast|multicast} ' +
@@ -121,6 +151,7 @@ module.exports.set = function(func, mock) {
 
 module.exports.reset = function(cb) {
   mocks = {
+    setup: mockSetup,
     launch: mockLaunch,
     attach: mockAttach,
     detach: mockDetach,
