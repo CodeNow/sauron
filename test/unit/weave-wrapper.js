@@ -16,7 +16,7 @@ lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
     lab.experiment('status', function () {
       lab.test('should error if weave not running', function (done) {
         weaveWrapper.status(function (err) {
-          Lab.expect(err.message).to.equal('weave is not running.');
+          Lab.expect(err.message).to.equal('weave container is not present; have you launched it?');
           done();
         });
       });
@@ -175,6 +175,14 @@ lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
             containerId = container.id;
             container.start(done);
           });
+      });
+      lab.beforeEach(function(done) {
+        var options = {
+          ipaddr: '10.0.0.0',
+          subnet: '32',
+          containerId: containerId
+        };
+        weaveWrapper.attach(options, done);
       });
       lab.test('normal', function (done) {
         var options = {

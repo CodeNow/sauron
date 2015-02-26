@@ -6,8 +6,7 @@ var start = require('./lib/start.js');
 
 start(function (err) {
   if (err) {
-    error.log(err);
-    return process.exit(1);
+    return error.log(err);
   }
   app.listen(process.env.PORT);
 });
