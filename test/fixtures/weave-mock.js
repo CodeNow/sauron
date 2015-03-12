@@ -85,7 +85,6 @@ function mockAttach (cidr, containerId, cb) {
     if(!data.State.Running) {
       return cb(new Error('Container '+containerId+' not running'));
     }
-    networkMap[containerId] = cidr;
     return cb();
   });
 }
@@ -113,10 +112,6 @@ function mockDetach (cidr, containerId, cb) {
     if(!data.State.Running) {
       return cb(new Error('Container '+containerId+' not running'));
     }
-    if (!networkMap[containerId]) {
-      return cb(new Error('Device "ethwe" does not exist.'));
-    }
-    delete networkMap[containerId];
     return cb();
   });
 }

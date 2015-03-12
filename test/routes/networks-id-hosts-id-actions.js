@@ -39,13 +39,32 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
               supertest(app)
                 .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
                 .send({ containerId: containerId })
+                .expect(200, done);
+            });
+        });
+    });
+    lab.test('should error if attaching to different container', function (done) {
+      supertest(app).post('/networks').expect(200).end(
+        function (err, res) {
+          if (err) { return done(err); }
+          Lab.expect(res.body.networkIp).to.equal('10.255.252.0');
+          supertest(app).post('/networks/10.255.252.0/hosts').expect(200).end(
+            function (err, res) {
+              if (err) { return done(err); }
+              Lab.expect(res.body.hostIp).to.equal('10.255.252.1');
+              supertest(app)
+                .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
+                .send({ containerId: containerId })
                 .expect(200, function(err) {
                   if (err) {return done(err); }
-                  done();
+                  supertest(app)
+                    .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
+                    .send({ containerId: 'different' })
+                    .expect(409, done);
                 });
-          });
+            });
         });
-      });
+    });
     lab.test('invalid host ip', function (done) {
       supertest(app)
         .put('/networks/10.255.10.0/hosts/10.255.b.1/actions/attach')
@@ -62,6 +81,39 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
         .put('/networks/10.255.10.0/hosts/10.255.252.1/actions/attach')
         .send({ containerId: 'fakeId' })
         .expect(500, done);
+    });
+    lab.describe('force test', function() {
+      var container2;
+      lab.beforeEach(function(done) {
+        dockerClient.createContainer({Image: 'ubuntu', Cmd: ['/bin/bash'], name: 'ubuntu-test'},
+          function (err, container) {
+            if (err) { return done(err); }
+            container2 = container.id;
+            container.start(done);
+          });
+      });
+      lab.test('should attach to different container with force', function (done) {
+        supertest(app).post('/networks').expect(200).end(
+          function (err, res) {
+            if (err) { return done(err); }
+            Lab.expect(res.body.networkIp).to.equal('10.255.252.0');
+            supertest(app).post('/networks/10.255.252.0/hosts').expect(200).end(
+              function (err, res) {
+                if (err) { return done(err); }
+                Lab.expect(res.body.hostIp).to.equal('10.255.252.1');
+                supertest(app)
+                  .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
+                  .send({ containerId: containerId })
+                  .expect(200, function(err) {
+                    if (err) {return done(err); }
+                    supertest(app)
+                      .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
+                      .send({ containerId: container2, force: true })
+                      .expect(200, done);
+                  });
+              });
+          });
+      });
     });
   }); //POST /actions/attach
 
@@ -81,15 +133,12 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
                 supertest(app)
                   .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/detach')
                   .send({ containerId: containerId })
-                  .expect(200, function(err) {
-                    if (err) {return done(err); }
-                    done();
-                  });
+                  .expect(200, done);
               });
         });
       });
     });
-  lab.test('should error if ip was set to diff container', function (done) {
+    lab.test('should error if ip was set to diff container', function (done) {
       supertest(app).post('/networks').expect(200).end(function (err, res) {
         if (err) { return done(err); }
         Lab.expect(res.body.networkIp).to.equal('10.255.252.0');
@@ -104,11 +153,7 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
                 supertest(app)
                   .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/detach')
                   .send({ containerId: 'different' })
-                  .expect(409, function(err, res) {
-                    console.log(err, res);
-                    if (err) {return done(err); }
-                    done();
-                  });
+                  .expect(409, done);
               });
         });
       });
@@ -133,6 +178,37 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
           Lab.expect(res.body.message).to.equal('container is not mapped to an ip');
           done();
         });
+    });
+    lab.describe('force test', function() {
+      var container2;
+      lab.beforeEach(function(done) {
+        dockerClient.createContainer({Image: 'ubuntu', Cmd: ['/bin/bash'], name: 'ubuntu-test'},
+          function (err, container) {
+            if (err) { return done(err); }
+            container2 = container.id;
+            container.start(done);
+          });
+      });
+      lab.test('should set ip to diff container with force ', function (done) {
+        supertest(app).post('/networks').expect(200).end(function (err, res) {
+          if (err) { return done(err); }
+          Lab.expect(res.body.networkIp).to.equal('10.255.252.0');
+          supertest(app).post('/networks/10.255.252.0/hosts').expect(200).end(function (err, res) {
+              if (err) { return done(err); }
+              Lab.expect(res.body.hostIp).to.equal('10.255.252.1');
+              supertest(app)
+                .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
+                .send({ containerId: containerId })
+                .expect(200, function(err) {
+                  if (err) {return done(err); }
+                  supertest(app)
+                    .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/detach')
+                    .send({ containerId: container2, force: true })
+                    .expect(200, done);
+                });
+          });
+        });
+      });
     });
   }); //POST /actions/detach
 }); // networks
