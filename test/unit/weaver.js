@@ -109,7 +109,7 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
           });
       });
       lab.test('normal', function (done) {
-        weaver.attachContainer(containerId, '10.0.0.0', '32', function (err) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function (err) {
           if (err) { return done(err); }
           containerIp.getContainerIp(containerId, function(err, data) {
             if (err) { return done(err); }
@@ -119,49 +119,58 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
         });
       });
       lab.test('should err if attach to 2 diff IP to same container', function (done) {
-        weaver.attachContainer(containerId, '10.0.0.0', '32', function (err) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function (err) {
           if (err) { return done(err); }
-          weaver.attachContainer(containerId, '10.0.0.1', '32', function (err) {
+          weaver.attachContainer(containerId, '10.0.0.1', '32', false, function (err) {
+            Lab.expect(err.message).to.equal('container is mapped to a different IP');
+            done();
+          });
+        });
+      });
+      lab.test('should pass if attach to 2 diff IP to same container with force', function (done) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function (err) {
+          if (err) { return done(err); }
+          weaver.attachContainer(containerId, '10.0.0.1', '32', true, function (err) {
             Lab.expect(err.message).to.equal('container is mapped to a different IP');
             done();
           });
         });
       });
       lab.test('should err if attaching IP to diff container', function (done) {
-        weaver.attachContainer(containerId, '10.0.0.0', '32', function (err) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function (err) {
           if (err) { return done(err); }
-          weaver.attachContainer(containerId+'1', '10.0.0.0', '32', function (err) {
+          weaver.attachContainer(containerId+'1', '10.0.0.0', '32', false, function (err) {
             Lab.expect(err.message).to.equal('ip already mapped to a container');
             done();
           });
         });
       });
       lab.test('missing ipaddr', function (done) {
-        weaver.attachContainer(containerId, null, '32', function (err) {
+        weaver.attachContainer(containerId, null, '32', false, function (err) {
           Lab.expect(err.message).to.equal('invalid input');
           done();
         });
       });
       lab.test('missing subnet', function (done) {
-        weaver.attachContainer(containerId, '32', null, function (err) {
+        weaver.attachContainer(containerId, '32', null, false, function (err) {
           Lab.expect(err.message).to.equal('invalid input');
           done();
         });
       });
       lab.test('missing containerId', function (done) {
-        weaver.attachContainer(null, '10.0.0.0', '32', function (err) {
+        weaver.attachContainer(null, '10.0.0.0', '32', false, function (err) {
           Lab.expect(err.message).to.equal('invalid input');
           done();
         });
       });
       lab.test('missing all', function (done) {
-        weaver.attachContainer(null, null, null, function (err) {
+        weaver.attachContainer(null, null, null, false, function (err) {
           Lab.expect(err.message).to.equal('invalid input');
           done();
         });
       });
       lab.test('attach to non existing container', function (done) {
-        weaver.attachContainer('FAKEID', '10.0.0.0', '32', function(err) {
+        weaver.attachContainer('FAKEID', '10.0.0.0', '32', false, function(err) {
           Lab.expect(err.message).to.match(new RegExp('Error: No such image or container: FAKEID'));
           done();
         });
@@ -169,7 +178,7 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
       lab.test('attach to stopped container', function (done) {
         dockerClient.getContainer(containerId).stop(function(err) {
           if (err) { return done(err); }
-          weaver.attachContainer(containerId, '10.0.0.0', '32', function(err) {
+          weaver.attachContainer(containerId, '10.0.0.0', '32', false, function(err) {
             Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
             done();
           });
@@ -187,42 +196,57 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
             container.start(done);
           });
       });
-      lab.test('normal', function (done) {
-        weaver.detachContainer(containerId, '10.0.0.0', '32', function (err) {
+      lab.test('should error if nothing attached', function (done) {
+        weaver.detachContainer(containerId, '10.0.0.0', '32', false, function (err) {
           Lab.expect(err.message).to.equal('container is not mapped to an ip');
           done();
         });
       });
       lab.test('missing ipaddr', function (done) {
-        weaver.detachContainer(containerId, null, '32', function (err) {
+        weaver.detachContainer(containerId, null, '32', false, function (err) {
           Lab.expect(err.message).to.equal('container is not mapped to an ip');
           done();
         });
       });
       lab.test('missing subnet', function (done) {
-        weaver.detachContainer(containerId, '32', null, function (err) {
+        weaver.detachContainer(containerId, '32', null, false, function (err) {
           Lab.expect(err.message).to.equal('container is not mapped to an ip');
           done();
         });
       });
       lab.test('missing containerId', function (done) {
-        weaver.detachContainer(null, '10.0.0.0', '32', function (err) {
+        weaver.detachContainer(null, '10.0.0.0', '32', false, function (err) {
           Lab.expect(err.message).to.equal('container is not mapped to an ip');
           done();
         });
       });
       lab.test('missing all', function (done) {
-        weaver.detachContainer(null, null, null, function (err) {
+        weaver.detachContainer(null, null, null, false, function (err) {
           Lab.expect(err.message).to.equal('container is not mapped to an ip');
           done();
         });
       });
+      lab.test('should error if detach to incorrect container', function (done) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function(err) {
+          if (err) { return done(err); }
+          weaver.detachContainer('different', '10.0.0.0', '32', false, function (err) {
+            Lab.expect(err.message).to.equal('ip is mapped to a different container');
+            done();
+          });
+        });
+      });
+      lab.test('should pass if detach to incorrect container with force', function (done) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function(err) {
+          if (err) { return done(err); }
+          weaver.detachContainer(containerId, '10.0.0.0', '32', true, done);
+        });
+      });
       lab.test('detach to non existing container', function (done) {
-        weaver.attachContainer(containerId, '10.0.0.0', '32', function(err) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function(err) {
           if (err) { return done(err); }
           dockerClient.getContainer(containerId).remove(function(err) {
             if (err) { return done(err); }
-            weaver.detachContainer(containerId, '10.0.0.0', '32', function(err) {
+            weaver.detachContainer(containerId, '10.0.0.0', '32', false, function(err) {
               Lab.expect(err.message)
                 .to.match(new RegExp('Error: No such image or container: '+containerId));
               done();
@@ -231,11 +255,11 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
         });
       });
       lab.test('detach to stopped container', function (done) {
-        weaver.attachContainer(containerId, '10.0.0.0', '32', function(err) {
+        weaver.attachContainer(containerId, '10.0.0.0', '32', false, function(err) {
           if (err) { return done(err); }
           dockerClient.getContainer(containerId).stop(function(err) {
             if (err) { return done(err); }
-            weaver.detachContainer(containerId, '10.0.0.0', '32', function(err) {
+            weaver.detachContainer(containerId, '10.0.0.0', '32', false, function(err) {
               Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
               done();
             });

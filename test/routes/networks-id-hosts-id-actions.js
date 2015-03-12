@@ -89,6 +89,30 @@ lab.experiment('/networks/:networkIp/hosts/:hostIp/actions/*', function () {
         });
       });
     });
+  lab.test('should error if ip was set to diff container', function (done) {
+      supertest(app).post('/networks').expect(200).end(function (err, res) {
+        if (err) { return done(err); }
+        Lab.expect(res.body.networkIp).to.equal('10.255.252.0');
+        supertest(app).post('/networks/10.255.252.0/hosts').expect(200).end(function (err, res) {
+            if (err) { return done(err); }
+            Lab.expect(res.body.hostIp).to.equal('10.255.252.1');
+            supertest(app)
+              .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/attach')
+              .send({ containerId: containerId })
+              .expect(200, function(err) {
+                if (err) {return done(err); }
+                supertest(app)
+                  .put('/networks/10.255.252.0/hosts/10.255.252.1/actions/detach')
+                  .send({ containerId: 'different' })
+                  .expect(409, function(err, res) {
+                    console.log(err, res);
+                    if (err) {return done(err); }
+                    done();
+                  });
+              });
+        });
+      });
+    });
     lab.test('invalid host ip', function (done) {
       supertest(app)
         .put('/networks/10.255.10.0/hosts/10.255.b.1/actions/detach')
