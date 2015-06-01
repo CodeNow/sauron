@@ -47,13 +47,10 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
             weaver.setup(function(){});
           });
       });
-      lab.test('setup weave when already setup', function (done) {
+      lab.test('setup weave when already setup should not throw error', function (done) {
         weaver.setup(function (err) {
           if (err) { return done(err); }
-          weaver.setup(function (err) {
-            Lab.expect(err.message).to.equal('container already started');
-            done();
-          });
+          weaver.setup(done);
         });
       });
       lab.test('should clear ip if failed to launch', function (done) {
@@ -65,20 +62,6 @@ lab.experiment('/lib/models/weaver.js unit test', function () {
               Lab.expect(data).to.have.length(1);
               Lab.expect(data).to.have.contain(ip.address());
               done();
-          });
-        });
-      });
-      lab.test('setup twice', function (done) {
-        weaver.setup(function (err) {
-          if (err) { return done(err); }
-          weaver.setup(function (err) {
-            Lab.expect(err.message).to.equal('container already started');
-            redis.smembers(process.env.WEAVE_NETWORKS+':'+process.env.WEAVE_PEERS,
-              function (err, data) {
-                if (err) { return done(err); }
-                Lab.expect(data).to.have.length(1);
-                done();
-            });
           });
         });
       });
