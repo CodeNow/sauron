@@ -55,7 +55,7 @@ function mockSetup (cb) {
 function mockLaunch () {
   var cb = arguments[arguments.length-1];
   if(launched) {
-    return cb("weave is already running");
+    return cb("weave is already running.");
   }
   launched = true;
   return cb(null, "e521bb239e333fb9ed77cf5a63700389a068e470bad00eda06dafa9e8332ade5");
