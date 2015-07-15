@@ -163,6 +163,36 @@ lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
             done();
           });
         });
+        lab.test('should ignore "Cannot destroy container" errors', function (done) {
+          lab.beforeEach(function (done) {
+            mock.set('attach', function (opts, cb) {
+              var cid = opts.containerId;
+              var message = [
+                'Command failed:',
+                'time="2015-07-15T12:22:35Z"',
+                'level=fatal',
+                'msg="Error response from daemon:',
+                  'Cannot destroy container '+cid+':',
+                  'Driver aufs failed to remove root filesystem '+cid+':',
+                  'rename /docker/aufs/mnt/'+cid+' /docker/aufs/mnt/'+cid+'-removing:',
+                  'device or resource busy"'
+              ].join(' ');
+              var err = new Error(message);
+              cb(err);
+            });
+            done();
+          });
+
+          var options = {
+            ipaddr: '10.0.0.0',
+            subnet: '32',
+            containerId: containerId
+          };
+          weaveWrapper.attach(options, function(err) {
+            Lab.expect(err).to.not.exist();
+            done();
+          });
+        });
       });
     }); // attach
 
