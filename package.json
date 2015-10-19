@@ -26,7 +26,7 @@
   "homepage": "https://github.com/codenow/sauron",
   "dependencies": {
     "101": "1.2.0",
-    "async": "^0.9.0",
+    "async": "1.4.2",
     "boom": "^2.6.1",
     "debug": "^2.1.0",
     "dotenv": "^0.4.0",
@@ -37,10 +37,10 @@
     "redis": "^0.12.1",
     "rollbar": "^0.4.0",
     "sync-exec": "^0.6.2",
-    "which": "^1.0.5"
+    "which": "^1.0.5",
+    "body-parser": "^1.9.0"
   },
   "devDependencies": {
-    "body-parser": "^1.9.0",
     "callback-count": "^0.1.0",
     "docker-mock": "^0.2.0",
     "dockerode": "^2.0.4",
