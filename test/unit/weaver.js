@@ -5,8 +5,6 @@ var lab = exports.lab = Lab.script();
 var mock = require('../../lib/executors/mock.js');
 var weaver = require('../../lib/models/weaver.js');
 var redis = require('../../lib/models/redis.js');
-var containerIp = require('../../lib/models/network/container-ip.js');
-var ip = require('ip');
 var docker = require('../fixtures/docker.js');
 var dockerClient = docker.client;
 
