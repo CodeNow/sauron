@@ -15,5 +15,13 @@ lab.experiment('/lib/models/redis.js unit test', function () {
         done();
       }
     });
+    lab.test('pubSub error event should be thrown', function (done) {
+      try {
+        redis.pubSub.emit('error', new Error('Redis is down'));
+      } catch (err) {
+        Lab.expect(err.message).to.equal('Redis error: Redis is down');
+        done();
+      }
+    });
   });
 });
