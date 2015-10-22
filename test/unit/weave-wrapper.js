@@ -1,291 +1,245 @@
 'use strict';
-require('../../lib/loadenv.js')();
+
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
-var mock = require('../../lib/executors/mock.js');
-var weaveWrapper = require('../../lib/engines/weave-wrapper.js');
-var docker = require('../fixtures/docker.js');
-var dockerClient = docker.client;
+var describe = lab.describe;
+var it = lab.it;
+var after = lab.after;
+var afterEach = lab.afterEach;
+var before = lab.before;
+var beforeEach = lab.beforeEach;
+var Code = require('code');
+var expect = Code.expect;
 
-lab.experiment('/lib/engines/weave-wrapper.js unit test', function () {
-  lab.beforeEach(docker.start);
-  lab.afterEach(docker.stop);
-  lab.beforeEach(mock.reset);
+var sinon = require('sinon');
+var child_process = require('child_process');
 
-  lab.experiment('sudo weave depended command', function () {
-    lab.experiment('status', function () {
-      lab.test('should error if weave not running', function (done) {
-        weaveWrapper.status(function (err) {
-          Lab.expect(err.message).to.equal('weave container is not present; have you launched it?');
+var WeaveWrapper = require('../../lib/models/weave-wrapper.js');
+
+describe('weave-wrapper.js unit test', function () {
+  describe('weave commands', function () {
+    describe('_runCmd', function() {
+      var testCmd = 'sudo rm -rf /all';
+
+      beforeEach(function(done) {
+        sinon.stub(child_process, 'exec');
+        done();
+      });
+
+      afterEach(function(done) {
+        child_process.exec.restore();
+        done();
+      });
+
+      it('should output stdout', function(done) {
+        var testStdout = 'all deleted';
+        child_process.exec.yieldsAsync(undefined, testStdout);
+        WeaveWrapper._runCmd(testCmd, function (err, stdout) {
+          expect(err).to.not.exist();
+          expect(stdout).to.equal(testStdout);
+          expect(child_process.exec.withArgs(testCmd).called)
+            .to.be.true();
           done();
         });
       });
-      lab.test('should get status', function (done) {
-        var options = {
-          password: 'pass',
-          peers: []
-        };
-        weaveWrapper.launch(options, function(err) {
-          if (err) { return done(err); }
-          weaveWrapper.status(done);
+
+      it('should cb err with stderr', function(done) {
+        var testStderr = 'all deleted';
+        child_process.exec.yieldsAsync(new Error('gone'), '', testStderr);
+        WeaveWrapper._runCmd(testCmd, function (err) {
+          expect(err).to.exist();
+          expect(err.stderr).to.equal(testStderr);
+          expect(child_process.exec.withArgs(testCmd).called)
+            .to.be.true();
+          done();
         });
       });
-    }); // status
-    lab.experiment('launch', function () {
-      lab.test('correct launch', function (done) {
+    }); // end _runCmd
+
+    describe('launch', function () {
+      beforeEach(function(done) {
+        sinon.stub(WeaveWrapper, '_runCmd');
+        sinon.stub(WeaveWrapper, 'handleErr');
+        process.env.WEAVE_PATH = '/usr/bin/weave';
+        process.env.IP_RANGE = '10.0.0.0/8';
+        done();
+      });
+
+      afterEach(function(done) {
+        WeaveWrapper._runCmd.restore();
+        WeaveWrapper.handleErr.restore();
+        delete process.env.WEAVE_PATH;
+        delete process.env.IP_RANGE;
+        done();
+      });
+
+      it('should launch with peers', function (done) {
+        WeaveWrapper._runCmd.yieldsAsync();
+        WeaveWrapper.handleErr.returnsArg(0);
         var options = {
           password: 'pass',
           peers: ['10.0.0.1', '10.0.0.2']
         };
-        weaveWrapper.launch(options, function (err, data) {
-          Lab.expect(data).to.equal(
-            'e521bb239e333fb9ed77cf5a63700389a068e470bad00eda06dafa9e8332ade5');
+
+        WeaveWrapper.launch(options, function (err) {
+          expect(err).to.not.exist();
+          expect(WeaveWrapper._runCmd
+            .withArgs('/usr/bin/weave launch-router --no-dns --password pass ' +
+              '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8 ' +
+              '10.0.0.1 10.0.0.2').called)
+            .to.be.true();
           done();
         });
       });
-      lab.test('no peer launch', function (done) {
+
+      it('should launch without peers', function (done) {
+        WeaveWrapper._runCmd.yieldsAsync();
+        WeaveWrapper.handleErr.returnsArg(0);
         var options = {
           password: 'pass',
           peers: []
         };
-        weaveWrapper.launch(options, function (err, data) {
-          Lab.expect(data).to.equal(
-            'e521bb239e333fb9ed77cf5a63700389a068e470bad00eda06dafa9e8332ade5');
+
+        WeaveWrapper.launch(options, function (err) {
+          expect(err).to.not.exist();
+          expect(WeaveWrapper._runCmd
+            .withArgs('/usr/bin/weave launch-router --no-dns --password pass ' +
+              '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8')
+            .called).to.be.true();
           done();
         });
       });
-      lab.test('missing password', function (done) {
+
+      it('should fail if missing password', function (done) {
+        WeaveWrapper._runCmd.yieldsAsync();
+        WeaveWrapper.handleErr.returnsArg(0);
         var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32',
           peers: []
         };
-        weaveWrapper.launch(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+        WeaveWrapper.launch(options, function (err) {
+          expect(err.output.statusCode).to.equal(400);
           done();
         });
       });
-      lab.test('missing peers', function (done) {
+
+      it('should fail if invalid peers', function (done) {
+        WeaveWrapper._runCmd.yieldsAsync();
+        WeaveWrapper.handleErr.returnsArg(0);
         var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32',
-          password: 'pass'
+          password: 'pass',
+          peers: 'peer'
         };
-        weaveWrapper.launch(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+        WeaveWrapper.launch(options, function (err) {
+          expect(err.output.statusCode).to.equal(400);
           done();
         });
       });
-      lab.test('missing all', function (done) {
-        weaveWrapper.launch(null, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+
+      it('should fail if missing options', function (done) {
+        WeaveWrapper._runCmd.yieldsAsync();
+        WeaveWrapper.handleErr.returnsArg(0);
+        WeaveWrapper.launch(null, function (err) {
+          expect(err.output.statusCode).to.equal(400);
           done();
         });
       });
     }); // launch
 
-    lab.experiment('attach', function () {
-      var containerId;
-      lab.beforeEach(function(done) {
-        dockerClient.createContainer({Image: 'ubuntu', Cmd: ['/bin/bash'], name: 'ubuntu-test'},
-          function (err, container) {
-            if (err) { return done(err); }
-            containerId = container.id;
-            container.start(done);
-          });
+    describe('attach', function () {
+      var testContainerId = '1738';
+
+      beforeEach(function(done) {
+        sinon.stub(WeaveWrapper, '_runCmd');
+        sinon.stub(WeaveWrapper, 'handleErr');
+        process.env.WEAVE_PATH = '/usr/bin/weave';
+        done();
       });
 
-      lab.test('normal', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32',
-          containerId: containerId
-        };
-        weaveWrapper.attach(options, done);
+      afterEach(function(done) {
+        WeaveWrapper._runCmd.restore();
+        WeaveWrapper.handleErr.restore();
+        delete process.env.WEAVE_PATH;
+        done();
       });
-      lab.test('missing ipaddr', function (done) {
-        var options = {
-          subnet: '32',
-          containerId: containerId
-        };
-        weaveWrapper.attach(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
-          done();
-        });
-      });
-      lab.test('missing subnet', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          containerId: containerId
-        };
-        weaveWrapper.attach(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
-          done();
-        });
-      });
-      lab.test('missing containerId', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32'
-        };
-        weaveWrapper.attach(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
-          done();
-        });
-      });
-      lab.test('missing all', function (done) {
-        weaveWrapper.attach(null, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
-          done();
-        });
-      });
-      lab.test('should error for non existing containers', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32',
-          containerId: 'FAKEID'
-        };
-        weaveWrapper.attach(options, function(err) {
-          Lab.expect(err.message).to.match(/Error: No such image or container: FAKEID/);
-          done();
-        });
-      });
-      lab.test('should error for stopped containers', function (done) {
-        dockerClient.getContainer(containerId).stop(function(err) {
-          if (err) { return done(err); }
-          var options = {
-            ipaddr: '10.0.0.0',
-            subnet: '32',
-            containerId: containerId
-          };
-          weaveWrapper.attach(options, function(err) {
-            Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
-            done();
-          });
-        });
-      });
-      lab.experiment('attach error "Cannot destroy container"', function () {
-        lab.beforeEach(function (done) {
-          mock.set('attach', function (ip, containerId, cb) {
-            var cid = containerId;
-            var message = [
-              'Command failed:',
-              'time="2015-07-15T12:22:35Z"',
-              'level=fatal',
-              'msg="Error response from daemon:',
-                'Cannot destroy container '+cid+':',
-                'Driver aufs failed to remove root filesystem '+cid+':',
-                'rename /docker/aufs/mnt/'+cid+' /docker/aufs/mnt/'+cid+'-removing:',
-                'device or resource busy"'
-            ].join(' ');
-            var err = new Error(message);
-            cb(err);
-          });
-          done();
-        });
 
-        lab.test('should ignore "Cannot destroy container" errors', function (done) {
-          var options = {
-            ipaddr: '10.0.0.0',
-            subnet: '32',
-            containerId: containerId
-          };
-          weaveWrapper.attach(options, function(err) {
-            Lab.expect(err).to.not.exist;
-            done();
-          });
+      it('should attach', function (done) {
+        WeaveWrapper._runCmd.yieldsAsync();
+        WeaveWrapper.handleErr.returnsArg(0);
+
+        WeaveWrapper.attach(testContainerId, function (err) {
+          expect(err).to.not.exist();
+          expect(WeaveWrapper._runCmd
+            .withArgs('/usr/bin/weave attach ' + testContainerId).called)
+            .to.be.true();
+          done();
+        });
+      });
+
+      it('should fail if missing containerId', function (done) {
+        WeaveWrapper._runCmd.yieldsAsync();
+        WeaveWrapper.handleErr.returnsArg(0);
+        WeaveWrapper.attach(null, function (err) {
+          expect(err.output.statusCode).to.equal(400);
+          done();
         });
       });
     }); // attach
 
-    lab.experiment('detach', function () {
-      var containerId;
-      lab.beforeEach(function(done) {
-        dockerClient.createContainer({Image: 'ubuntu', Cmd: ['/bin/bash'], name: 'ubuntu-test'},
-          function (err, container) {
-            if (err) { return done(err); }
-            containerId = container.id;
-            container.start(done);
-          });
-      });
-      lab.beforeEach(function(done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32',
-          containerId: containerId
-        };
-        weaveWrapper.attach(options, done);
-      });
-      lab.test('normal', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32',
-          containerId: containerId
-        };
-        weaveWrapper.detach(options, done);
-      });
-      lab.test('missing ipaddr', function (done) {
-        var options = {
-          subnet: '32',
-          containerId: containerId
-        };
-        weaveWrapper.detach(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
+    describe('handleErr', function() {
+      it('should cb if no error', function(done) {
+        WeaveWrapper.handleErr(function (err) {
+          expect(err).to.not.exist();
           done();
-        });
+        })(null);
       });
-      lab.test('missing subnet', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          containerId: containerId
-        };
-        weaveWrapper.detach(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
-          done();
-        });
-      });
-      lab.test('missing containerId', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32'
-        };
-        weaveWrapper.detach(options, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
-          done();
-        });
-      });
-      lab.test('missing all', function (done) {
-        weaveWrapper.detach(null, function (err) {
-          Lab.expect(err.message).to.equal('invalid input');
-          done();
-        });
-      });
-      lab.test('should error for non existing containers', function (done) {
-        var options = {
-          ipaddr: '10.0.0.0',
-          subnet: '32',
-          containerId: 'FAKEID'
-        };
-        weaveWrapper.detach(options, function(err) {
-          Lab.expect(err.message).to.match(/Error: No such image or container: FAKEID/);
-          done();
-        });
-      });
-      lab.test('should error for stopped containers', function (done) {
-        dockerClient.getContainer(containerId).stop(function(err) {
-          if (err) { return done(err); }
-          var options = {
-            ipaddr: '10.0.0.0',
-            subnet: '32',
-            containerId: containerId
-          };
-          weaveWrapper.detach(options, function(err) {
-            Lab.expect(err.message).to.match(new RegExp('Container '+containerId+' not running'));
-            done();
-          });
-        });
-      });
-    }); // detach
 
-  }); // weave depended command
+      it('should cb with no error for already running', function(done) {
+        var testErr = { message: 'weave already running.' };
+        WeaveWrapper.handleErr(function (err) {
+          expect(err).to.not.exist();
+          done();
+        })(testErr);
+      });
+
+      it('should cb 409 for not running', function(done) {
+        var testErr = { message: 'container is not running.' };
+        WeaveWrapper.handleErr(function (err) {
+          expect(err.output.statusCode).to.equal(409);
+          done();
+        }, 'it never ends', {})(testErr);
+      });
+
+      it('should cb 409 for died', function(done) {
+        var testErr = { message: 'container had died' };
+        WeaveWrapper.handleErr(function (err) {
+          expect(err.output.statusCode).to.equal(409);
+          done();
+        }, 'it never ends', {})(testErr);
+      });
+
+      it('should cb 500 for unknown err', function(done) {
+        var testErr = { message: 'mine of moria' };
+        WeaveWrapper.handleErr(function (err) {
+          expect(err.output.statusCode).to.equal(500);
+          done();
+        }, 'it never ends', {})(testErr);
+      });
+
+      it('should append error if error has message', function(done) {
+        var testErr = new Error('keep it safe');
+        WeaveWrapper.handleErr(function (err) {
+          expect(err.message).to.equal('keep it secret:keep it safe');
+          done();
+        }, 'keep it secret', {})(testErr);
+      });
+
+       it('should use passed message err does not have message', function(done) {
+        var testErr = 'false';
+        WeaveWrapper.handleErr(function (err) {
+          expect(err.message).to.equal('keep it secret');
+          done();
+        }, 'keep it secret', {})(testErr);
+      });
+    }); // end handleErr
+  }); // weave commands
 });
