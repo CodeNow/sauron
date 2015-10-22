@@ -39,8 +39,6 @@ Sauron is the greatest and most trusted servant of Runnable during Two Point O. 
 * on startup:
   * Sauron checks to see if its dependencies are installed, they currently are:
     * weave
-    * ethtool
-    * conntrack
   * Sauron check to see if weave is already running
     * if running, start listening
     * if not:
