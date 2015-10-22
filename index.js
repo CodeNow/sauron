@@ -1,14 +1,11 @@
 'use strict';
-require('./lib/loadenv.js')();
-var error = require('./lib/helpers/error.js');
-var app = require('./lib/app.js');
-var start = require('./lib/start.js');
 
-start(function (err) {
+var Start = require('./lib/start.js');
+var ErrorCat = require('error-cat');
+var error = new ErrorCat();
+
+Start.startUp(function (err) {
   if (err) {
-    return error.log(err);
+    throw error.createAndReport(err, 'failed to start');
   }
-  app.listen(process.env.PORT);
 });
-
-module.exports = app;
