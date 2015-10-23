@@ -14,6 +14,8 @@ var ip = require('ip');
 var rollbar = require('rollbar');
 
 var Redis = require('../../../lib/models/redis.js');
+var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
+var RabbitMq = require('../../../lib/models/rabbitmq.js');
 var Events = require('../../../lib/models/events.js');
 
 describe('events.js unit test', function () {
@@ -95,7 +97,7 @@ describe('events.js unit test', function () {
       done();
     });
 
-    it('should not exit if not weave container', function (done) {
+    it('should not exit if empty object', function (done) {
       Events._thisHost.returns(true);
       Events._isWeaveContainer.returns(false);
       rollbar.handleErrorWithPayloadData.yields();
@@ -104,7 +106,79 @@ describe('events.js unit test', function () {
       expect(process.exit.called).to.be.false();
       done();
     });
+
+    it('should not exit if no data', function (done) {
+      Events._handleDie(null);
+      expect(process.exit.called).to.be.false();
+      done();
+    });
   }); // end _handleDie
+
+  describe('_handleStart', function () {
+    beforeEach(function (done) {
+      sinon.stub(RabbitMq, 'publishContainerNetworkAttached');
+      sinon.stub(Events, '_idNetworkNeeded');
+      sinon.stub(Events, '_thisHost');
+      sinon.stub(WeaveWrapper, 'attach');
+      done();
+    });
+
+    afterEach(function (done) {
+      RabbitMq.publishContainerNetworkAttached.restore();
+      Events._idNetworkNeeded.restore();
+      Events._thisHost.restore();
+      WeaveWrapper.attach.restore();
+      done();
+    });
+
+    it('should not attach if invalid data', function (done) {
+      Events._handleStart(null);
+      expect(WeaveWrapper.attach.called).to.be.false();
+      done();
+    });
+
+    it('should not attach if not host', function (done) {
+      Events._thisHost.returns(false);
+
+      Events._handleStart({});
+      expect(WeaveWrapper.attach.called).to.be.false();
+      done();
+    });
+
+    it('should not attach if network not needed', function (done) {
+      Events._thisHost.returns(true);
+      Events._idNetworkNeeded.returns(false);
+
+      Events._handleStart({});
+      expect(WeaveWrapper.attach.called).to.be.false();
+      done();
+    });
+
+    it('should not publish if attach failed', function (done) {
+      Events._thisHost.returns(true);
+      Events._idNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yieldsAsync('Dunlendings');
+
+      Events._handleStart({});
+      expect(RabbitMq.publishContainerNetworkAttached.called).to.be.false();
+      done();
+    });
+
+    it('should publish correct data', function (done) {
+      var testFrom = 'ubuntu';
+      var testIp = '10.0.0.0';
+      Events._thisHost.returns(true);
+      Events._idNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(null, testIp);
+
+      Events._handleStart({ from: testFrom });
+      expect(RabbitMq.publishContainerNetworkAttached.withArgs({
+        containerId: testFrom,
+        containerIp: testIp
+      }).called).to.be.true();
+      done();
+    });
+  }); // end _handleStart
 
   describe('_isWeaveContainer', function () {
     it('should return true if correct container', function (done) {
