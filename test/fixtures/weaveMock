@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# usage
+# ./weaveMock <MOCK_TYPE> <WEAVE_COMMAND> [...args...]
+#
+MOCK_TYPE=$1
+WEAVE_COMMAND=$2
+case "$WEAVE_COMMAND" in
+  launch)
+    echo one
+    ;;
+  attach)
+    echo hi
+    ;;
+  *)
+    echo "Unknown weave command '$WEAVE_COMMAND'" >&2
+    ;;
+esac

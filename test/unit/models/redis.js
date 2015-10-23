@@ -1,7 +1,5 @@
 'use strict';
 
-require('loadenv')();
-
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
@@ -44,8 +42,8 @@ describe('redis.js unit test', function () {
     });
   }); // end connect
 
-  describe('_handleError', function() {
-    it('should throw when called', function(done) {
+  describe('_handleError', function () {
+    it('should throw when called', function (done) {
       var testErr = new Error('Gríma Wormtongue');
       expect(function () {
         Redis._handleError(testErr);

@@ -1,5 +1,4 @@
 'use strict';
-require('loadenv')();
 
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
@@ -10,9 +9,9 @@ var expect = Code.expect;
 
 var BasePaths = require('../../../lib/middleware/base-paths.js');
 
-describe('base-paths.js unit test', function() {
-  describe('root', function() {
-    it('should return 200 for success', function(done) {
+describe('base-paths.js unit test', function () {
+  describe('root', function () {
+    it('should return 200 for success', function (done) {
       var res = {
         status: function (code) {
           expect(code).to.equal(200);
@@ -32,8 +31,8 @@ describe('base-paths.js unit test', function() {
     });
   }); // end root
 
-  describe('all', function() {
-    it('should return 200 for success', function(done) {
+  describe('all', function () {
+    it('should return 200 for success', function (done) {
       var res = {
         status: function (code) {
           expect(code).to.equal(404);

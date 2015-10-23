@@ -1,7 +1,5 @@
 'use strict';
 
-require('loadenv')();
-
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
@@ -17,12 +15,12 @@ var Redis = require('../../../lib/models/redis.js');
 var Peers = require('../../../lib/models/peers.js');
 
 describe('peers.js unit test', function () {
-  beforeEach(function(done) {
+  beforeEach(function (done) {
     process.env.WEAVE_PEER_NAMESPACE = 'weave:peers';
     process.env.ORG_ID = 12348756;
     done();
   });
-  describe('getList', function() {
+  describe('getList', function () {
     beforeEach(function (done) {
       Redis.client = {
         smembers: sinon.stub()
@@ -31,12 +29,12 @@ describe('peers.js unit test', function () {
       done();
     });
 
-    afterEach(function(done) {
+    afterEach(function (done) {
       Peers._handleErr.restore();
       done();
     });
 
-    it('should list smembers', function(done) {
+    it('should list smembers', function (done) {
       var testList = ['Watcher', 'in', 'the', 'Water'];
       Redis.client.smembers.yieldsAsync(null, testList);
       Peers._handleErr.returnsArg(0);
@@ -47,7 +45,7 @@ describe('peers.js unit test', function () {
       });
     });
 
-    it('should error if smembers errors', function(done) {
+    it('should error if smembers errors', function (done) {
       var testError = 'Shelob';
       Redis.client.smembers.yieldsAsync(testError);
       Peers._handleErr.returnsArg(0);
@@ -58,7 +56,7 @@ describe('peers.js unit test', function () {
     });
   }); // end getList
 
-  describe('addSelf', function() {
+  describe('addSelf', function () {
     beforeEach(function (done) {
       Redis.client = {
         sadd: sinon.stub()
@@ -67,12 +65,12 @@ describe('peers.js unit test', function () {
       done();
     });
 
-    afterEach(function(done) {
+    afterEach(function (done) {
       Peers._handleErr.restore();
       done();
     });
 
-    it('should list sadd', function(done) {
+    it('should list sadd', function (done) {
       var testList = ['Watcher', 'in', 'the', 'Water'];
       Redis.client.sadd.yieldsAsync(null, testList);
       Peers._handleErr.returnsArg(0);
@@ -83,7 +81,7 @@ describe('peers.js unit test', function () {
       });
     });
 
-    it('should error if sadd errors', function(done) {
+    it('should error if sadd errors', function (done) {
       var testError = 'Shelob';
       Redis.client.sadd.yieldsAsync(testError);
       Peers._handleErr.returnsArg(0);
@@ -94,8 +92,8 @@ describe('peers.js unit test', function () {
     });
   }); // end addSelf
 
-  describe('_handleErr', function() {
-    it('should cb with args if not err', function(done) {
+  describe('_handleErr', function () {
+    it('should cb with args if not err', function (done) {
       var testData = 'Ungoliant';
       Peers._handleErr(function (err, data) {
         expect(err).to.not.exist();
@@ -104,7 +102,7 @@ describe('peers.js unit test', function () {
       })(null, testData);
     });
 
-    it('should cb original error message', function(done) {
+    it('should cb original error message', function (done) {
       var testError = { message: 'as takes longest to finish' };
       Peers._handleErr(function (err) {
         expect(err.message)
@@ -113,7 +111,7 @@ describe('peers.js unit test', function () {
       }, 'Its the job thats never started', {})(testError);
     });
 
-    it('should cb passed message', function(done) {
+    it('should cb passed message', function (done) {
       var testError = 'never seen';
       Peers._handleErr(function (err) {
         expect(err.message)

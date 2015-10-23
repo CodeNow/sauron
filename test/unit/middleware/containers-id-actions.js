@@ -1,7 +1,5 @@
 'use strict';
 
-require('loadenv')();
-
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
@@ -13,23 +11,23 @@ var expect = Code.expect;
 
 var sinon = require('sinon');
 
-var containerIdActions = require('../../../lib/middleware/containers-id-actions.js');
+var ContainersIdActions = require('../../../lib/middleware/containers-id-actions.js');
 var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
 
 
-describe('containers-id-actions.js unit test', function() {
-  describe('attach', function() {
-    beforeEach(function(done) {
+describe('containers-id-actions.js unit test', function () {
+  describe('attach', function () {
+    beforeEach(function (done) {
       sinon.stub(WeaveWrapper, 'attach');
       done();
     });
 
-    afterEach(function(done) {
+    afterEach(function (done) {
       WeaveWrapper.attach.restore();
       done();
     });
 
-    it('should return 200 for success', function(done) {
+    it('should return 200 for success', function (done) {
       var testIp = '10.0.0.0';
       WeaveWrapper.attach.yieldsAsync(null, testIp);
       var req = {
@@ -48,10 +46,10 @@ describe('containers-id-actions.js unit test', function() {
           };
         }
       };
-      containerIdActions.attach(req, res);
+      ContainersIdActions.attach(req, res);
     });
 
-    it('should next with err on error', function(done) {
+    it('should next with err on error', function (done) {
       WeaveWrapper.attach.yieldsAsync('error');
       var req = {
         params: {
@@ -59,7 +57,7 @@ describe('containers-id-actions.js unit test', function() {
         }
       };
 
-      containerIdActions.attach(req, {}, function (err) {
+      ContainersIdActions.attach(req, {}, function (err) {
         expect(err).to.exist();
         done();
       });
