@@ -14,7 +14,6 @@ var sinon = require('sinon');
 var Redis = require('../../lib/models/redis.js');
 var Events = require('../../lib/models/events.js');
 var WeaveSetup = require('../../lib/models/weave-setup.js');
-var app = require('../../lib/app.js');
 var Start = require('../../lib/start.js');
 
 describe('start.js unit test', function () {
@@ -23,7 +22,6 @@ describe('start.js unit test', function () {
       sinon.stub(Redis, 'connect');
       sinon.stub(Events, 'listen');
       sinon.stub(WeaveSetup, 'setup');
-      sinon.stub(app, 'listen');
       done();
     });
 
@@ -31,7 +29,6 @@ describe('start.js unit test', function () {
       Redis.connect.restore();
       Events.listen.restore();
       WeaveSetup.setup.restore();
-      app.listen.restore();
       done();
     });
 
@@ -39,31 +36,17 @@ describe('start.js unit test', function () {
       Redis.connect.returns();
       Events.listen.returns();
       WeaveSetup.setup.yieldsAsync();
-      app.listen.yieldsAsync();
 
       Start.startup(function (err) {
         expect(err).to.not.exist();
         expect(Redis.connect.calledOnce).to.be.true();
         expect(Events.listen.calledOnce).to.be.true();
         expect(WeaveSetup.setup.calledOnce).to.be.true();
-        expect(app.listen.calledOnce).to.be.true();
         done();
       });
     });
 
     it('should cb err if weave setup failed', function (done) {
-      Redis.connect.returns();
-      Events.listen.returns();
-      WeaveSetup.setup.yieldsAsync();
-      app.listen.yieldsAsync('Balrogs');
-
-      Start.startup(function (err) {
-        expect(err).to.exist();
-        done();
-      });
-    });
-
-    it('should cb err if app listen failed', function (done) {
       Redis.connect.returns();
       Events.listen.returns();
       WeaveSetup.setup.yieldsAsync('Balrogs');
