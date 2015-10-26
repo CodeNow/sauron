@@ -31,7 +31,7 @@ describe('events functional test', function () {
     testRedisClient.flushdb(done);
   });
 
-  afterEach(function(done) {
+  afterEach(function (done) {
     rollbar.handleErrorWithPayloadData.restore();
     delete process.env.ORG_ID;
     done();
@@ -63,7 +63,7 @@ describe('events functional test', function () {
 
     it('should launch weave and add self to redis', function (done) {
       var key = process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID;
-      testRedisClient.sadd(key, '10.22.33.44', function() {
+      testRedisClient.sadd(key, '10.22.33.44', function () {
         Start.startup(function () {
           testRedisClient.smembers(key, function (err, keys) {
             var weaveInput = fs.readFileSync('./weaveMockArgsLaunch');

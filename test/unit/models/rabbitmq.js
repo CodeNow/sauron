@@ -14,8 +14,8 @@ var hermesClient = require('runnable-hermes');
 
 var RabbitMq = require('../../../lib/models/rabbitmq.js');
 
-describe('rabbitmq.js unit test', function() {
-  beforeEach(function(done) {
+describe('rabbitmq.js unit test', function () {
+  beforeEach(function (done) {
     process.env.RABBITMQ_HOSTNAME = 'Goblins';
     process.env.RABBITMQ_PASSWORD = 'Orcs';
     process.env.RABBITMQ_PORT = '1738';
@@ -23,7 +23,7 @@ describe('rabbitmq.js unit test', function() {
     done();
   });
 
-  afterEach(function(done) {
+  afterEach(function (done) {
     delete process.env.RABBITMQ_HOSTNAME;
     delete process.env.RABBITMQ_PASSWORD;
     delete process.env.RABBITMQ_PORT;
@@ -31,18 +31,18 @@ describe('rabbitmq.js unit test', function() {
     done();
   });
 
-  describe('connect', function() {
-    beforeEach(function(done) {
+  describe('connect', function () {
+    beforeEach(function (done) {
       sinon.stub(hermesClient.prototype, 'connect');
       done();
     });
 
-    afterEach(function(done) {
+    afterEach(function (done) {
       hermesClient.prototype.connect.restore();
       done();
     });
 
-    it('should set client', function(done) {
+    it('should set client', function (done) {
       var testClient = 'Bolg';
       hermesClient.prototype.connect.returns({
         on: sinon.stub().returns(testClient)
@@ -55,20 +55,20 @@ describe('rabbitmq.js unit test', function() {
     });
   }); // end connect
 
-  describe('disconnect', function() {
-    beforeEach(function(done) {
+  describe('disconnect', function () {
+    beforeEach(function (done) {
       RabbitMq.client = {
         close: sinon.stub()
       };
       done();
     });
 
-    afterEach(function(done) {
+    afterEach(function (done) {
       RabbitMq.client = null;
       done();
     });
 
-    it('should close client', function(done) {
+    it('should close client', function (done) {
       RabbitMq.client.close.yieldsAsync();
 
       RabbitMq.disconnect(function () {
@@ -78,8 +78,8 @@ describe('rabbitmq.js unit test', function() {
     });
   }); // end disconnect
 
-  describe('publishContainerNetworkAttached', function() {
-    beforeEach(function(done) {
+  describe('publishContainerNetworkAttached', function () {
+    beforeEach(function (done) {
       sinon.stub(RabbitMq, '_dataCheck');
       RabbitMq.client = {
         publish: sinon.stub()
@@ -87,13 +87,13 @@ describe('rabbitmq.js unit test', function() {
       done();
     });
 
-    afterEach(function(done) {
+    afterEach(function (done) {
       RabbitMq._dataCheck.restore();
       RabbitMq.client = null;
       done();
     });
 
-    it('should throw if missing data', function(done) {
+    it('should throw if missing data', function (done) {
       RabbitMq._dataCheck.throws();
 
       expect(function () {
@@ -103,7 +103,7 @@ describe('rabbitmq.js unit test', function() {
       done();
     });
 
-    it('should call publish with correct key and data', function(done) {
+    it('should call publish with correct key and data', function (done) {
       RabbitMq._dataCheck.returns();
       RabbitMq.client.publish.returns();
 

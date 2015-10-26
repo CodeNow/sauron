@@ -58,7 +58,7 @@ describe('events.js unit test', function () {
       done();
     });
 
-    afterEach(function(done) {
+    afterEach(function (done) {
       Events._handleEvent.restore();
       ErrorCat.prototype.createAndReport.restore();
       done();
@@ -249,7 +249,7 @@ describe('events.js unit test', function () {
     });
   }); // end _idNetworkNeeded
 
-  describe('_validate', function() {
+  describe('_validate', function () {
     it('should return false if no id', function (done) {
       var testData = {};
       expect(Events._validate(testData))
