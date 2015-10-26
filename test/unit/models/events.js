@@ -12,6 +12,7 @@ var expect = Code.expect;
 var sinon = require('sinon');
 var ip = require('ip');
 var rollbar = require('rollbar');
+var ErrorCat = require('error-cat');
 
 var Redis = require('../../../lib/models/redis.js');
 var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
@@ -32,18 +33,62 @@ describe('events.js unit test', function () {
   describe('listen', function () {
     beforeEach(function (done) {
       Redis.pubSub = {
+        subscribe: sinon.stub(),
         on: sinon.stub()
       };
       done();
     });
 
-    it('should attach listeners', function (done) {
+    it('should listeners', function (done) {
+      Redis.pubSub.subscribe.returns();
       Redis.pubSub.on.returns();
+
       Events.listen();
-      expect(Redis.pubSub.on.calledTwice).to.be.true();
+
+      expect(Redis.pubSub.subscribe.calledTwice).to.be.true();
+      expect(Redis.pubSub.on.calledOnce).to.be.true();
       done();
     });
   }); // end listen
+
+  describe('_domainRun', function () {
+    beforeEach(function (done) {
+      sinon.stub(Events, '_handleEvent');
+      sinon.stub(ErrorCat.prototype, 'createAndReport');
+      done();
+    });
+
+    afterEach(function(done) {
+      Events._handleEvent.restore();
+      ErrorCat.prototype.createAndReport.restore();
+      done();
+    });
+
+    it('should run event handler', function (done) {
+      var testChannel = 'some chan';
+      var testData = 'some dat';
+      Events._handleEvent.restore();
+
+      sinon.stub(Events, '_handleEvent', function (channel, data) {
+        expect(channel).to.equal(testChannel);
+        expect(data).to.equal(testData);
+        done();
+      });
+
+      Events._domainRun(testChannel, testData);
+    });
+
+    it('should catch thrown error', function (done) {
+      ErrorCat.prototype.createAndReport.restore();
+      sinon.stub(ErrorCat.prototype, 'createAndReport', function (code) {
+        expect(code).to.equal(500);
+        done();
+      });
+      Events._handleEvent.throws(new Error('Ungoliant'));
+
+      Events._domainRun();
+    });
+  }); // end _domainRun
 
   describe('stop', function () {
     beforeEach(function (done) {
@@ -55,7 +100,9 @@ describe('events.js unit test', function () {
 
     it('should remove listeners', function (done) {
       Redis.pubSub.removeAllListeners.returns();
+
       Events.stop();
+
       expect(Redis.pubSub.removeAllListeners.calledTwice).to.be.true();
       done();
     });
@@ -65,7 +112,6 @@ describe('events.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(process, 'exit');
       sinon.stub(Events, '_isWeaveContainer');
-      sinon.stub(Events, '_thisHost');
       sinon.stub(rollbar, 'handleErrorWithPayloadData');
       done();
     });
@@ -73,14 +119,12 @@ describe('events.js unit test', function () {
     afterEach(function (done) {
       process.exit.restore();
       Events._isWeaveContainer.restore();
-      Events._thisHost.restore();
       rollbar.handleErrorWithPayloadData.restore();
       done();
     });
 
     it('should exit if weave container', function (done) {
       Events._isWeaveContainer.returns(true);
-      Events._thisHost.returns(true);
       rollbar.handleErrorWithPayloadData.yields();
 
       Events._handleDie({});
@@ -88,27 +132,11 @@ describe('events.js unit test', function () {
       done();
     });
 
-    it('should fail if not host', function (done) {
-      Events._thisHost.returns(false);
-      rollbar.handleErrorWithPayloadData.yields();
-
-      Events._handleDie({});
-      expect(process.exit.called).to.be.false();
-      done();
-    });
-
-    it('should not exit if empty object', function (done) {
-      Events._thisHost.returns(true);
+    it('should fail if _isWeaveContainer returns false', function (done) {
       Events._isWeaveContainer.returns(false);
       rollbar.handleErrorWithPayloadData.yields();
 
       Events._handleDie({});
-      expect(process.exit.called).to.be.false();
-      done();
-    });
-
-    it('should not exit if no data', function (done) {
-      Events._handleDie(null);
       expect(process.exit.called).to.be.false();
       done();
     });
@@ -118,7 +146,6 @@ describe('events.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMq, 'publishContainerNetworkAttached');
       sinon.stub(Events, '_idNetworkNeeded');
-      sinon.stub(Events, '_thisHost');
       sinon.stub(WeaveWrapper, 'attach');
       done();
     });
@@ -126,36 +153,20 @@ describe('events.js unit test', function () {
     afterEach(function (done) {
       RabbitMq.publishContainerNetworkAttached.restore();
       Events._idNetworkNeeded.restore();
-      Events._thisHost.restore();
       WeaveWrapper.attach.restore();
       done();
     });
 
-    it('should not attach if invalid data', function (done) {
-      Events._handleStart(null);
-      expect(WeaveWrapper.attach.called).to.be.false();
-      done();
-    });
-
-    it('should not attach if not host', function (done) {
-      Events._thisHost.returns(false);
-
-      Events._handleStart({});
-      expect(WeaveWrapper.attach.called).to.be.false();
-      done();
-    });
-
     it('should not attach if network not needed', function (done) {
-      Events._thisHost.returns(true);
       Events._idNetworkNeeded.returns(false);
 
       Events._handleStart({});
+
       expect(WeaveWrapper.attach.called).to.be.false();
       done();
     });
 
     it('should not publish if attach failed', function (done) {
-      Events._thisHost.returns(true);
       Events._idNetworkNeeded.returns(true);
       WeaveWrapper.attach.yieldsAsync('Dunlendings');
 
@@ -165,16 +176,20 @@ describe('events.js unit test', function () {
     });
 
     it('should publish correct data', function (done) {
-      var testFrom = 'ubuntu';
       var testIp = '10.0.0.0';
-      Events._thisHost.returns(true);
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
       Events._idNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
 
-      Events._handleStart({ from: testFrom });
+      Events._handleStart({
+        id: testId,
+        host: testHost
+      });
       expect(RabbitMq.publishContainerNetworkAttached.withArgs({
-        containerId: testFrom,
-        containerIp: testIp
+        containerId: testId,
+        containerIp: testIp,
+        host: testHost
       }).called).to.be.true();
       done();
     });
@@ -207,6 +222,12 @@ describe('events.js unit test', function () {
   }); // end _isWeaveContainer
 
   describe('_idNetworkNeeded', function () {
+    it('should return false no from', function (done) {
+      expect(Events._idNetworkNeeded({}))
+        .to.be.false();
+      done();
+    });
+
     it('should return false if weave container', function (done) {
       ['weave', 'zetto/weave', 'weaveworks/exec'].forEach(function (item) {
         var testData = {
@@ -218,7 +239,7 @@ describe('events.js unit test', function () {
       done();
     });
 
-    it('should return true if not filtered', function (done) {
+    it('should return true', function (done) {
       var testData = {
         from: 'wrong',
       };
@@ -226,37 +247,109 @@ describe('events.js unit test', function () {
         .to.be.true();
       done();
     });
+  }); // end _idNetworkNeeded
 
-    it('should return false no from', function (done) {
-      expect(Events._idNetworkNeeded({}))
+  describe('_validate', function() {
+    it('should return false if no id', function (done) {
+      var testData = {};
+      expect(Events._validate(testData))
         .to.be.false();
       done();
     });
-  }); // end _idNetworkNeeded
 
-  describe('_thisHost', function() {
-    it('should return true', function (done) {
+    it('should return false if missing host', function (done) {
       var testData = {
-        host: 'http://' + ip.address() + ':4242'
+        id: '12352524',
       };
-      expect(Events._thisHost(testData))
-        .to.be.true();
+      expect(Events._validate(testData))
+        .to.be.false();
       done();
     });
 
     it('should return false if wrong host', function (done) {
       var testData = {
-        host: 'non host'
+        id: '12352524',
+        host: 'not host'
       };
-      expect(Events._thisHost(testData))
+      expect(Events._validate(testData))
         .to.be.false();
       done();
     });
 
-    it('should return false no host', function (done) {
-      expect(Events._thisHost({}))
-        .to.be.false();
+    it('should return true', function (done) {
+      var testData = {
+        id: '12352524',
+        host: 'http://' + ip.address() + ':4242'
+      };
+      expect(Events._validate(testData))
+        .to.be.true();
       done();
     });
-  }); // end _thisHost
+  }); // end _validate
+
+  describe('_handleEvent', function () {
+    beforeEach(function (done) {
+      sinon.stub(Events, '_validate');
+      sinon.stub(Events, '_handleDie');
+      sinon.stub(Events, '_handleStart');
+      done();
+    });
+
+    afterEach(function (done) {
+      Events._validate.restore();
+      Events._handleDie.restore();
+      Events._handleStart.restore();
+      done();
+    });
+
+    it('should throw invalid data', function (done) {
+      expect(function () {
+        Events._handleEvent('');
+      }).to.be.throw(Error);
+      done();
+    });
+
+    it('should return if invalid data', function (done) {
+      Events._validate.returns(false);
+
+      Events._handleEvent(null, JSON.stringify({ test: 1 }));
+
+      expect(Events._handleDie.called).to.be.false();
+      expect(Events._handleStart.called).to.be.false();
+      done();
+    });
+
+    it('should handle die if die event', function (done) {
+      Events._validate.returns(true);
+
+      Events._handleEvent('runnable:docker:events:die',
+        JSON.stringify({ test: 1 }));
+
+      expect(Events._handleDie.called).to.be.true();
+      expect(Events._handleStart.called).to.be.false();
+      done();
+    });
+
+    it('should handle start if start event', function (done) {
+      Events._validate.returns(true);
+
+      Events._handleEvent('runnable:docker:events:start',
+        JSON.stringify({ test: 1 }));
+
+      expect(Events._handleDie.called).to.be.false();
+      expect(Events._handleStart.called).to.be.true();
+      done();
+    });
+
+    it('should call nothing if other event', function (done) {
+      Events._validate.returns(true);
+
+      Events._handleEvent('runnable:docker:events:other',
+        JSON.stringify({ test: 1 }));
+
+      expect(Events._handleDie.called).to.be.false();
+      expect(Events._handleStart.called).to.be.false();
+      done();
+    });
+  }); // end _handleEvent
 }); // end events.js unit test

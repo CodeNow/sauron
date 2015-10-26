@@ -59,7 +59,6 @@ describe('weave-wrapper.js unit test', function () {
       sinon.stub(WeaveWrapper, 'handleErr');
       process.env.WEAVE_PATH = '/usr/bin/weave';
       process.env.WEAVE_IP_RANGE = '10.0.0.0/8';
-      process.env.WEAVE_PASSWORD = 'pass';
       done();
     });
 
@@ -68,7 +67,6 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.handleErr.restore();
       delete process.env.WEAVE_PATH;
       delete process.env.WEAVE_IP_RANGE;
-      delete process.env.WEAVE_PASSWORD;
       done();
     });
 
@@ -80,7 +78,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.launch(peers, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave launch-router --no-dns --password pass ' +
+          .withArgs('/usr/bin/weave launch-router --no-dns ' +
             '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8 ' +
             '10.0.0.1 10.0.0.2').called)
           .to.be.true();
@@ -96,7 +94,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.launch(peers, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave launch-router --no-dns --password pass ' +
+          .withArgs('/usr/bin/weave launch-router --no-dns ' +
             '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8')
           .called).to.be.true();
         done();
@@ -141,8 +139,7 @@ describe('weave-wrapper.js unit test', function () {
     });
 
     it('should attach', function (done) {
-      WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.handleErr.returnsArg(0);
+      WeaveWrapper._runCmd.yieldsAsync(null, '10.0.0.0\n');
 
       WeaveWrapper.attach(testContainerId, function (err) {
         expect(err).to.not.exist();
@@ -155,12 +152,21 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should fail if missing containerId', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.handleErr.returnsArg(0);
       WeaveWrapper.attach(null, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
     });
+
+    it('should handleErr if runCmd failed', function (done) {
+      WeaveWrapper._runCmd.yieldsAsync(new Error('Gollum'));
+      WeaveWrapper.handleErr.returnsArg(0);
+      WeaveWrapper.attach(testContainerId, function (err) {
+        expect(err).to.exist();
+        done();
+      });
+    });
+
   }); // attach
 
   describe('handleErr', function () {

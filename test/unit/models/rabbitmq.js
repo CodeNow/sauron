@@ -112,7 +112,7 @@ describe('rabbitmq.js unit test', function() {
         containerIp: '10.0.0.2'
       });
 
-      expect(RabbitMq.client.publish.withArgs('container.network.attached')
+      expect(RabbitMq.client.publish.withArgs('container-network-attached')
         .calledOnce).to.be.true();
       expect(Object.keys(RabbitMq.client.publish.args[0][1]))
         .to.contain(['timestamp', 'id', 'containerId', 'containerIp']);
