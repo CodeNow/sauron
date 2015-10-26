@@ -72,7 +72,7 @@ describe('events functional test', function () {
       testRedisPubSub.publish('runnable:docker:events:die', JSON.stringify({
         host: 'http://' + ip.address() + ':4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
-        from: 'weaveworks/weave:1.1.2'
+        from: 'weaveworks/weave:1.2.0'
       }));
       exitHook = function () {
         done();
