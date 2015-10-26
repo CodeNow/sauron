@@ -42,6 +42,22 @@ describe('redis.js unit test', function () {
     });
   }); // end connect
 
+  describe('disconnect', function () {
+    it('should create clients and attach error handles', function (done) {
+      Redis.client = {
+        quit: sinon.stub()
+      };
+      Redis.pubSub = {
+        quit: sinon.stub()
+      };
+
+      Redis.disconnect();
+      expect(Redis.client.quit.calledOnce).to.be.true();
+      expect(Redis.pubSub.quit.calledOnce).to.be.true();
+      done();
+    });
+  }); // end disconnect
+
   describe('_handleError', function () {
     it('should throw when called', function (done) {
       var testErr = new Error('Gríma Wormtongue');
