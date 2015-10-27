@@ -21,12 +21,12 @@ var Events = require('../../../lib/models/events.js');
 
 describe('events.js unit test', function () {
   beforeEach(function (done) {
-    process.env.WEAVE_CONTAINER_NAME = 'weaveworks/weave:1.1.2';
+    process.env.WEAVE_IMAGE_NAME = 'weaveworks/weave:1.2.0';
     done();
   });
 
   afterEach(function (done) {
-    delete process.env.WEAVE_CONTAINER_NAME;
+    delete process.env.WEAVE_IMAGE_NAME;
     done();
   });
 
@@ -198,7 +198,7 @@ describe('events.js unit test', function () {
   describe('_isWeaveContainer', function () {
     it('should return true if correct container', function (done) {
       var testData = {
-        from: process.env.WEAVE_CONTAINER_NAME,
+        from: process.env.WEAVE_IMAGE_NAME,
       };
       expect(Events._isWeaveContainer(testData))
         .to.be.true();
