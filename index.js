@@ -6,6 +6,6 @@ var error = new ErrorCat();
 
 Start.startup(function (err) {
   if (err) {
-    throw error.createAndReport(err, 'failed to start');
+    throw error.createAndReport(500, err, 'failed to start');
   }
 });
