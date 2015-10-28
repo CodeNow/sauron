@@ -12,7 +12,7 @@ var expect = Code.expect;
 var sinon = require('sinon');
 var hermesClient = require('runnable-hermes');
 
-var RabbitMq = require('../../../lib/models/rabbitmq.js');
+var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 
 describe('rabbitmq.js unit test', function () {
   beforeEach(function (done) {
@@ -48,31 +48,31 @@ describe('rabbitmq.js unit test', function () {
         on: sinon.stub().returns(testClient)
       });
 
-      RabbitMq.connect();
+      RabbitMQ.connect();
 
-      expect(RabbitMq.client).to.equal(testClient);
+      expect(RabbitMQ.client).to.equal(testClient);
       done();
     });
   }); // end connect
 
   describe('disconnect', function () {
     beforeEach(function (done) {
-      RabbitMq.client = {
+      RabbitMQ.client = {
         close: sinon.stub()
       };
       done();
     });
 
     afterEach(function (done) {
-      RabbitMq.client = null;
+      RabbitMQ.client = null;
       done();
     });
 
     it('should close client', function (done) {
-      RabbitMq.client.close.yieldsAsync();
+      RabbitMQ.client.close.yieldsAsync();
 
-      RabbitMq.disconnect(function () {
-        expect(RabbitMq.client.close.called).to.be.true();
+      RabbitMQ.disconnect(function () {
+        expect(RabbitMQ.client.close.called).to.be.true();
         done();
       });
     });
@@ -80,41 +80,41 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishContainerNetworkAttached', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMq, '_dataCheck');
-      RabbitMq.client = {
+      sinon.stub(RabbitMQ, '_dataCheck');
+      RabbitMQ.client = {
         publish: sinon.stub()
       };
       done();
     });
 
     afterEach(function (done) {
-      RabbitMq._dataCheck.restore();
-      RabbitMq.client = null;
+      RabbitMQ._dataCheck.restore();
+      RabbitMQ.client = null;
       done();
     });
 
     it('should throw if missing data', function (done) {
-      RabbitMq._dataCheck.throws();
+      RabbitMQ._dataCheck.throws();
 
       expect(function () {
-        RabbitMq.publishContainerNetworkAttached();
+        RabbitMQ.publishContainerNetworkAttached();
       }).to.throw();
 
       done();
     });
 
     it('should call publish with correct key and data', function (done) {
-      RabbitMq._dataCheck.returns();
-      RabbitMq.client.publish.returns();
+      RabbitMQ._dataCheck.returns();
+      RabbitMQ.client.publish.returns();
 
-      RabbitMq.publishContainerNetworkAttached({
+      RabbitMQ.publishContainerNetworkAttached({
         containerId: 'testId',
         containerIp: '10.0.0.2'
       });
 
-      expect(RabbitMq.client.publish.withArgs('container-network-attached')
+      expect(RabbitMQ.client.publish.withArgs('container-network-attached')
         .calledOnce).to.be.true();
-      expect(Object.keys(RabbitMq.client.publish.args[0][1]))
+      expect(Object.keys(RabbitMQ.client.publish.args[0][1]))
         .to.contain(['timestamp', 'id', 'containerId', 'containerIp']);
       done();
     });
@@ -127,7 +127,7 @@ describe('rabbitmq.js unit test', function () {
       };
 
       expect(function () {
-        RabbitMq._dataCheck(testData, ['Goblins', 'Hobgoblins']);
+        RabbitMQ._dataCheck(testData, ['Goblins', 'Hobgoblins']);
       }).to.throw();
 
       done();
@@ -138,7 +138,7 @@ describe('rabbitmq.js unit test', function () {
         Goblins: 'Azog',
       };
 
-      RabbitMq._dataCheck(testData, ['Goblins']);
+      RabbitMQ._dataCheck(testData, ['Goblins']);
 
       done();
     });
@@ -147,7 +147,7 @@ describe('rabbitmq.js unit test', function () {
   describe('_dataCheck', function () {
     it('should throw if missing keys', function (done) {
       expect(function () {
-        RabbitMq._handleFatalError(new Error('Gothmog'));
+        RabbitMQ._handleFatalError(new Error('Gothmog'));
       }).to.throw();
 
       done();

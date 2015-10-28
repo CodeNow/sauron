@@ -15,7 +15,7 @@ var ErrorCat = require('error-cat');
 
 var Redis = require('../../../lib/models/redis.js');
 var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
-var RabbitMq = require('../../../lib/models/rabbitmq.js');
+var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 var Events = require('../../../lib/models/events.js');
 
 describe('events.js unit test', function () {
@@ -143,21 +143,21 @@ describe('events.js unit test', function () {
 
   describe('_handleStart', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMq, 'publishContainerNetworkAttached');
-      sinon.stub(Events, '_idNetworkNeeded');
+      sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
+      sinon.stub(Events, '_isNetworkNeeded');
       sinon.stub(WeaveWrapper, 'attach');
       done();
     });
 
     afterEach(function (done) {
-      RabbitMq.publishContainerNetworkAttached.restore();
-      Events._idNetworkNeeded.restore();
+      RabbitMQ.publishContainerNetworkAttached.restore();
+      Events._isNetworkNeeded.restore();
       WeaveWrapper.attach.restore();
       done();
     });
 
     it('should not attach if network not needed', function (done) {
-      Events._idNetworkNeeded.returns(false);
+      Events._isNetworkNeeded.returns(false);
 
       Events._handleStart({});
 
@@ -166,11 +166,11 @@ describe('events.js unit test', function () {
     });
 
     it('should not publish if attach failed', function (done) {
-      Events._idNetworkNeeded.returns(true);
+      Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yieldsAsync('Dunlendings');
 
       Events._handleStart({});
-      expect(RabbitMq.publishContainerNetworkAttached.called).to.be.false();
+      expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
       done();
     });
 
@@ -178,14 +178,14 @@ describe('events.js unit test', function () {
       var testIp = '10.0.0.0';
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
-      Events._idNetworkNeeded.returns(true);
+      Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
 
       Events._handleStart({
         id: testId,
         host: testHost
       });
-      expect(RabbitMq.publishContainerNetworkAttached.withArgs({
+      expect(RabbitMQ.publishContainerNetworkAttached.withArgs({
         containerId: testId,
         containerIp: testIp,
         host: testHost
@@ -220,9 +220,9 @@ describe('events.js unit test', function () {
     });
   }); // end _isWeaveContainer
 
-  describe('_idNetworkNeeded', function () {
+  describe('_isNetworkNeeded', function () {
     it('should return false no from', function (done) {
-      expect(Events._idNetworkNeeded({}))
+      expect(Events._isNetworkNeeded({}))
         .to.be.false();
       done();
     });
@@ -232,7 +232,7 @@ describe('events.js unit test', function () {
         var testData = {
           from: item,
         };
-        expect(Events._idNetworkNeeded(testData))
+        expect(Events._isNetworkNeeded(testData))
           .to.be.false();
       });
       done();
@@ -242,11 +242,11 @@ describe('events.js unit test', function () {
       var testData = {
         from: 'wrong',
       };
-      expect(Events._idNetworkNeeded(testData))
+      expect(Events._isNetworkNeeded(testData))
         .to.be.true();
       done();
     });
-  }); // end _idNetworkNeeded
+  }); // end _isNetworkNeeded
 
   describe('_validate', function () {
     it('should return false if no id', function (done) {
