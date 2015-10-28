@@ -11,7 +11,6 @@ var expect = Code.expect;
 
 var sinon = require('sinon');
 var ip = require('ip');
-var rollbar = require('rollbar');
 var ErrorCat = require('error-cat');
 
 var Redis = require('../../../lib/models/redis.js');
@@ -112,20 +111,20 @@ describe('events.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(process, 'exit');
       sinon.stub(Events, '_isWeaveContainer');
-      sinon.stub(rollbar, 'handleErrorWithPayloadData');
+      sinon.stub(ErrorCat.prototype, 'createAndReport');
       done();
     });
 
     afterEach(function (done) {
       process.exit.restore();
       Events._isWeaveContainer.restore();
-      rollbar.handleErrorWithPayloadData.restore();
+      ErrorCat.prototype.createAndReport.restore();
       done();
     });
 
     it('should exit if weave container', function (done) {
       Events._isWeaveContainer.returns(true);
-      rollbar.handleErrorWithPayloadData.yields();
+      ErrorCat.prototype.createAndReport.returns();
 
       Events._handleDie({});
       expect(process.exit.called).to.be.true();
@@ -134,7 +133,7 @@ describe('events.js unit test', function () {
 
     it('should fail if _isWeaveContainer returns false', function (done) {
       Events._isWeaveContainer.returns(false);
-      rollbar.handleErrorWithPayloadData.yields();
+      ErrorCat.prototype.createAndReport.returns();
 
       Events._handleDie({});
       expect(process.exit.called).to.be.false();

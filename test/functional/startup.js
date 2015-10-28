@@ -54,7 +54,7 @@ describe('events functional test', function () {
           process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID, function (err, keys) {
           var weaveInput = fs.readFileSync('./weaveMockArgsLaunch');
           expect(weaveInput.toString())
-            .to.equal('launch-router --no-dns --ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8\n');
+            .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/8 --ipalloc-default-subnet 10.21.0.0/8\n');
             expect(keys).to.contain(ip.address());
           done();
         });
@@ -68,7 +68,7 @@ describe('events functional test', function () {
           testRedisClient.smembers(key, function (err, keys) {
             var weaveInput = fs.readFileSync('./weaveMockArgsLaunch');
             expect(weaveInput.toString())
-              .to.equal('launch-router --no-dns --ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8 10.22.33.44\n');
+              .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/8 --ipalloc-default-subnet 10.21.0.0/8 10.22.33.44\n');
               expect(keys).to.contain(ip.address());
             done();
           });
