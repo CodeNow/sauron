@@ -120,6 +120,48 @@ describe('rabbitmq.js unit test', function () {
     });
   }); // end publishContainerNetworkAttached
 
+  describe('publishContainerNetworkAttachFailed', function () {
+    beforeEach(function (done) {
+      sinon.stub(RabbitMQ, '_dataCheck');
+      RabbitMQ.client = {
+        publish: sinon.stub()
+      };
+      done();
+    });
+
+    afterEach(function (done) {
+      RabbitMQ._dataCheck.restore();
+      RabbitMQ.client = null;
+      done();
+    });
+
+    it('should throw if missing data', function (done) {
+      RabbitMQ._dataCheck.throws();
+
+      expect(function () {
+        RabbitMQ.publishContainerNetworkAttachFailed();
+      }).to.throw();
+
+      done();
+    });
+
+    it('should call publish with correct key and data', function (done) {
+      RabbitMQ._dataCheck.returns();
+      RabbitMQ.client.publish.returns();
+
+      RabbitMQ.publishContainerNetworkAttachFailed({
+        containerId: 'testId',
+        err: '10.0.0.2'
+      });
+
+      expect(RabbitMQ.client.publish.withArgs('container-network-attach-failed')
+        .calledOnce).to.be.true();
+      expect(Object.keys(RabbitMQ.client.publish.args[0][1]))
+        .to.contain(['timestamp', 'id', 'containerId', 'err']);
+      done();
+    });
+  }); // end publishContainerNetworkAttachFailed
+
   describe('_dataCheck', function () {
     it('should throw if missing keys', function (done) {
       var testData = {

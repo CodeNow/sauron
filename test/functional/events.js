@@ -32,7 +32,7 @@ var testRabbit = hermesClient
     password: process.env.RABBITMQ_PASSWORD,
     port: process.env.RABBITMQ_PORT,
     username: process.env.RABBITMQ_USERNAME,
-    queues: [ 'container-network-attached' ]
+    queues: [ 'container-network-attached', 'container-network-attach-failed' ]
   })
   .connect();
 
@@ -90,7 +90,7 @@ describe('events functional test', function () {
 
   describe('runnable:docker:events:start', function () {
     beforeEach(function (done) {
-      fs.unlink('./weaveMockArgsAttach', function () {
+      fs.unlink('./weaveMockArgs', function () {
         done();
       });
     });
@@ -101,8 +101,27 @@ describe('events functional test', function () {
         expect(data.containerId).to.equal(testId);
         expect(data.host).to.equal('http://' + ip.address() + ':4242');
         expect(data.containerIp).to.equal('10.0.17.38');
-        var weaveInput = fs.readFileSync('./weaveMockArgsAttach');
+        var weaveInput = fs.readFileSync('./weaveMockArgs');
         expect(weaveInput.toString()).to.equal('attach Andune\n');
+        cb();
+        done();
+      });
+      testRedisPubSub.publish('runnable:docker:events:start', JSON.stringify({
+        host: 'http://' + ip.address() + ':4242',
+        id: testId,
+        from: 'ubuntu'
+      }));
+    });
+
+    it('should call emit fail if attach failed', function (done) {
+      var testId = 'Andune';
+      process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock fail');
+      testRabbit.subscribe('container-network-attach-failed', function (data, cb) {
+        expect(data.containerId).to.equal(testId);
+        expect(data.host).to.equal('http://' + ip.address() + ':4242');
+        expect(data.err.data.err.stderr).to.equal('weave command fail attach Andune failed\n');
+        var weaveInput = fs.readFileSync('./weaveMockArgs');
+        expect(weaveInput.toString()).to.equal('fail attach Andune\n');
         cb();
         done();
       });

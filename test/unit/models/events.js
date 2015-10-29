@@ -144,6 +144,7 @@ describe('events.js unit test', function () {
   describe('_handleStart', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
+      sinon.stub(RabbitMQ, 'publishContainerNetworkAttachFailed');
       sinon.stub(Events, '_isNetworkNeeded');
       sinon.stub(WeaveWrapper, 'attach');
       done();
@@ -151,6 +152,7 @@ describe('events.js unit test', function () {
 
     afterEach(function (done) {
       RabbitMQ.publishContainerNetworkAttached.restore();
+      RabbitMQ.publishContainerNetworkAttachFailed.restore();
       Events._isNetworkNeeded.restore();
       WeaveWrapper.attach.restore();
       done();
@@ -166,11 +168,25 @@ describe('events.js unit test', function () {
     });
 
     it('should not publish if attach failed', function (done) {
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yieldsAsync('Dunlendings');
+      var testErr = 'Dunlendings';
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
 
-      Events._handleStart({});
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(testErr);
+      RabbitMQ.publishContainerNetworkAttachFailed.returns();
+
+      Events._handleStart({
+        id: testId,
+        host: testHost
+      });
+
       expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
+      expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs({
+        containerId: testId,
+        host: testHost,
+        err : testErr
+      }).called).to.be.true();
       done();
     });
 
@@ -180,11 +196,13 @@ describe('events.js unit test', function () {
       var testId = '23984765893264';
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
+      RabbitMQ.publishContainerNetworkAttached.returns();
 
       Events._handleStart({
         id: testId,
         host: testHost
       });
+
       expect(RabbitMQ.publishContainerNetworkAttached.withArgs({
         containerId: testId,
         containerIp: testIp,
