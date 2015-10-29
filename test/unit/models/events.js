@@ -198,9 +198,44 @@ describe('events.js unit test', function () {
     it('should return true if correct container', function (done) {
       var testData = {
         from: process.env.WEAVE_IMAGE_NAME,
+        inspectData: {
+          Config: {
+            ExposedPorts: {
+              '6783/tcp': {},
+              '6783/udp': {}
+            }
+          }
+        }
       };
+
       expect(Events._isWeaveContainer(testData))
         .to.be.true();
+      done();
+    });
+
+    it('should return false if wrong container', function (done) {
+      var testData = {
+        from: process.env.WEAVE_IMAGE_NAME,
+        inspectData: {
+          Config: {
+            ExposedPorts: null
+          }
+        }
+      };
+
+      expect(Events._isWeaveContainer(testData))
+        .to.be.false();
+      done();
+    });
+
+    it('should return false if wrong container', function (done) {
+      var testData = {
+        from: process.env.WEAVE_IMAGE_NAME,
+        inspectData: {}
+      };
+
+      expect(Events._isWeaveContainer(testData))
+        .to.be.false();
       done();
     });
 
