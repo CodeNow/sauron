@@ -16,6 +16,7 @@ Sauron is in charge of adding an overlay network per org and giving each contain
 
 Sauron listens for container start events emitted from [docker-listener](https://github.com/CodeNow/docker-listener) on redis
 Based on the event, Sauron runs `weave` commands then publishes `container.network.attached` events
+If Sauron failed to attach for any reason, it will emit `container.network.attach.failed`
 
 In the future Sauron should listen to events from rabbit (`container.lifecycle.started` exchange)
 
@@ -24,6 +25,8 @@ In the future Sauron should listen to events from rabbit (`container.lifecycle.s
 #### runnable:docker:events:start
 This event is when a container has started.
 In response we run `weave attach <containerId>` which adds the `ethwe` network interface to the container
+If attach is successful `container.network.attached` event is published to rabbitmq
+If attach is not successful `container.network.attach.failed` event is published
 
 #### runnable:docker:events:die
 This event is when a container has died
