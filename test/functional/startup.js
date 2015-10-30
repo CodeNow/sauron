@@ -10,9 +10,7 @@ var beforeEach = lab.beforeEach;
 var Code = require('code');
 var expect = Code.expect;
 
-var sinon = require('sinon');
 var path = require('path');
-var rollbar = require('rollbar');
 var fs = require('fs');
 var redis = require('redis');
 var ip = require('ip');
@@ -25,14 +23,12 @@ var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
-    sinon.stub(rollbar, 'handleErrorWithPayloadData').yieldsAsync();
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
     process.env.ORG_ID = '1234124';
     testRedisClient.flushdb(done);
   });
 
   afterEach(function (done) {
-    rollbar.handleErrorWithPayloadData.restore();
     delete process.env.ORG_ID;
     done();
   });

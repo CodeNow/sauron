@@ -35,7 +35,6 @@
     "loadenv": "^2.1.0",
     "redis": "^2.2.5",
     "redis-pubsub-emitter": "^0.4.0",
-    "rollbar": "^0.5.8",
     "runnable-hermes": "^6.2.1",
     "uuid": "^2.0.1",
     "which": "^1.2.0"

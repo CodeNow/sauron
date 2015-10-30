@@ -111,20 +111,20 @@ describe('events.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(process, 'exit');
       sinon.stub(Events, '_isWeaveContainer');
-      sinon.stub(ErrorCat.prototype, 'createAndReport');
+      sinon.stub(ErrorCat.prototype, 'report');
       done();
     });
 
     afterEach(function (done) {
       process.exit.restore();
       Events._isWeaveContainer.restore();
-      ErrorCat.prototype.createAndReport.restore();
+      ErrorCat.prototype.report.restore();
       done();
     });
 
     it('should exit if weave container', function (done) {
       Events._isWeaveContainer.returns(true);
-      ErrorCat.prototype.createAndReport.returns();
+      ErrorCat.prototype.report.yields();
 
       Events._handleDie({});
       expect(process.exit.called).to.be.true();
@@ -133,7 +133,7 @@ describe('events.js unit test', function () {
 
     it('should fail if _isWeaveContainer returns false', function (done) {
       Events._isWeaveContainer.returns(false);
-      ErrorCat.prototype.createAndReport.returns();
+      ErrorCat.prototype.report.yields();
 
       Events._handleDie({});
       expect(process.exit.called).to.be.false();
