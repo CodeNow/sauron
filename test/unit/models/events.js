@@ -167,8 +167,8 @@ describe('events.js unit test', function () {
       done();
     });
 
-    it('should not publish if attach failed', function (done) {
-      var testErr = 'Dunlendings';
+    it('should publish attach failed', function (done) {
+      var testErr = ErrorCat.create(500, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
 
@@ -187,6 +187,25 @@ describe('events.js unit test', function () {
         host: testHost,
         err : testErr
       }).called).to.be.true();
+      done();
+    });
+
+    it('should not publish if 409 attach failed', function (done) {
+      var testErr = ErrorCat.create(409, 'Dunlendings');
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
+
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(testErr);
+      RabbitMQ.publishContainerNetworkAttachFailed.returns();
+
+      Events._handleStart({
+        id: testId,
+        host: testHost
+      });
+
+      expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
+      expect(RabbitMQ.publishContainerNetworkAttachFailed.called).to.be.false();
       done();
     });
 
