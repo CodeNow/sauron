@@ -178,14 +178,24 @@ describe('events.js unit test', function () {
 
       Events._handleStart({
         id: testId,
-        host: testHost
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
       });
 
       expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
       expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs({
         containerId: testId,
         host: testHost,
-        err : testErr
+        err : testErr,
+        instanceId: '5633e9273e2b5b0c0077fd41',
+        contextVersionId: '563a808f9359ef0c00df34e6'
       }).called).to.be.true();
       done();
     });
@@ -219,13 +229,23 @@ describe('events.js unit test', function () {
 
       Events._handleStart({
         id: testId,
-        host: testHost
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
       });
 
       expect(RabbitMQ.publishContainerNetworkAttached.withArgs({
         containerId: testId,
         containerIp: testIp,
-        host: testHost
+        host: testHost,
+        instanceId: '5633e9273e2b5b0c0077fd41',
+        contextVersionId: '563a808f9359ef0c00df34e6'
       }).called).to.be.true();
       done();
     });
