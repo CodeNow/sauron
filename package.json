@@ -40,9 +40,8 @@
     "which": "^1.2.0"
   },
   "devDependencies": {
-    "lab": "^7.0.0",
+    "lab": "7.0.0",
     "code": "^1.5.0",
-    "docker-mock": "^5.0.2",
     "sinon": "^1.17.2"
   }
 }
