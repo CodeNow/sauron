@@ -15,30 +15,48 @@ var sinon = require('sinon');
 var redis = require('redis');
 var path = require('path');
 var fs = require('fs');
-var hermesClient = require('runnable-hermes');
+var Hermes = require('runnable-hermes');
 var ErrorCat = require('error-cat');
 
 var testRedisClient = redis.createClient(
   process.env.REDIS_PORT,
   process.env.REDIS_IPADDRESS);
 
-var testRedisPubSub = redis.createClient(
-  process.env.REDIS_PORT,
-  process.env.REDIS_IPADDRESS);
+var publishedEvents = [
+  'container.life-cycle.died',
+  'container.life-cycle.started'
+];
 
-var testRabbit = hermesClient
-  .hermesSingletonFactory({
+var subscribedEvents = [
+  'container.network.attached',
+  'container.network.attach-failed'
+];
+
+var testPublisher = new Hermes({
     hostname: process.env.RABBITMQ_HOSTNAME,
     password: process.env.RABBITMQ_PASSWORD,
     port: process.env.RABBITMQ_PORT,
     username: process.env.RABBITMQ_USERNAME,
-    queues: [ 'container-network-attached', 'container-network-attach-failed' ]
-  })
-  .connect();
+    publishedEvents: publishedEvents,
+    name: 'testPublisher'
+  });
+
+var testSubscriber = new Hermes({
+    hostname: process.env.RABBITMQ_HOSTNAME,
+    password: process.env.RABBITMQ_PASSWORD,
+    port: process.env.RABBITMQ_PORT,
+    username: process.env.RABBITMQ_USERNAME,
+    subscribedEvents: subscribedEvents,
+    name: 'testSubscriber'
+  });
 
 var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
+  beforeEach(function (done) {
+    testPublisher.connect(done);
+  });
+
   beforeEach(function (done) {
     sinon.stub(ErrorCat.prototype, 'report').returns();
     testRedisClient.flushdb(done);
@@ -49,12 +67,24 @@ describe('events functional test', function () {
     Start.startup(done);
   });
 
+  beforeEach(function (done) {
+    testSubscriber.connect(done);
+  });
+
   afterEach(function (done) {
     Start.shutdown(done);
     ErrorCat.prototype.report.restore();
   });
 
-  describe('runnable:docker:events:die', function () {
+  afterEach(function (done) {
+    testPublisher.close(done);
+  });
+
+  afterEach(function (done) {
+    testSubscriber.close(done);
+  });
+
+  describe('container.life-cycle.died', function () {
     var exitHook;
     beforeEach(function (done) {
       sinon.stub(process, 'exit', function () {
@@ -70,7 +100,7 @@ describe('events functional test', function () {
 
     it('should call exit for weave container', function (done) {
       ErrorCat.prototype.report.onCall(0).yieldsAsync();
-      testRedisPubSub.publish('runnable:docker:events:die', JSON.stringify({
+      testPublisher.publish('container.life-cycle.died', {
         host: 'http://' + ip.address() + ':4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
@@ -82,14 +112,14 @@ describe('events functional test', function () {
             }
           }
         }
-      }));
+      });
       exitHook = function () {
         done();
       };
     });
-  }); // end runnable:docker:events:die
+  }); // end container.life-cycle.died
 
-  describe('runnable:docker:events:start', function () {
+  describe('container.life-cycle.started', function () {
     beforeEach(function (done) {
       fs.unlink('./weaveMockArgs', function () {
         done();
@@ -98,7 +128,7 @@ describe('events functional test', function () {
 
     it('should call weave attach on container and emit event', function (done) {
       var testId = 'Andune';
-      testRabbit.subscribe('container-network-attached', function (data, cb) {
+      testSubscriber.subscribe('container.network.attached', function (data, cb) {
         expect(data.containerId).to.equal(testId);
         expect(data.host).to.equal('http://' + ip.address() + ':4242');
         expect(data.containerIp).to.equal('10.0.17.38');
@@ -109,7 +139,7 @@ describe('events functional test', function () {
         cb();
         done();
       });
-      testRedisPubSub.publish('runnable:docker:events:start', JSON.stringify({
+      testPublisher.publish('container.life-cycle.started', {
         host: 'http://' + ip.address() + ':4242',
         id: testId,
         from: 'ubuntu',
@@ -121,24 +151,24 @@ describe('events functional test', function () {
             }
           }
         }
-      }));
+      });
     });
 
     it('should call emit fail if attach failed', function (done) {
       var testId = 'Andune';
-      process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock fail');
-      testRabbit.subscribe('container-network-attach-failed', function (data, cb) {
+      process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock died-attach');
+      testSubscriber.subscribe('container.network.attach-failed', function (data, cb) {
         expect(data.containerId).to.equal(testId);
         expect(data.host).to.equal('http://' + ip.address() + ':4242');
-        expect(data.err.data.err.stderr).to.equal('weave command fail attach Andune failed\n');
+        expect(data.err.data.err.stderr).to.equal('container died\n');
         expect(data.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
         expect(data.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
-        expect(weaveInput.toString()).to.equal('fail attach Andune\n');
+        expect(weaveInput.toString()).to.equal('died-attach attach Andune\n');
         cb();
         done();
       });
-      testRedisPubSub.publish('runnable:docker:events:start', JSON.stringify({
+      testPublisher.publish('container.life-cycle.started', {
         host: 'http://' + ip.address() + ':4242',
         id: testId,
         from: 'ubuntu',
@@ -150,7 +180,44 @@ describe('events functional test', function () {
             }
           }
         }
-      }));
+      });
     });
-  }); // end runnable:docker:events:start
+
+    describe('attach retry', function () {
+      beforeEach(function (done) {
+        fs.unlink('./attempt', function () {
+          done();
+        });
+      });
+
+      it('should retry weave attach on fail and emit event on success', function (done) {
+        var testId = 'Andune';
+        process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock retry-attach');
+        testSubscriber.subscribe('container.network.attached', function (data, cb) {
+          expect(data.containerId).to.equal(testId);
+          expect(data.host).to.equal('http://' + ip.address() + ':4242');
+          expect(data.containerIp).to.equal('10.0.17.38');
+          expect(data.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
+          expect(data.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
+          var weaveInput = fs.readFileSync('./weaveMockArgs');
+          expect(weaveInput.toString()).to.equal('retry-attach attach Andune\n');
+          cb();
+          done();
+        });
+        testPublisher.publish('container.life-cycle.started', {
+          host: 'http://' + ip.address() + ':4242',
+          id: testId,
+          from: 'ubuntu',
+          inspectData: {
+            Config: {
+              Labels: {
+                instanceId: '5633e9273e2b5b0c0077fd41',
+                contextVersionId: '563a808f9359ef0c00df34e6'
+              }
+            }
+          }
+        });
+      });
+    }); // end attach retry
+  }); // end container.life-cycle.started
 }); // end functional test
