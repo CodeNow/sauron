@@ -10,9 +10,7 @@ var beforeEach = lab.beforeEach;
 var Code = require('code');
 var expect = Code.expect;
 
-var sinon = require('sinon');
 var path = require('path');
-var rollbar = require('rollbar');
 var fs = require('fs');
 var redis = require('redis');
 var ip = require('ip');
@@ -25,14 +23,12 @@ var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
-    sinon.stub(rollbar, 'handleErrorWithPayloadData').yieldsAsync();
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
     process.env.ORG_ID = '1234124';
     testRedisClient.flushdb(done);
   });
 
   afterEach(function (done) {
-    rollbar.handleErrorWithPayloadData.restore();
     delete process.env.ORG_ID;
     done();
   });
@@ -54,7 +50,7 @@ describe('events functional test', function () {
           process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID, function (err, keys) {
           var weaveInput = fs.readFileSync('./weaveMockArgs');
           expect(weaveInput.toString())
-            .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/8 --ipalloc-default-subnet 10.21.0.0/8\n');
+            .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
             expect(keys).to.contain(ip.address());
           done();
         });
@@ -68,7 +64,7 @@ describe('events functional test', function () {
           testRedisClient.smembers(key, function (err, keys) {
             var weaveInput = fs.readFileSync('./weaveMockArgs');
             expect(weaveInput.toString())
-              .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/8 --ipalloc-default-subnet 10.21.0.0/8 10.22.33.44\n');
+              .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.22.33.44\n');
               expect(keys).to.contain(ip.address());
             done();
           });

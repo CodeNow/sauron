@@ -14,9 +14,9 @@ var ip = require('ip');
 var sinon = require('sinon');
 var redis = require('redis');
 var path = require('path');
-var rollbar = require('rollbar');
 var fs = require('fs');
 var hermesClient = require('runnable-hermes');
+var ErrorCat = require('error-cat');
 
 var testRedisClient = redis.createClient(
   process.env.REDIS_PORT,
@@ -40,7 +40,7 @@ var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
-    sinon.stub(rollbar, 'handleErrorWithPayloadData').yieldsAsync();
+    sinon.stub(ErrorCat.prototype, 'report').returns();
     testRedisClient.flushdb(done);
   });
 
@@ -51,7 +51,7 @@ describe('events functional test', function () {
 
   afterEach(function (done) {
     Start.shutdown(done);
-    rollbar.handleErrorWithPayloadData.restore();
+    ErrorCat.prototype.report.restore();
   });
 
   describe('runnable:docker:events:die', function () {
@@ -69,6 +69,7 @@ describe('events functional test', function () {
     });
 
     it('should call exit for weave container', function (done) {
+      ErrorCat.prototype.report.onCall(0).yieldsAsync();
       testRedisPubSub.publish('runnable:docker:events:die', JSON.stringify({
         host: 'http://' + ip.address() + ':4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
@@ -101,6 +102,8 @@ describe('events functional test', function () {
         expect(data.containerId).to.equal(testId);
         expect(data.host).to.equal('http://' + ip.address() + ':4242');
         expect(data.containerIp).to.equal('10.0.17.38');
+        expect(data.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
+        expect(data.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
         expect(weaveInput.toString()).to.equal('attach Andune\n');
         cb();
@@ -109,7 +112,15 @@ describe('events functional test', function () {
       testRedisPubSub.publish('runnable:docker:events:start', JSON.stringify({
         host: 'http://' + ip.address() + ':4242',
         id: testId,
-        from: 'ubuntu'
+        from: 'ubuntu',
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
       }));
     });
 
@@ -120,6 +131,8 @@ describe('events functional test', function () {
         expect(data.containerId).to.equal(testId);
         expect(data.host).to.equal('http://' + ip.address() + ':4242');
         expect(data.err.data.err.stderr).to.equal('weave command fail attach Andune failed\n');
+        expect(data.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
+        expect(data.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
         expect(weaveInput.toString()).to.equal('fail attach Andune\n');
         cb();
@@ -128,7 +141,15 @@ describe('events functional test', function () {
       testRedisPubSub.publish('runnable:docker:events:start', JSON.stringify({
         host: 'http://' + ip.address() + ':4242',
         id: testId,
-        from: 'ubuntu'
+        from: 'ubuntu',
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
       }));
     });
   }); // end runnable:docker:events:start

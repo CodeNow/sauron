@@ -111,20 +111,20 @@ describe('events.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(process, 'exit');
       sinon.stub(Events, '_isWeaveContainer');
-      sinon.stub(ErrorCat.prototype, 'createAndReport');
+      sinon.stub(ErrorCat.prototype, 'report');
       done();
     });
 
     afterEach(function (done) {
       process.exit.restore();
       Events._isWeaveContainer.restore();
-      ErrorCat.prototype.createAndReport.restore();
+      ErrorCat.prototype.report.restore();
       done();
     });
 
     it('should exit if weave container', function (done) {
       Events._isWeaveContainer.returns(true);
-      ErrorCat.prototype.createAndReport.returns();
+      ErrorCat.prototype.report.yields();
 
       Events._handleDie({});
       expect(process.exit.called).to.be.true();
@@ -133,7 +133,7 @@ describe('events.js unit test', function () {
 
     it('should fail if _isWeaveContainer returns false', function (done) {
       Events._isWeaveContainer.returns(false);
-      ErrorCat.prototype.createAndReport.returns();
+      ErrorCat.prototype.report.yields();
 
       Events._handleDie({});
       expect(process.exit.called).to.be.false();
@@ -167,8 +167,41 @@ describe('events.js unit test', function () {
       done();
     });
 
-    it('should not publish if attach failed', function (done) {
-      var testErr = 'Dunlendings';
+    it('should publish attach failed', function (done) {
+      var testErr = ErrorCat.create(500, 'Dunlendings');
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
+
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(testErr);
+      RabbitMQ.publishContainerNetworkAttachFailed.returns();
+
+      Events._handleStart({
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
+      });
+
+      expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
+      expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs({
+        containerId: testId,
+        host: testHost,
+        err : testErr,
+        instanceId: '5633e9273e2b5b0c0077fd41',
+        contextVersionId: '563a808f9359ef0c00df34e6'
+      }).called).to.be.true();
+      done();
+    });
+
+    it('should not publish if 409 attach failed', function (done) {
+      var testErr = ErrorCat.create(409, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
 
@@ -182,11 +215,7 @@ describe('events.js unit test', function () {
       });
 
       expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-      expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs({
-        containerId: testId,
-        host: testHost,
-        err : testErr
-      }).called).to.be.true();
+      expect(RabbitMQ.publishContainerNetworkAttachFailed.called).to.be.false();
       done();
     });
 
@@ -200,13 +229,23 @@ describe('events.js unit test', function () {
 
       Events._handleStart({
         id: testId,
-        host: testHost
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
       });
 
       expect(RabbitMQ.publishContainerNetworkAttached.withArgs({
         containerId: testId,
         containerIp: testIp,
-        host: testHost
+        host: testHost,
+        instanceId: '5633e9273e2b5b0c0077fd41',
+        contextVersionId: '563a808f9359ef0c00df34e6'
       }).called).to.be.true();
       done();
     });

@@ -56,7 +56,7 @@ describe('weave-wrapper.js unit test', function () {
   describe('launch', function () {
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, '_runCmd');
-      sinon.stub(WeaveWrapper, 'handleErr');
+      sinon.stub(WeaveWrapper, '_handleCmdResult');
       process.env.WEAVE_PATH = '/usr/bin/weave';
       process.env.WEAVE_IP_RANGE = '10.0.0.0/8';
       done();
@@ -64,7 +64,7 @@ describe('weave-wrapper.js unit test', function () {
 
     afterEach(function (done) {
       WeaveWrapper._runCmd.restore();
-      WeaveWrapper.handleErr.restore();
+      WeaveWrapper._handleCmdResult.restore();
       delete process.env.WEAVE_PATH;
       delete process.env.WEAVE_IP_RANGE;
       done();
@@ -72,7 +72,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should launch with peers', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.handleErr.returnsArg(0);
+      WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = ['10.0.0.1', '10.0.0.2'];
 
       WeaveWrapper.launch(peers, function (err) {
@@ -88,7 +88,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should launch without peers', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.handleErr.returnsArg(0);
+      WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = [];
 
       WeaveWrapper.launch(peers, function (err) {
@@ -103,7 +103,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should fail if invalid peers', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.handleErr.returnsArg(0);
+      WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = 'no valid';
       WeaveWrapper.launch(peers, function (err) {
         expect(err.output.statusCode).to.equal(400);
@@ -113,7 +113,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should fail if missing peers', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.handleErr.returnsArg(0);
+      WeaveWrapper._handleCmdResult.returnsArg(0);
       WeaveWrapper.launch(null, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
@@ -126,26 +126,37 @@ describe('weave-wrapper.js unit test', function () {
 
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, '_runCmd');
-      sinon.stub(WeaveWrapper, 'handleErr');
+      sinon.stub(WeaveWrapper, '_handleCmdResult');
       process.env.WEAVE_PATH = '/usr/bin/weave';
       done();
     });
 
     afterEach(function (done) {
       WeaveWrapper._runCmd.restore();
-      WeaveWrapper.handleErr.restore();
+      WeaveWrapper._handleCmdResult.restore();
       delete process.env.WEAVE_PATH;
       done();
     });
 
     it('should attach', function (done) {
       WeaveWrapper._runCmd.yieldsAsync(null, '10.0.0.0\n');
+      WeaveWrapper._handleCmdResult.returnsArg(0);
 
       WeaveWrapper.attach(testContainerId, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave attach ' + testContainerId).called)
           .to.be.true();
+        done();
+      });
+    });
+
+    it('should fail if invalid ip', function (done) {
+      WeaveWrapper._runCmd.yieldsAsync(null, 'not an ip\n');
+      WeaveWrapper._handleCmdResult.returnsArg(0);
+
+      WeaveWrapper.attach(testContainerId, function (err) {
+        expect(err).to.exist();
         done();
       });
     });
@@ -158,9 +169,9 @@ describe('weave-wrapper.js unit test', function () {
       });
     });
 
-    it('should handleErr if runCmd failed', function (done) {
+    it('should _handleCmdResult if runCmd failed', function (done) {
       WeaveWrapper._runCmd.yieldsAsync(new Error('Gollum'));
-      WeaveWrapper.handleErr.returnsArg(0);
+      WeaveWrapper._handleCmdResult.returnsArg(0);
       WeaveWrapper.attach(testContainerId, function (err) {
         expect(err).to.exist();
         done();
@@ -169,25 +180,25 @@ describe('weave-wrapper.js unit test', function () {
 
   }); // attach
 
-  describe('handleErr', function () {
+  describe('_handleCmdResult', function () {
     it('should cb if no error', function (done) {
-      WeaveWrapper.handleErr(function (err) {
+      WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.not.exist();
         done();
-      })(null);
+      }, 'test', {})(null);
     });
 
     it('should cb with no error for already running', function (done) {
       var testErr = { message: 'weave already running.' };
-      WeaveWrapper.handleErr(function (err) {
+      WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.not.exist();
         done();
-      })(testErr);
+      }, 'test', {})(testErr);
     });
 
     it('should cb 409 for not running', function (done) {
       var testErr = { message: 'container is not running.' };
-      WeaveWrapper.handleErr(function (err) {
+      WeaveWrapper._handleCmdResult(function (err) {
         expect(err.output.statusCode).to.equal(409);
         done();
       }, 'it never ends', {})(testErr);
@@ -195,7 +206,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should cb 409 for died', function (done) {
       var testErr = { message: 'container had died' };
-      WeaveWrapper.handleErr(function (err) {
+      WeaveWrapper._handleCmdResult(function (err) {
         expect(err.output.statusCode).to.equal(409);
         done();
       }, 'it never ends', {})(testErr);
@@ -203,7 +214,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should cb 500 for unknown err', function (done) {
       var testErr = { message: 'mine of moria' };
-      WeaveWrapper.handleErr(function (err) {
+      WeaveWrapper._handleCmdResult(function (err) {
         expect(err.output.statusCode).to.equal(500);
         done();
       }, 'it never ends', {})(testErr);
@@ -211,7 +222,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should append error if error has message', function (done) {
       var testErr = new Error('keep it safe');
-      WeaveWrapper.handleErr(function (err) {
+      WeaveWrapper._handleCmdResult(function (err) {
         expect(err.message).to.equal('keep it secret:keep it safe');
         done();
       }, 'keep it secret', {})(testErr);
@@ -219,10 +230,10 @@ describe('weave-wrapper.js unit test', function () {
 
      it('should use passed message err does not have message', function (done) {
       var testErr = 'false';
-      WeaveWrapper.handleErr(function (err) {
+      WeaveWrapper._handleCmdResult(function (err) {
         expect(err.message).to.equal('keep it secret');
         done();
       }, 'keep it secret', {})(testErr);
     });
-  }); // end handleErr
+  }); // end _handleCmdResult
 });
