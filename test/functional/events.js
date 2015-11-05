@@ -102,8 +102,8 @@ describe('events functional test', function () {
         expect(data.containerId).to.equal(testId);
         expect(data.host).to.equal('http://' + ip.address() + ':4242');
         expect(data.containerIp).to.equal('10.0.17.38');
-        expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
-        expect(data.inspectData.Config.Labels.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
+        expect(data.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
+        expect(data.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
         expect(weaveInput.toString()).to.equal('attach Andune\n');
         cb();
@@ -131,8 +131,8 @@ describe('events functional test', function () {
         expect(data.containerId).to.equal(testId);
         expect(data.host).to.equal('http://' + ip.address() + ':4242');
         expect(data.err.data.err.stderr).to.equal('weave command fail attach Andune failed\n');
-        expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
-        expect(data.inspectData.Config.Labels.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
+        expect(data.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
+        expect(data.contextVersionId).to.equal('563a808f9359ef0c00df34e6');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
         expect(weaveInput.toString()).to.equal('fail attach Andune\n');
         cb();
