@@ -12,7 +12,7 @@ var expect = Code.expect;
 var sinon = require('sinon');
 
 var Redis = require('../../lib/models/redis.js');
-var Events = require('../../lib/models/events.js');
+var WorkerServer = require('../../lib/models/worker-server.js');
 var WeaveSetup = require('../../lib/models/weave-setup.js');
 var RabbitMQ = require('../../lib/models/rabbitmq.js');
 var Start = require('../../lib/start.js');
@@ -21,40 +21,40 @@ describe('start.js unit test', function () {
   describe('startup', function () {
     beforeEach(function (done) {
       sinon.stub(Redis, 'connect');
-      sinon.stub(Events, 'listen');
+      sinon.stub(WorkerServer, 'listen');
       sinon.stub(WeaveSetup, 'setup');
-      sinon.stub(RabbitMQ, 'connect');
+      sinon.stub(RabbitMQ, 'create');
       done();
     });
 
     afterEach(function (done) {
       Redis.connect.restore();
-      Events.listen.restore();
+      WorkerServer.listen.restore();
       WeaveSetup.setup.restore();
-      RabbitMQ.connect.restore();
+      RabbitMQ.create.restore();
       done();
     });
 
     it('should startup all services', function (done) {
       Redis.connect.returns();
-      Events.listen.returns();
-      RabbitMQ.connect.returns();
+      RabbitMQ.create.returns();
       WeaveSetup.setup.yieldsAsync();
+      WorkerServer.listen.yieldsAsync();
 
       Start.startup(function (err) {
         expect(err).to.not.exist();
         expect(Redis.connect.calledOnce).to.be.true();
-        expect(Events.listen.calledOnce).to.be.true();
-        expect(RabbitMQ.connect.calledOnce).to.be.true();
+        expect(RabbitMQ.create.calledOnce).to.be.true();
         expect(WeaveSetup.setup.calledOnce).to.be.true();
+        expect(WorkerServer.listen.calledOnce).to.be.true();
         done();
       });
     });
 
     it('should cb err if weave setup failed', function (done) {
       Redis.connect.returns();
-      Events.listen.returns();
-      RabbitMQ.connect.returns();
+      WorkerServer.listen.returns();
+      RabbitMQ.create.returns();
       WeaveSetup.setup.yieldsAsync('Balrogs');
 
       Start.startup(function (err) {
@@ -67,36 +67,35 @@ describe('start.js unit test', function () {
   describe('shutdown', function () {
     beforeEach(function (done) {
       sinon.stub(Redis, 'disconnect');
-      sinon.stub(Events, 'stop');
-      sinon.stub(RabbitMQ, 'disconnect');
+      sinon.stub(WorkerServer, 'stop');
+      sinon.stub(RabbitMQ, 'disconnectPublisher');
       done();
     });
 
     afterEach(function (done) {
       Redis.disconnect.restore();
-      Events.stop.restore();
-      RabbitMQ.disconnect.restore();
+      WorkerServer.stop.restore();
+      RabbitMQ.disconnectPublisher.restore();
       done();
     });
 
     it('should shutdown all services', function (done) {
       Redis.disconnect.returns();
-      Events.stop.returns();
-      RabbitMQ.disconnect.yieldsAsync();
+      WorkerServer.stop.yieldsAsync();
+      RabbitMQ.disconnectPublisher.yieldsAsync();
 
       Start.shutdown(function (err) {
         expect(err).to.not.exist();
         expect(Redis.disconnect.calledOnce).to.be.true();
-        expect(Events.stop.calledOnce).to.be.true();
-        expect(RabbitMQ.disconnect.calledOnce).to.be.true();
+        expect(WorkerServer.stop.calledOnce).to.be.true();
+        expect(RabbitMQ.disconnectPublisher.calledOnce).to.be.true();
         done();
       });
     });
 
-    it('should cb err if weave disconnect failed', function (done) {
+    it('should cb err if worker server failed', function (done) {
       Redis.disconnect.returns();
-      Events.stop.returns();
-      RabbitMQ.disconnect.yieldsAsync('Balrogs');
+      WorkerServer.stop.yieldsAsync('Balrogs');
 
       Start.shutdown(function (err) {
         expect(err).to.exist();
