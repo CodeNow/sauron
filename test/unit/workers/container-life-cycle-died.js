@@ -13,6 +13,7 @@ var expect = Code.expect;
 var sinon = require('sinon');
 var ponos = require('ponos');
 var TaskFatalError = ponos.TaskFatalError;
+var ErrorCat = require('error-cat');
 
 var Events = require('../../../lib/models/events.js');
 var containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js');
@@ -21,16 +22,18 @@ var WeaveDiedError = require('../../../lib/errors/weave-died-error.js');
 describe('container-life-cycle-died.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleDiedAsync');
+      sinon.stub(Events, 'handleDied');
       sinon.stub(process, 'exit');
       sinon.stub(Events, 'validateJob');
+      sinon.stub(ErrorCat.prototype, 'report');
       done();
     });
 
     afterEach(function (done) {
-      Events.handleDiedAsync.restore();
+      Events.handleDied.restore();
       Events.validateJob.restore();
       process.exit.restore();
+      ErrorCat.prototype.report.restore();
       done();
     });
 
@@ -46,9 +49,9 @@ describe('container-life-cycle-died.js unit test', function () {
         });
     });
 
-    it('should throw error if handleDiedAsync failed', function (done) {
+    it('should throw error if handleDied failed', function (done) {
       Events.validateJob.returns(true);
-      Events.handleDiedAsync.throws(new Error('test'));
+      Events.handleDied.throws(new Error('test'));
       containerLifeCycleDied({})
         .then(function () {
           throw new Error('should have thrown');
@@ -59,9 +62,21 @@ describe('container-life-cycle-died.js unit test', function () {
         });
     });
 
+    it('should report on WeaveDiedError', function (done) {
+      Events.validateJob.returns(true);
+      Events.handleDied.throws(new WeaveDiedError('test'));
+      process.exit.returns();
+      containerLifeCycleDied({})
+        .then(function () {
+          expect(ErrorCat.prototype.report.calledOnce).to.be.true();
+          done();
+        })
+        .catch(done);
+    });
+
     it('should exit on WeaveDiedError', function (done) {
       Events.validateJob.returns(true);
-      Events.handleDiedAsync.throws(new WeaveDiedError('test'));
+      Events.handleDied.throws(new WeaveDiedError('test'));
       process.exit.returns();
       containerLifeCycleDied({})
         .then(function () {
@@ -73,7 +88,7 @@ describe('container-life-cycle-died.js unit test', function () {
 
     it('should be fine if no errors', function (done) {
       Events.validateJob.returns(true);
-      Events.handleDiedAsync.returns();
+      Events.handleDied.returns();
       containerLifeCycleDied({})
         .then(function () {
           done();

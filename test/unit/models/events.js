@@ -35,47 +35,42 @@ describe('events.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(Events, '_isWeaveContainer');
       sinon.stub(Events, '_isThisHost');
-      sinon.stub(ErrorCat.prototype, 'report');
       done();
     });
 
     afterEach(function (done) {
       Events._isWeaveContainer.restore();
       Events._isThisHost.restore();
-      ErrorCat.prototype.report.restore();
       done();
     });
 
-    it('should cb err if weave container', function (done) {
+    it('should throw err if weave container', function (done) {
       Events._isThisHost.returns(true);
       Events._isWeaveContainer.returns(true);
-      ErrorCat.prototype.report.yields();
 
-      Events.handleDied({}, function (err) {
-        expect(err).to.be.an.instanceof(WeaveDiedError);
-        done();
-      });
+      expect(function() {
+        Events.handleDied();
+      }).to.throw(WeaveDiedError);
+      done();
     });
 
-    it('should not error if _isWeaveContainer returns false', function (done) {
+    it('should not throw if _isWeaveContainer returns false', function (done) {
       Events._isThisHost.returns(true);
       Events._isWeaveContainer.returns(false);
-      ErrorCat.prototype.report.yields();
 
-      Events.handleDied({}, function (err) {
-        expect(err).to.not.exist();
-        done();
-      });
+      expect(function() {
+        Events.handleDied();
+      }).to.not.throw();
+      done();
     });
 
-    it('should not error if _isThisHost returns false', function (done) {
+    it('should not throw if _isThisHost returns false', function (done) {
       Events._isThisHost.returns(false);
-      ErrorCat.prototype.report.yields();
 
-      Events.handleDied({}, function (err) {
-        expect(err).to.not.exist();
-        done();
-      });
+      expect(function() {
+        Events.handleDied();
+      }).to.not.throw();
+      done();
     });
   }); // end handleDied
 
