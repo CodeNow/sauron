@@ -36,7 +36,7 @@
     "loadenv": "^2.1.0",
     "ponos": "^1.0.1",
     "redis": "^2.2.5",
-    "runnable-hermes": "^6.2.1",
+    "runnable-hermes": "git+ssh://git@github.com:Runnable/hermes#fanout-exchange",
     "uuid": "^2.0.1",
     "which": "^1.2.0"
   },
