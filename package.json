@@ -36,13 +36,13 @@
     "loadenv": "^2.1.0",
     "ponos": "^1.0.1",
     "redis": "^2.2.5",
-    "runnable-hermes": "git+ssh://git@github.com:Runnable/hermes#fanout-exchange",
+    "runnable-hermes": "git://github.com:Runnable/hermes#fanout-exchange",
     "uuid": "^2.0.1",
     "which": "^1.2.0"
   },
   "devDependencies": {
-    "lab": "7.0.0",
     "code": "^1.5.0",
+    "lab": "7.0.0",
     "sinon": "^1.17.2"
   }
 }
