@@ -10,7 +10,6 @@ var Code = require('code');
 var expect = Code.expect;
 
 var sinon = require('sinon');
-
 var redis = require('redis');
 
 var Redis = require('../../../lib/models/redis.js');
