@@ -1,6 +1,7 @@
 'use strict';
 require('loadenv')();
 
+var ip = require('ip');
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
@@ -117,15 +118,25 @@ describe('rabbitmq.js unit test', function () {
       RabbitMQ._dataCheck.returns();
       RabbitMQ._publisher.publish.returns();
 
-      RabbitMQ.publishContainerNetworkAttached({
-        containerId: 'testId',
-        containerIp: '10.0.0.2'
-      });
-
+      var data = {
+        containerIp: '10.0.0.2',
+        host: 'http://' + ip.address() + ':4242',
+        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
+        from: 'weaveworks/weave:1.2.0',
+        inspectData: {
+          Config: {
+            ExposedPorts: {
+              '6783/tcp': {},
+              '6783/udp': {}
+            }
+          }
+        }
+      };
+      RabbitMQ.publishContainerNetworkAttached(data);
       expect(RabbitMQ._publisher.publish.withArgs('container.network.attached')
         .calledOnce).to.be.true();
       expect(Object.keys(RabbitMQ._publisher.publish.args[0][1]))
-        .to.contain(['timestamp', 'id', 'containerId', 'containerIp']);
+        .to.contain(['id', 'inspectData', 'containerIp']);
       done();
     });
   }); // end publishContainerNetworkAttached
@@ -158,16 +169,28 @@ describe('rabbitmq.js unit test', function () {
     it('should call publish with correct key and data', function (done) {
       RabbitMQ._dataCheck.returns();
       RabbitMQ._publisher.publish.returns();
+      var data = {
+        containerIp: '10.0.0.2',
+        host: 'http://' + ip.address() + ':4242',
+        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
+        from: 'weaveworks/weave:1.2.0',
+        inspectData: {
+          Config: {
+            ExposedPorts: {
+              '6783/tcp': {},
+              '6783/udp': {}
+            }
+          }
+        },
+        err: 'Some errr'
+      };
 
-      RabbitMQ.publishContainerNetworkAttachFailed({
-        containerId: 'testId',
-        err: '10.0.0.2'
-      });
+      RabbitMQ.publishContainerNetworkAttachFailed(data);
 
       expect(RabbitMQ._publisher.publish.withArgs('container.network.attach-failed')
         .calledOnce).to.be.true();
       expect(Object.keys(RabbitMQ._publisher.publish.args[0][1]))
-        .to.contain(['timestamp', 'id', 'containerId', 'err']);
+        .to.contain(['id', 'inspectData', 'err']);
       done();
     });
   }); // end publishContainerNetworkAttachFailed

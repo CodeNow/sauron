@@ -136,8 +136,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
       RabbitMQ.publishContainerNetworkAttachFailed.returns();
-
-      Events.handleStarted({
+      var jobData = {
         id: testId,
         host: testHost,
         inspectData: {
@@ -148,16 +147,12 @@ describe('events.js unit test', function () {
             }
           }
         }
-      }, function (err) {
+      };
+      Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist();
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-        expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs({
-          containerId: testId,
-          host: testHost,
-          err : testErr,
-          instanceId: '5633e9273e2b5b0c0077fd41',
-          contextVersionId: '563a808f9359ef0c00df34e6'
-        }).called).to.be.true();
+        jobData.err = testErr;
+        expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs(jobData).called).to.be.true();
         done();
       });
     });
@@ -169,8 +164,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
-
-      Events.handleStarted({
+      var jobData = {
         id: testId,
         host: testHost,
         inspectData: {
@@ -181,18 +175,13 @@ describe('events.js unit test', function () {
             }
           }
         }
-      }, function (err) {
+      };
+      Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist();
-        expect(RabbitMQ.publishContainerNetworkAttached.withArgs({
-          containerId: testId,
-          containerIp: testIp,
-          host: testHost,
-          instanceId: '5633e9273e2b5b0c0077fd41',
-          contextVersionId: '563a808f9359ef0c00df34e6'
-        }).called).to.be.true();
+        jobData.containerIp = testIp;
+        expect(RabbitMQ.publishContainerNetworkAttached.withArgs(jobData).called).to.be.true();
         done();
       });
-
     });
   }); // end handleStarted
 

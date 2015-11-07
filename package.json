@@ -37,7 +37,6 @@
     "ponos": "^1.0.1",
     "redis": "^2.2.5",
     "runnable-hermes": "git://github.com/Runnable/hermes.git#fanout-exchange",
-    "uuid": "^2.0.1",
     "which": "^1.2.0"
   },
   "devDependencies": {
