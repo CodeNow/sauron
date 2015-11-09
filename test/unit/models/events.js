@@ -79,6 +79,7 @@ describe('events.js unit test', function () {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttachFailed');
       sinon.stub(Events, '_isNetworkNeeded');
+      sinon.stub(Events, '_isThisHost');
       sinon.stub(WeaveWrapper, 'attach');
       done();
     });
@@ -87,11 +88,23 @@ describe('events.js unit test', function () {
       RabbitMQ.publishContainerNetworkAttached.restore();
       RabbitMQ.publishContainerNetworkAttachFailed.restore();
       Events._isNetworkNeeded.restore();
+      Events._isThisHost.restore();
       WeaveWrapper.attach.restore();
       done();
     });
 
+    it('should not attach if not this host', function (done) {
+      Events._isThisHost.returns(false);
+
+      Events.handleStarted({}, function (err) {
+        expect(err).to.not.exist();
+        expect(WeaveWrapper.attach.called).to.be.false();
+        done();
+      });
+    });
+
     it('should not attach if network not needed', function (done) {
+      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(false);
 
       Events.handleStarted({}, function (err) {
@@ -99,7 +112,6 @@ describe('events.js unit test', function () {
         expect(WeaveWrapper.attach.called).to.be.false();
         done();
       });
-
     });
 
     it('should cb TaskError if 500', function (done) {
@@ -107,6 +119,7 @@ describe('events.js unit test', function () {
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
 
+      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
       RabbitMQ.publishContainerNetworkAttachFailed.returns();
@@ -133,6 +146,7 @@ describe('events.js unit test', function () {
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
 
+      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
       RabbitMQ.publishContainerNetworkAttachFailed.returns();
@@ -161,6 +175,7 @@ describe('events.js unit test', function () {
       var testIp = '10.0.0.0';
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
+      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
