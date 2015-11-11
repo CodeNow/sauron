@@ -1,5 +1,7 @@
 'use strict';
+require('loadenv')();
 
+var ip = require('ip');
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
@@ -10,7 +12,7 @@ var Code = require('code');
 var expect = Code.expect;
 
 var sinon = require('sinon');
-var hermesClient = require('runnable-hermes');
+var Hermes = require('runnable-hermes');
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 
@@ -31,57 +33,66 @@ describe('rabbitmq.js unit test', function () {
     done();
   });
 
-  describe('connect', function () {
+  describe('create', function () {
     beforeEach(function (done) {
-      sinon.stub(hermesClient.prototype, 'connect');
+      sinon.stub(Hermes.prototype, 'connect');
       done();
     });
 
     afterEach(function (done) {
-      hermesClient.prototype.connect.restore();
+      Hermes.prototype.connect.restore();
       done();
     });
 
-    it('should set client', function (done) {
+    it('should set both client', function (done) {
       var testClient = 'Bolg';
-      hermesClient.prototype.connect.returns({
+      Hermes.prototype.connect.returns({
         on: sinon.stub().returns(testClient)
       });
 
-      RabbitMQ.connect();
+      RabbitMQ.create();
 
-      expect(RabbitMQ.client).to.equal(testClient);
+      expect(RabbitMQ._publisher).to.exist();
+      expect(RabbitMQ._subscriber).to.exist();
       done();
     });
-  }); // end connect
+  }); // end create
 
-  describe('disconnect', function () {
+  describe('getSubscriber', function () {
+    it('should return subscriber clietn', function (done) {
+      RabbitMQ._subscriber = 'test';
+      expect(RabbitMQ.getSubscriber()).to.equal('test');
+      done();
+    });
+  }); // end getSubscriber
+
+  describe('disconnectPublisher', function () {
     beforeEach(function (done) {
-      RabbitMQ.client = {
+      RabbitMQ._publisher = {
         close: sinon.stub()
       };
       done();
     });
 
     afterEach(function (done) {
-      RabbitMQ.client = null;
+      RabbitMQ._publisher = null;
       done();
     });
 
-    it('should close client', function (done) {
-      RabbitMQ.client.close.yieldsAsync();
+    it('should close _publisher', function (done) {
+      RabbitMQ._publisher.close.yieldsAsync();
 
-      RabbitMQ.disconnect(function () {
-        expect(RabbitMQ.client.close.called).to.be.true();
+      RabbitMQ.disconnectPublisher(function () {
+        expect(RabbitMQ._publisher.close.called).to.be.true();
         done();
       });
     });
-  }); // end disconnect
+  }); // end disconnectPublisher
 
   describe('publishContainerNetworkAttached', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, '_dataCheck');
-      RabbitMQ.client = {
+      RabbitMQ._publisher = {
         publish: sinon.stub()
       };
       done();
@@ -89,7 +100,7 @@ describe('rabbitmq.js unit test', function () {
 
     afterEach(function (done) {
       RabbitMQ._dataCheck.restore();
-      RabbitMQ.client = null;
+      RabbitMQ._publisher = null;
       done();
     });
 
@@ -105,17 +116,27 @@ describe('rabbitmq.js unit test', function () {
 
     it('should call publish with correct key and data', function (done) {
       RabbitMQ._dataCheck.returns();
-      RabbitMQ.client.publish.returns();
+      RabbitMQ._publisher.publish.returns();
 
-      RabbitMQ.publishContainerNetworkAttached({
-        containerId: 'testId',
-        containerIp: '10.0.0.2'
-      });
-
-      expect(RabbitMQ.client.publish.withArgs('container-network-attached')
+      var data = {
+        containerIp: '10.0.0.2',
+        host: 'http://' + ip.address() + ':4242',
+        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
+        from: 'weaveworks/weave:1.2.0',
+        inspectData: {
+          Config: {
+            ExposedPorts: {
+              '6783/tcp': {},
+              '6783/udp': {}
+            }
+          }
+        }
+      };
+      RabbitMQ.publishContainerNetworkAttached(data);
+      expect(RabbitMQ._publisher.publish.withArgs('container.network.attached')
         .calledOnce).to.be.true();
-      expect(Object.keys(RabbitMQ.client.publish.args[0][1]))
-        .to.contain(['timestamp', 'id', 'containerId', 'containerIp']);
+      expect(Object.keys(RabbitMQ._publisher.publish.args[0][1]))
+        .to.contain(['id', 'inspectData', 'containerIp']);
       done();
     });
   }); // end publishContainerNetworkAttached
@@ -123,7 +144,7 @@ describe('rabbitmq.js unit test', function () {
   describe('publishContainerNetworkAttachFailed', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, '_dataCheck');
-      RabbitMQ.client = {
+      RabbitMQ._publisher = {
         publish: sinon.stub()
       };
       done();
@@ -131,7 +152,7 @@ describe('rabbitmq.js unit test', function () {
 
     afterEach(function (done) {
       RabbitMQ._dataCheck.restore();
-      RabbitMQ.client = null;
+      RabbitMQ._publisher = null;
       done();
     });
 
@@ -147,17 +168,29 @@ describe('rabbitmq.js unit test', function () {
 
     it('should call publish with correct key and data', function (done) {
       RabbitMQ._dataCheck.returns();
-      RabbitMQ.client.publish.returns();
+      RabbitMQ._publisher.publish.returns();
+      var data = {
+        containerIp: '10.0.0.2',
+        host: 'http://' + ip.address() + ':4242',
+        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
+        from: 'weaveworks/weave:1.2.0',
+        inspectData: {
+          Config: {
+            ExposedPorts: {
+              '6783/tcp': {},
+              '6783/udp': {}
+            }
+          }
+        },
+        err: 'Some errr'
+      };
 
-      RabbitMQ.publishContainerNetworkAttachFailed({
-        containerId: 'testId',
-        err: '10.0.0.2'
-      });
+      RabbitMQ.publishContainerNetworkAttachFailed(data);
 
-      expect(RabbitMQ.client.publish.withArgs('container-network-attach-failed')
+      expect(RabbitMQ._publisher.publish.withArgs('container.network.attach-failed')
         .calledOnce).to.be.true();
-      expect(Object.keys(RabbitMQ.client.publish.args[0][1]))
-        .to.contain(['timestamp', 'id', 'containerId', 'err']);
+      expect(Object.keys(RabbitMQ._publisher.publish.args[0][1]))
+        .to.contain(['id', 'inspectData', 'err']);
       done();
     });
   }); // end publishContainerNetworkAttachFailed

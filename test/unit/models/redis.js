@@ -10,9 +10,7 @@ var Code = require('code');
 var expect = Code.expect;
 
 var sinon = require('sinon');
-
 var redis = require('redis');
-var redisPubSub = require('redis-pubsub-emitter');
 
 var Redis = require('../../../lib/models/redis.js');
 
@@ -20,13 +18,11 @@ describe('redis.js unit test', function () {
   describe('connect', function () {
     beforeEach(function (done) {
       sinon.stub(redis, 'createClient');
-      sinon.stub(redisPubSub, 'createClient');
       done();
     });
 
     afterEach(function (done) {
       redis.createClient.restore();
-      redisPubSub.createClient.restore();
       done();
     });
 
@@ -35,9 +31,8 @@ describe('redis.js unit test', function () {
         on: sinon.stub()
       };
       redis.createClient.returns(redisMock);
-      redisPubSub.createClient.returns(redisMock);
       Redis.connect();
-      expect(redisMock.on.calledTwice).to.be.true();
+      expect(redisMock.on.calledOnce).to.be.true();
       done();
     });
   }); // end connect
@@ -47,13 +42,9 @@ describe('redis.js unit test', function () {
       Redis.client = {
         quit: sinon.stub()
       };
-      Redis.pubSub = {
-        quit: sinon.stub()
-      };
 
       Redis.disconnect();
       expect(Redis.client.quit.calledOnce).to.be.true();
-      expect(Redis.pubSub.quit.calledOnce).to.be.true();
       done();
     });
   }); // end disconnect

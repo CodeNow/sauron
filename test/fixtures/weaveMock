@@ -13,8 +13,19 @@ case "$WEAVE_COMMAND" in
   attach)
     echo 10.0.17.38
     ;;
-  fail)
-    echo "weave command $* failed" >&2
+  died-attach)
+    echo "container died" >&2
+    exit 1
+    ;;
+  retry-attach)
+    if [[ -f ./attempt ]]; then
+      rm ./attempt
+      echo 10.0.17.38
+      exit 0
+    fi
+
+    echo "1" > ./attempt
+    echo "temp fail" >&2
     exit 1
     ;;
 esac

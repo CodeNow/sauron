@@ -12,6 +12,7 @@ var expect = Code.expect;
 
 var path = require('path');
 var fs = require('fs');
+var Hermes = require('runnable-hermes');
 var redis = require('redis');
 var ip = require('ip');
 
@@ -19,9 +20,27 @@ var testRedisClient = redis.createClient(
   process.env.REDIS_PORT,
   process.env.REDIS_IPADDRESS);
 
+var publishedEvents = [
+  'container.life-cycle.died',
+  'container.life-cycle.started'
+];
+
+var testPublisher = new Hermes({
+    hostname: process.env.RABBITMQ_HOSTNAME,
+    password: process.env.RABBITMQ_PASSWORD,
+    port: process.env.RABBITMQ_PORT,
+    username: process.env.RABBITMQ_USERNAME,
+    publishedEvents: publishedEvents,
+    name: 'testPublisher'
+  });
+
 var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
+  beforeEach(function (done) {
+    testPublisher.connect(done);
+  });
+
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
     process.env.ORG_ID = '1234124';
@@ -31,6 +50,10 @@ describe('events functional test', function () {
   afterEach(function (done) {
     delete process.env.ORG_ID;
     done();
+  });
+
+  afterEach(function (done) {
+    testPublisher.close(done);
   });
 
   describe('weave launch', function () {
