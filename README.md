@@ -9,7 +9,7 @@ Sauron is in charge of adding an overlay network per org and giving each contain
 * Maintaining peers per org which is passed when launching weave
 * Launching `weave` and restarting it if it dies
 * Call `weave attach` on all started containers
-* Emitting `container.network.attached` or `container.network.attach-failed` events events
+* Emitting `container.network.attached` or `container.network.attach-failed` events
 
 ## Architecture
 ![Sauron Architecture](https://docs.google.com/drawings/d/1MrohwgRaQXmE6rmVZ6x2hdkHRGMis33Y0fciQBkbFXA/pub?w=959&h=209)
