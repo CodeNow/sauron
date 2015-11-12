@@ -9,26 +9,29 @@ Sauron is in charge of adding an overlay network per org and giving each contain
 * Maintaining peers per org which is passed when launching weave
 * Launching `weave` and restarting it if it dies
 * Call `weave attach` on all started containers
-* Emitting `container.network.attached` events
+* Emitting `container.network.attached` or `container.network.attach-failed` events
 
 ## Architecture
 ![Sauron Architecture](https://docs.google.com/drawings/d/1MrohwgRaQXmE6rmVZ6x2hdkHRGMis33Y0fciQBkbFXA/pub?w=959&h=209)
 
-Sauron listens for container start events emitted from [docker-listener](https://github.com/CodeNow/docker-listener) on redis
+Sauron listens for container started events emitted from [docker-listener](https://github.com/CodeNow/docker-listener) on rabbitmq
 Based on the event, Sauron runs `weave` commands then publishes `container.network.attached` events
-If Sauron failed to attach for any reason, it will emit `container.network.attach.failed`
+If Sauron failed to attach for a fatal or some ignorable reason (container died, no container found)
+, it will emit `container.network.attach-failed`
+If Sauron failed to attach for a non-fatal reason, he retries
 
-In the future Sauron should listen to events from rabbit (`container.lifecycle.started` exchange)
+Sauron uses redis to hold peer information.
+On start, the host IP is added to the list of peers for a specific org.
 
 ### Incoming events
 
-#### runnable:docker:events:start
+#### container.life-cycle.started
 This event is when a container has started.
 In response we run `weave attach <containerId>` which adds the `ethwe` network interface to the container
 If attach is successful `container.network.attached` event is published to rabbitmq
-If attach is not successful `container.network.attach.failed` event is published
+If attach is not successful `container.network.attach-failed` event is published
 
-#### runnable:docker:events:die
+#### container.life-cycle.died
 This event is when a container has died
 In response we check to see if it is the weave container.
 If it is we kill the application so it can relaunch the weave container.
