@@ -181,6 +181,16 @@ describe('weave-wrapper.js unit test', function () {
   }); // attach
 
   describe('_handleCmdResult', function () {
+    beforeEach(function (done) {
+      sinon.stub(WeaveWrapper, '_isIgnorable');
+      done();
+    });
+
+    afterEach(function (done) {
+      WeaveWrapper._isIgnorable.restore();
+      done();
+    });
+
     it('should cb if no error', function (done) {
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.not.exist();
@@ -196,23 +206,8 @@ describe('weave-wrapper.js unit test', function () {
       }, 'test', {})(testErr);
     });
 
-    it('should cb 409 for not running', function (done) {
-      var testErr = { message: 'container is not running.' };
-      WeaveWrapper._handleCmdResult(function (err) {
-        expect(err.output.statusCode).to.equal(409);
-        done();
-      }, 'it never ends', {})(testErr);
-    });
-
-    it('should cb 409 for died', function (done) {
-      var testErr = { message: 'container had died' };
-      WeaveWrapper._handleCmdResult(function (err) {
-        expect(err.output.statusCode).to.equal(409);
-        done();
-      }, 'it never ends', {})(testErr);
-    });
-
     it('should cb 500 for unknown err', function (done) {
+      WeaveWrapper._isIgnorable.returns(false);
       var testErr = { message: 'mine of moria' };
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err.output.statusCode).to.equal(500);
@@ -220,7 +215,17 @@ describe('weave-wrapper.js unit test', function () {
       }, 'it never ends', {})(testErr);
     });
 
+    it('should cb 409 for ignorable err', function (done) {
+      WeaveWrapper._isIgnorable.returns(true);
+      var testErr = { message: 'mine of moria' };
+      WeaveWrapper._handleCmdResult(function (err) {
+        expect(err.output.statusCode).to.equal(409);
+        done();
+      }, 'it never ends', {})(testErr);
+    });
+
     it('should append error if error has message', function (done) {
+      WeaveWrapper._isIgnorable.returns(true);
       var testErr = new Error('keep it safe');
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err.message).to.equal('keep it secret:keep it safe');
@@ -229,6 +234,7 @@ describe('weave-wrapper.js unit test', function () {
     });
 
      it('should use passed message err does not have message', function (done) {
+      WeaveWrapper._isIgnorable.returns(true);
       var testErr = 'false';
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err.message).to.equal('keep it secret');
@@ -236,4 +242,32 @@ describe('weave-wrapper.js unit test', function () {
       }, 'keep it secret', {})(testErr);
     });
   }); // end _handleCmdResult
+
+  describe('_isIgnorable', function () {
+    it('should return true', function (done) {
+      [
+        'container is not running.',
+        'container had died',
+        'Error: No such container 189237590128375'
+      ].forEach(function (m) {
+        var testErr = { message: m };
+        expect(WeaveWrapper._isIgnorable(testErr), m)
+          .to.be.true();
+      });
+      done();
+    });
+
+    it('should return false', function (done) {
+      [
+        'is running.',
+        'alive',
+        'such container 189237590128375'
+      ].forEach(function (m) {
+        var testErr = { message: m };
+        expect(WeaveWrapper._isIgnorable(testErr), m)
+          .to.be.false();
+      });
+      done();
+    });
+  }); // end _isIgnorable
 });
