@@ -24,7 +24,7 @@ On start, the host IP is added to the list of peers for a specific org.
 
 ### Incoming events
 
-#### container.life-cycle.stared
+#### container.life-cycle.started
 This event is when a container has started.
 In response we run `weave attach <containerId>` which adds the `ethwe` network interface to the container
 If attach is successful `container.network.attached` event is published to rabbitmq
