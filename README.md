@@ -16,8 +16,9 @@ Sauron is in charge of adding an overlay network per org and giving each contain
 
 Sauron listens for container started events emitted from [docker-listener](https://github.com/CodeNow/docker-listener) on rabbitmq
 Based on the event, Sauron runs `weave` commands then publishes `container.network.attached` events
-If Sauron failed to attach for a fatal reason, it will emit `container.network.attach-failed`
-If Sauron failed to attach for some ignorable reason (container died, no container found), He ignores it
+If Sauron failed to attach for a fatal or some ignorable reason (container died, no container found)
+, it will emit `container.network.attach-failed`
+If Sauron failed to attach for a non-fatal reason, he retries
 
 Sauron uses redis to hold peer information.
 On start, the host IP is added to the list of peers for a specific org.
