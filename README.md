@@ -34,7 +34,12 @@ If attach is not successful `container.network.attach-failed` event is published
 #### container.life-cycle.died
 This event is when a container has died
 In response we check to see if it is the weave container.
-If it is we kill the application so it can relaunch the weave container.
+If it is we create `weave.start` command
+
+### Commands
+
+#### weave.start
+This command is used to start a weave container on the dock
 
 ## Development
 
