@@ -33,7 +33,7 @@ var subscribedEvents = [
 ];
 
 var queues = [
-  'weave.start'
+  ip.address() + 'weave.start'
 ];
 
 var testPublisher = new Hermes({
@@ -143,7 +143,7 @@ describe('events functional test', function () {
     });
 
     it('should setup weave', function (done) {
-      testPublisher.publish('weave.start', {});
+      testPublisher.publish(ip.address() + 'weave.start', {});
       publishHook = function () {
         done();
       };

@@ -213,7 +213,7 @@ describe('rabbitmq.js unit test', function () {
 
       RabbitMQ.publishWeaveStart();
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.start', {}).called).to.be.true();
+        .withArgs(ip.address() + 'weave.start', {}).called).to.be.true();
       done();
     });
   }); // end publishWeaveStart
