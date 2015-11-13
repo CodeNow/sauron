@@ -32,12 +32,17 @@ var subscribedEvents = [
   'container.network.attach-failed'
 ];
 
+var queues = [
+  ip.address() + '.weave.start'
+];
+
 var testPublisher = new Hermes({
     hostname: process.env.RABBITMQ_HOSTNAME,
     password: process.env.RABBITMQ_PASSWORD,
     port: process.env.RABBITMQ_PORT,
     username: process.env.RABBITMQ_USERNAME,
     publishedEvents: publishedEvents,
+    queues: queues,
     name: 'testPublisher'
   });
 
@@ -50,6 +55,8 @@ var testSubscriber = new Hermes({
     name: 'testSubscriber'
   });
 
+var WeaveSetup = require('../../lib/models/weave-setup.js');
+var RabbitMQ = require('../../lib/models/rabbitmq.js');
 var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
@@ -85,21 +92,21 @@ describe('events functional test', function () {
   });
 
   describe('container.life-cycle.died', function () {
-    var exitHook;
+    var publishHook;
+
     beforeEach(function (done) {
-      sinon.stub(process, 'exit', function () {
-        exitHook();
+      sinon.stub(RabbitMQ, 'publishWeaveStart', function () {
+        publishHook();
       });
       done();
     });
 
     afterEach(function (done) {
-      process.exit.restore();
+      RabbitMQ.publishWeaveStart.restore();
       done();
     });
 
-    it('should call exit for weave container', function (done) {
-      ErrorCat.prototype.report.onCall(0).yieldsAsync();
+    it('should publishWeaveStart for weave container death', function (done) {
       testPublisher.publish('container.life-cycle.died', {
         host: 'http://' + ip.address() + ':4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
@@ -113,11 +120,35 @@ describe('events functional test', function () {
           }
         }
       });
-      exitHook = function () {
+
+      publishHook = function () {
         done();
       };
     });
   }); // end container.life-cycle.died
+
+  describe('weave.start', function () {
+    var publishHook;
+
+    beforeEach(function (done) {
+      sinon.stub(WeaveSetup, 'setup', function () {
+        publishHook();
+      });
+      done();
+    });
+
+    afterEach(function (done) {
+      WeaveSetup.setup.restore();
+      done();
+    });
+
+    it('should setup weave', function (done) {
+      testPublisher.publish(ip.address() + '.weave.start', {});
+      publishHook = function () {
+        done();
+      };
+    });
+  }); // end weave.start
 
   describe('container.life-cycle.started', function () {
     beforeEach(function (done) {

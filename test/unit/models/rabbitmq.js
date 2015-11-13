@@ -195,6 +195,29 @@ describe('rabbitmq.js unit test', function () {
     });
   }); // end publishContainerNetworkAttachFailed
 
+  describe('publishWeaveStart', function () {
+    beforeEach(function (done) {
+      RabbitMQ._publisher = {
+        publish: sinon.stub()
+      };
+      done();
+    });
+
+    afterEach(function (done) {
+      RabbitMQ._publisher = null;
+      done();
+    });
+
+    it('should publish _publisher', function (done) {
+      RabbitMQ._publisher.publish.returns();
+
+      RabbitMQ.publishWeaveStart();
+      expect(RabbitMQ._publisher.publish
+        .withArgs(ip.address() + '.weave.start', {}).called).to.be.true();
+      done();
+    });
+  }); // end publishWeaveStart
+
   describe('_dataCheck', function () {
     it('should throw if missing keys', function (done) {
       var testData = {

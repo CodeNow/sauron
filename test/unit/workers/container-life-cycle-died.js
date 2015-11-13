@@ -15,6 +15,7 @@ var ponos = require('ponos');
 var TaskFatalError = ponos.TaskFatalError;
 var ErrorCat = require('error-cat');
 
+var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 var Events = require('../../../lib/models/events.js');
 var containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js');
 var WeaveDiedError = require('../../../lib/errors/weave-died-error.js');
@@ -23,7 +24,7 @@ describe('container-life-cycle-died.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
       sinon.stub(Events, 'handleDied');
-      sinon.stub(process, 'exit');
+      sinon.stub(RabbitMQ, 'publishWeaveStart');
       sinon.stub(Events, 'validateJob');
       sinon.stub(ErrorCat.prototype, 'report');
       done();
@@ -32,7 +33,7 @@ describe('container-life-cycle-died.js unit test', function () {
     afterEach(function (done) {
       Events.handleDied.restore();
       Events.validateJob.restore();
-      process.exit.restore();
+      RabbitMQ.publishWeaveStart.restore();
       ErrorCat.prototype.report.restore();
       done();
     });
@@ -65,7 +66,7 @@ describe('container-life-cycle-died.js unit test', function () {
     it('should report on WeaveDiedError', function (done) {
       Events.validateJob.returns(true);
       Events.handleDied.throws(new WeaveDiedError('test'));
-      process.exit.returns();
+      RabbitMQ.publishWeaveStart.returns();
       containerLifeCycleDied({})
         .then(function () {
           expect(ErrorCat.prototype.report.calledOnce).to.be.true();
@@ -74,13 +75,13 @@ describe('container-life-cycle-died.js unit test', function () {
         .catch(done);
     });
 
-    it('should exit on WeaveDiedError', function (done) {
+    it('should publishWeaveStart on WeaveDiedError', function (done) {
       Events.validateJob.returns(true);
       Events.handleDied.throws(new WeaveDiedError('test'));
-      process.exit.returns();
+      RabbitMQ.publishWeaveStart.returns();
       containerLifeCycleDied({})
         .then(function () {
-          expect(process.exit.calledOnce).to.be.true();
+          expect(RabbitMQ.publishWeaveStart.calledOnce).to.be.true();
           done();
         })
         .catch(done);
