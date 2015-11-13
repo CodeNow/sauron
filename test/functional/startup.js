@@ -68,30 +68,45 @@ describe('events functional test', function () {
     });
 
     it('should launch weave and add self to redis', function (done) {
-      Start.startup(function () {
+      var key = process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID;
+      Start.startup(check);
+
+      function check () {
         testRedisClient.smembers(
-          process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID, function (err, keys) {
-          var weaveInput = fs.readFileSync('./weaveMockArgs');
-          expect(weaveInput.toString())
-            .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
+          key, function (err, keys) {
+          var weaveInput;
+          try {
+            weaveInput = fs.readFileSync('./weaveMockArgs');
+            expect(weaveInput.toString())
+              .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
             expect(keys).to.contain(ip.address());
+          } catch (err) {
+            return process.nextTick(check);
+          }
           done();
         });
-      });
+      }
     });
 
-    it('should launch weave and add self to redis', function (done) {
+    it('should launch weave with peers', function (done) {
       var key = process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID;
       testRedisClient.sadd(key, '10.22.33.44', function () {
-        Start.startup(function () {
+        Start.startup(check);
+
+        function check () {
           testRedisClient.smembers(key, function (err, keys) {
-            var weaveInput = fs.readFileSync('./weaveMockArgs');
-            expect(weaveInput.toString())
-              .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.22.33.44\n');
+            var weaveInput;
+             try {
+              weaveInput = fs.readFileSync('./weaveMockArgs');
+              expect(weaveInput.toString())
+                .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.22.33.44\n');
               expect(keys).to.contain(ip.address());
+            } catch (err) {
+              return process.nextTick(check);
+            }
             done();
           });
-        });
+        }
       });
     });
   }); // end runnable:docker:events:start

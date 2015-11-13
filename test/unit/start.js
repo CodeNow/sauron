@@ -13,7 +13,6 @@ var sinon = require('sinon');
 
 var Redis = require('../../lib/models/redis.js');
 var WorkerServer = require('../../lib/models/worker-server.js');
-var WeaveSetup = require('../../lib/models/weave-setup.js');
 var RabbitMQ = require('../../lib/models/rabbitmq.js');
 var Start = require('../../lib/start.js');
 
@@ -22,7 +21,7 @@ describe('start.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(Redis, 'connect');
       sinon.stub(WorkerServer, 'listen');
-      sinon.stub(WeaveSetup, 'setup');
+      sinon.stub(RabbitMQ, 'publishWeaveStart');
       sinon.stub(RabbitMQ, 'create');
       done();
     });
@@ -30,7 +29,7 @@ describe('start.js unit test', function () {
     afterEach(function (done) {
       Redis.connect.restore();
       WorkerServer.listen.restore();
-      WeaveSetup.setup.restore();
+      RabbitMQ.publishWeaveStart.restore();
       RabbitMQ.create.restore();
       done();
     });
@@ -38,27 +37,15 @@ describe('start.js unit test', function () {
     it('should startup all services', function (done) {
       Redis.connect.returns();
       RabbitMQ.create.returns();
-      WeaveSetup.setup.yieldsAsync();
+      RabbitMQ.publishWeaveStart.returns();
       WorkerServer.listen.yieldsAsync();
 
       Start.startup(function (err) {
         expect(err).to.not.exist();
         expect(Redis.connect.calledOnce).to.be.true();
         expect(RabbitMQ.create.calledOnce).to.be.true();
-        expect(WeaveSetup.setup.calledOnce).to.be.true();
+        expect(RabbitMQ.publishWeaveStart.calledOnce).to.be.true();
         expect(WorkerServer.listen.calledOnce).to.be.true();
-        done();
-      });
-    });
-
-    it('should cb err if weave setup failed', function (done) {
-      Redis.connect.returns();
-      WorkerServer.listen.returns();
-      RabbitMQ.create.returns();
-      WeaveSetup.setup.yieldsAsync('Balrogs');
-
-      Start.startup(function (err) {
-        expect(err).to.exist();
         done();
       });
     });
