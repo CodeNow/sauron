@@ -12,15 +12,11 @@ var expect = Code.expect;
 
 var ip = require('ip');
 var sinon = require('sinon');
-var redis = require('redis');
 var path = require('path');
 var fs = require('fs');
 var Hermes = require('runnable-hermes');
 var ErrorCat = require('error-cat');
-
-var testRedisClient = redis.createClient(
-  process.env.REDIS_PORT,
-  process.env.REDIS_IPADDRESS);
+var nock = require('nock');
 
 var publishedEvents = [
   'container.life-cycle.died',
@@ -66,11 +62,24 @@ describe('events functional test', function () {
 
   beforeEach(function (done) {
     sinon.stub(ErrorCat.prototype, 'report').returns();
-    testRedisClient.flushdb(done);
+    done();
   });
 
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
+    nock(process.env.MAVIS_URL)
+      .get('/docks')
+      .reply(200, [{
+        'numContainers': 1,
+        'numBuilds': 5,
+        'host': 'http://10.0.202.22:4242',
+        'tags': '1738,run,build'
+      }, {
+        'numContainers': 1,
+        'numBuilds': 1,
+        'host': 'http://10.0.233.186:4242',
+        'tags': '1660575,run,build'
+      }]);
     Start.startup(done);
   });
 
