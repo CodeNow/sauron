@@ -10,12 +10,10 @@ var beforeEach = lab.beforeEach;
 var Code = require('code');
 var expect = Code.expect;
 
-var ip = require('ip');
 var sinon = require('sinon');
 var path = require('path');
 var fs = require('fs');
 var Hermes = require('runnable-hermes');
-var ErrorCat = require('error-cat');
 var nock = require('nock');
 
 var publishedEvents = [
@@ -29,7 +27,7 @@ var subscribedEvents = [
 ];
 
 var queues = [
-  ip.address() + '.weave.start'
+  'weave.start'
 ];
 
 var testPublisher = new Hermes({
@@ -48,11 +46,11 @@ var testSubscriber = new Hermes({
     port: process.env.RABBITMQ_PORT,
     username: process.env.RABBITMQ_USERNAME,
     subscribedEvents: subscribedEvents,
+    queues: queues,
     name: 'testSubscriber'
   });
 
 var WeaveSetup = require('../../lib/models/weave-setup.js');
-var RabbitMQ = require('../../lib/models/rabbitmq.js');
 var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
@@ -61,14 +59,13 @@ describe('events functional test', function () {
   });
 
   beforeEach(function (done) {
-    sinon.stub(ErrorCat.prototype, 'report').returns();
-    done();
-  });
-
-  beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
+    // need to nock 3 times
+    // once for initial setup
+    // two for each weave start job
     nock(process.env.MAVIS_URL)
       .get('/docks')
+      .times(3)
       .reply(200, [{
         'numContainers': 1,
         'numBuilds': 5,
@@ -89,7 +86,6 @@ describe('events functional test', function () {
 
   afterEach(function (done) {
     Start.shutdown(done);
-    ErrorCat.prototype.report.restore();
   });
 
   afterEach(function (done) {
@@ -101,23 +97,37 @@ describe('events functional test', function () {
   });
 
   describe('container.life-cycle.died', function () {
-    var publishHook;
-
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, 'publishWeaveStart', function () {
-        publishHook();
+      process.env.ORG_ID = 'testOrg';
+
+      fs.unlink('./weaveMockArgs', function () {
+        done();
       });
-      done();
+      nock(process.env.MAVIS_URL)
+        .get('/docks')
+        .reply(200, [{
+          'numContainers': 1,
+          'numBuilds': 5,
+          'host': 'http://10.0.202.22:4242',
+          'tags': 'testOrg,run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://10.0.233.186:4242',
+          'tags': '1660575,run,build'
+        }]);
     });
 
     afterEach(function (done) {
-      RabbitMQ.publishWeaveStart.restore();
+      delete process.env.ORG_ID;
       done();
     });
 
-    it('should publishWeaveStart for weave container death', function (done) {
+    it('should launch weave with no peers on container death', function (done) {
+      process.env.ORG_ID = 'nopeers';
+
       testPublisher.publish('container.life-cycle.died', {
-        host: 'http://' + ip.address() + ':4242',
+        host: 'http://localhost:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
         inspectData: {
@@ -130,32 +140,93 @@ describe('events functional test', function () {
         }
       });
 
-      publishHook = function () {
+      check();
+      function check () {
+        var weaveInput;
+        try {
+          weaveInput = fs.readFileSync('./weaveMockArgs');
+        } catch (err) {
+          return setTimeout(check, 100);
+        }
+        expect(weaveInput.toString())
+          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
         done();
-      };
+      }
+    });
+
+    it('should launch weave with peers on container death', function (done) {
+      testPublisher.publish('container.life-cycle.died', {
+        host: 'http://localhost:4242',
+        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
+        from: 'weaveworks/weave:1.2.0',
+        inspectData: {
+          Config: {
+            ExposedPorts: {
+              '6783/tcp': {},
+              '6783/udp': {}
+            }
+          }
+        }
+      });
+
+      check();
+      function check () {
+        var weaveInput;
+        try {
+          weaveInput = fs.readFileSync('./weaveMockArgs');
+        } catch (err) {
+          return setTimeout(check, 100);
+        }
+        expect(weaveInput.toString())
+          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.0.202.22\n');
+        done();
+      }
     });
   }); // end container.life-cycle.died
 
   describe('weave.start', function () {
-    var publishHook;
-
     beforeEach(function (done) {
-      sinon.stub(WeaveSetup, 'setup', function () {
-        publishHook();
+      process.env.ORG_ID = 'testOrg';
+
+      fs.unlink('./weaveMockArgs', function () {
+        done();
       });
-      done();
+      nock(process.env.MAVIS_URL)
+        .get('/docks')
+        .reply(200, [{
+          'numContainers': 1,
+          'numBuilds': 5,
+          'host': 'http://10.0.202.22:4242',
+          'tags': '55555,run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://10.0.233.186:4242',
+          'tags': '1660575,run,build'
+        }]);
     });
 
     afterEach(function (done) {
-      WeaveSetup.setup.restore();
+      delete process.env.ORG_ID;
       done();
     });
 
     it('should setup weave', function (done) {
-      testPublisher.publish(ip.address() + '.weave.start', {});
-      publishHook = function () {
+      testPublisher.publish('weave.start', {
+        dockerHost: 'http://10.2.2.2:4242'
+      });
+      check();
+      function check () {
+        var weaveInput;
+        try {
+          weaveInput = fs.readFileSync('./weaveMockArgs');
+        } catch (err) {
+          return setTimeout(check, 100);
+        }
+        expect(weaveInput.toString())
+          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
         done();
-      };
+      }
     });
   }); // end weave.start
 
@@ -170,7 +241,7 @@ describe('events functional test', function () {
       var testId = 'Andune';
       testSubscriber.subscribe('container.network.attached', function (data, cb) {
         expect(data.id).to.equal(testId);
-        expect(data.host).to.equal('http://' + ip.address() + ':4242');
+        expect(data.host).to.equal('http://localhost:4242');
         expect(data.containerIp).to.equal('10.0.17.38');
         expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
@@ -179,7 +250,7 @@ describe('events functional test', function () {
         done();
       });
       testPublisher.publish('container.life-cycle.started', {
-        host: 'http://' + ip.address() + ':4242',
+        host: 'http://localhost:4242',
         id: testId,
         from: 'ubuntu',
         inspectData: {
@@ -198,7 +269,7 @@ describe('events functional test', function () {
       process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock died-attach');
       testSubscriber.subscribe('container.network.attach-failed', function (data, cb) {
         expect(data.id).to.equal(testId);
-        expect(data.host).to.equal('http://' + ip.address() + ':4242');
+        expect(data.host).to.equal('http://localhost:4242');
         expect(data.err.data.err.stderr).to.equal('container died\n');
         expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
@@ -207,7 +278,7 @@ describe('events functional test', function () {
         done();
       });
       testPublisher.publish('container.life-cycle.started', {
-        host: 'http://' + ip.address() + ':4242',
+        host: 'http://localhost:4242',
         id: testId,
         from: 'ubuntu',
         inspectData: {
@@ -233,7 +304,7 @@ describe('events functional test', function () {
         process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock retry-attach');
         testSubscriber.subscribe('container.network.attached', function (data, cb) {
           expect(data.id).to.equal(testId);
-          expect(data.host).to.equal('http://' + ip.address() + ':4242');
+          expect(data.host).to.equal('http://localhost:4242');
           expect(data.containerIp).to.equal('10.0.17.38');
           expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
           var weaveInput = fs.readFileSync('./weaveMockArgs');
@@ -242,7 +313,7 @@ describe('events functional test', function () {
           done();
         });
         testPublisher.publish('container.life-cycle.started', {
-          host: 'http://' + ip.address() + ':4242',
+          host: 'http://localhost:4242',
           id: testId,
           from: 'ubuntu',
           inspectData: {

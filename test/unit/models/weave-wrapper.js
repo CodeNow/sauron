@@ -30,11 +30,15 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should output stdout', function (done) {
       var testStdout = 'all deleted';
+      var testEnv = 'env test';
+
       child_process.exec.yieldsAsync(undefined, testStdout);
-      WeaveWrapper._runCmd(testCmd, function (err, stdout) {
+      WeaveWrapper._runCmd(testCmd, testEnv, function (err, stdout) {
         expect(err).to.not.exist();
         expect(stdout).to.equal(testStdout);
-        expect(child_process.exec.withArgs(testCmd).called)
+        expect(child_process.exec.withArgs(testCmd, {
+          env: testEnv
+        }).called)
           .to.be.true();
         done();
       });
@@ -42,11 +46,15 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should cb err with stderr', function (done) {
       var testStderr = 'all deleted';
+      var testEnv = 'env test';
+
       child_process.exec.yieldsAsync(new Error('gone'), '', testStderr);
-      WeaveWrapper._runCmd(testCmd, function (err) {
+      WeaveWrapper._runCmd(testCmd, testEnv, function (err) {
         expect(err).to.exist();
         expect(err.stderr).to.equal(testStderr);
-        expect(child_process.exec.withArgs(testCmd).called)
+        expect(child_process.exec.withArgs(testCmd, {
+          env: testEnv
+        }).called)
           .to.be.true();
         done();
       });
@@ -54,7 +62,12 @@ describe('weave-wrapper.js unit test', function () {
   }); // end _runCmd
 
   describe('launch', function () {
+    var testDockerHost = '10.0.0.1:4242';
+
     beforeEach(function (done) {
+      WeaveWrapper.certs = {
+        cert: 'test'
+      };
       sinon.stub(WeaveWrapper, '_runCmd');
       sinon.stub(WeaveWrapper, '_handleCmdResult');
       process.env.WEAVE_PATH = '/usr/bin/weave';
@@ -63,6 +76,7 @@ describe('weave-wrapper.js unit test', function () {
     });
 
     afterEach(function (done) {
+      delete WeaveWrapper.certs;
       WeaveWrapper._runCmd.restore();
       WeaveWrapper._handleCmdResult.restore();
       delete process.env.WEAVE_PATH;
@@ -75,12 +89,15 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = ['10.0.0.1', '10.0.0.2'];
 
-      WeaveWrapper.launch(peers, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
             '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8 ' +
-            '10.0.0.1 10.0.0.2').called)
+            '10.0.0.1 10.0.0.2', {
+              DOCKER_HOST: 'tcp://' + testDockerHost,
+              cert: 'test'
+            }).called)
           .to.be.true();
         done();
       });
@@ -91,11 +108,14 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = [];
 
-      WeaveWrapper.launch(peers, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
-            '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8')
+            '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8', {
+              DOCKER_HOST: 'tcp://' + testDockerHost,
+              cert: 'test'
+            })
           .called).to.be.true();
         done();
       });
@@ -105,7 +125,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync();
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = 'no valid';
-      WeaveWrapper.launch(peers, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -114,7 +134,7 @@ describe('weave-wrapper.js unit test', function () {
     it('should fail if missing peers', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
       WeaveWrapper._handleCmdResult.returnsArg(0);
-      WeaveWrapper.launch(null, function (err) {
+      WeaveWrapper.launch(null, testDockerHost, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -123,8 +143,12 @@ describe('weave-wrapper.js unit test', function () {
 
   describe('attach', function () {
     var testContainerId = '1738';
+    var testDockerHost = '10.2.2.2:4242';
 
     beforeEach(function (done) {
+      WeaveWrapper.certs = {
+        cert: 'test'
+      };
       sinon.stub(WeaveWrapper, '_runCmd');
       sinon.stub(WeaveWrapper, '_handleCmdResult');
       process.env.WEAVE_PATH = '/usr/bin/weave';
@@ -132,6 +156,7 @@ describe('weave-wrapper.js unit test', function () {
     });
 
     afterEach(function (done) {
+      delete WeaveWrapper.certs;
       WeaveWrapper._runCmd.restore();
       WeaveWrapper._handleCmdResult.restore();
       delete process.env.WEAVE_PATH;
@@ -142,11 +167,13 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync(null, '10.0.0.0\n');
       WeaveWrapper._handleCmdResult.returnsArg(0);
 
-      WeaveWrapper.attach(testContainerId, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave attach ' + testContainerId).called)
-          .to.be.true();
+          .withArgs('/usr/bin/weave attach ' + testContainerId, {
+            DOCKER_HOST: 'tcp://' + testDockerHost,
+            cert: 'test'
+          }).called).to.be.true();
         done();
       });
     });
@@ -155,7 +182,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync(null, 'not an ip\n');
       WeaveWrapper._handleCmdResult.returnsArg(0);
 
-      WeaveWrapper.attach(testContainerId, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
         expect(err).to.exist();
         done();
       });
@@ -163,7 +190,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should fail if missing containerId', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.attach(null, function (err) {
+      WeaveWrapper.attach(null, testDockerHost, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -172,7 +199,7 @@ describe('weave-wrapper.js unit test', function () {
     it('should _handleCmdResult if runCmd failed', function (done) {
       WeaveWrapper._runCmd.yieldsAsync(new Error('Gollum'));
       WeaveWrapper._handleCmdResult.returnsArg(0);
-      WeaveWrapper.attach(testContainerId, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
         expect(err).to.exist();
         done();
       });

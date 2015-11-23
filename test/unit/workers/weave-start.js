@@ -18,17 +18,17 @@ var containerLifeCycleStarted = require('../../../lib/workers/weave-start.js');
 describe('weave-start.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(WeaveSetup, 'setup');
+      sinon.stub(WeaveSetup, 'setupAsync');
       done();
     });
 
     afterEach(function (done) {
-      WeaveSetup.setup.restore();
+      WeaveSetup.setupAsync.restore();
       done();
     });
 
     it('should throw error if setup failed', function (done) {
-      WeaveSetup.setup.throws(new Error('test'));
+      WeaveSetup.setupAsync.throws(new Error('test'));
       containerLifeCycleStarted({})
         .then(function () {
           throw new Error('should have thrown');
@@ -40,12 +40,12 @@ describe('weave-start.js unit test', function () {
     });
 
     it('should be fine if no errors', function (done) {
-      WeaveSetup.setup.returns();
-      containerLifeCycleStarted({})
-        .then(function () {
-          done();
-        })
-        .catch(done);
+      WeaveSetup.setupAsync.returns();
+      containerLifeCycleStarted({
+        dockerHost: '10.0.0.1:4224'
+      })
+      .then(done)
+      .catch(done);
     });
   }); // end run
 }); // end weave-start

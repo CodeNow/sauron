@@ -18,7 +18,6 @@ var TaskError = require('ponos').TaskError;
 var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
 var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 var Events = require('../../../lib/models/events.js');
-var WeaveDiedError = require('../../../lib/errors/weave-died-error.js');
 
 describe('events.js unit test', function () {
   beforeEach(function (done) {
@@ -34,42 +33,38 @@ describe('events.js unit test', function () {
   describe('handleDied', function () {
     beforeEach(function (done) {
       sinon.stub(Events, '_isWeaveContainer');
-      sinon.stub(Events, '_isThisHost');
+      sinon.stub(Events, '_getDockerHost');
+      sinon.stub(RabbitMQ, 'publishWeaveStart');
       done();
     });
 
     afterEach(function (done) {
       Events._isWeaveContainer.restore();
-      Events._isThisHost.restore();
+      Events._getDockerHost.restore();
+      RabbitMQ.publishWeaveStart.restore();
       done();
     });
 
-    it('should throw err if weave container', function (done) {
-      Events._isThisHost.returns(true);
+    it('should publish start if weave container', function (done) {
       Events._isWeaveContainer.returns(true);
+      Events._getDockerHost.returns();
+      RabbitMQ.publishWeaveStart.returns();
 
-      expect(function() {
-        Events.handleDied();
-      }).to.throw(WeaveDiedError);
+      Events.handleDied();
+
+      expect(RabbitMQ.publishWeaveStart.calledOnce)
+        .to.be.true();
       done();
     });
 
-    it('should not throw if _isWeaveContainer returns false', function (done) {
-      Events._isThisHost.returns(true);
+    it('should not publish start', function (done) {
       Events._isWeaveContainer.returns(false);
+      RabbitMQ.publishWeaveStart.returns();
 
-      expect(function() {
-        Events.handleDied();
-      }).to.not.throw();
-      done();
-    });
+      Events.handleDied();
 
-    it('should not throw if _isThisHost returns false', function (done) {
-      Events._isThisHost.returns(false);
-
-      expect(function() {
-        Events.handleDied();
-      }).to.not.throw();
+      expect(RabbitMQ.publishWeaveStart.calledOnce)
+        .to.be.false();
       done();
     });
   }); // end handleDied
@@ -79,7 +74,7 @@ describe('events.js unit test', function () {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttachFailed');
       sinon.stub(Events, '_isNetworkNeeded');
-      sinon.stub(Events, '_isThisHost');
+      sinon.stub(Events, '_getDockerHost');
       sinon.stub(WeaveWrapper, 'attach');
       done();
     });
@@ -88,23 +83,12 @@ describe('events.js unit test', function () {
       RabbitMQ.publishContainerNetworkAttached.restore();
       RabbitMQ.publishContainerNetworkAttachFailed.restore();
       Events._isNetworkNeeded.restore();
-      Events._isThisHost.restore();
+      Events._getDockerHost.restore();
       WeaveWrapper.attach.restore();
       done();
     });
 
-    it('should not attach if not this host', function (done) {
-      Events._isThisHost.returns(false);
-
-      Events.handleStarted({}, function (err) {
-        expect(err).to.not.exist();
-        expect(WeaveWrapper.attach.called).to.be.false();
-        done();
-      });
-    });
-
     it('should not attach if network not needed', function (done) {
-      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(false);
 
       Events.handleStarted({}, function (err) {
@@ -119,7 +103,6 @@ describe('events.js unit test', function () {
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
 
-      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
       RabbitMQ.publishContainerNetworkAttachFailed.returns();
@@ -146,7 +129,6 @@ describe('events.js unit test', function () {
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
 
-      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
       RabbitMQ.publishContainerNetworkAttachFailed.returns();
@@ -175,7 +157,6 @@ describe('events.js unit test', function () {
       var testIp = '10.0.0.0';
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
-      Events._isThisHost.returns(true);
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
@@ -333,19 +314,12 @@ describe('events.js unit test', function () {
     });
   }); // end validateJob
 
-  describe('_isThisHost', function () {
-    it('should return false if not this host', function (done) {
-      expect(Events._isThisHost({
-        host: 'bad'
-      })).to.be.false();
+  describe('_getDockerHost', function () {
+    it('should return formated dockerhost', function (done) {
+      expect(Events._getDockerHost({
+        host: 'http://10.0.0.2:4242'
+      })).to.equal('10.0.0.2:4242');
       done();
     });
-
-    it('should return true if this host', function (done) {
-      expect(Events._isThisHost({
-        host: 'http://' + ip.address() + ':4242'
-      })).to.be.true();
-      done();
-    });
-  }); // end _isThisHost
+  }); // end _getDockerHost
 }); // end events.js unit test
