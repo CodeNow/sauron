@@ -10,114 +10,70 @@ var Code = require('code');
 var expect = Code.expect;
 
 var sinon = require('sinon');
+var request = require('request');
 
-var Redis = require('../../../lib/models/redis.js');
 var Peers = require('../../../lib/models/peers.js');
 
 describe('peers.js unit test', function () {
   beforeEach(function (done) {
-    process.env.WEAVE_PEER_NAMESPACE = 'weave:peers';
     process.env.ORG_ID = 12348756;
     done();
   });
   describe('getList', function () {
     beforeEach(function (done) {
-      Redis.client = {
-        smembers: sinon.stub()
-      };
-      sinon.stub(Peers, '_handleErr');
+      sinon.stub(request, 'get');
       done();
     });
 
     afterEach(function (done) {
-      Peers._handleErr.restore();
+      request.get.restore();
       done();
     });
 
-    it('should list smembers', function (done) {
-      var testList = ['Watcher', 'in', 'the', 'Water'];
-      Redis.client.smembers.yieldsAsync(null, testList);
-      Peers._handleErr.returnsArg(0);
-      Peers.getList(function (err, peers) {
-        expect(err).to.not.exist();
-        expect(peers).to.deep.equal(testList);
+    it('should error is request errored', function (done) {
+      request.get.yieldsAsync('firestone');
+      Peers.getList('', function (err) {
+        expect(err.output.statusCode).to.equal(502);
         done();
       });
     });
 
-    it('should error if smembers errors', function (done) {
-      var testError = 'Shelob';
-      Redis.client.smembers.yieldsAsync(testError);
-      Peers._handleErr.returnsArg(0);
-      Peers.getList(function (err) {
-        expect(err).to.exist();
+    it('should error is request returncode != 200', function (done) {
+      request.get.yieldsAsync(null, {
+        statusCode: 500
+      });
+      Peers.getList('', function (err) {
+        expect(err.output.statusCode).to.equal(500);
+        done();
+      });
+    });
+
+    it('should return correct hosts based on org', function (done) {
+      var testData = [{tags: 'runnable,build,run', host: 'http://host1:4242'},
+        {tags: 'runnable,build,run', host: 'http://host2:4242'},
+        {tags: 'codenow,build,run', host: 'http://host3:4242'}];
+      request.get.yieldsAsync(null, {
+        statusCode: 200
+      }, JSON.stringify(testData));
+      Peers.getList('runnable', function (err, peers) {
+        expect(err).to.not.exist();
+        expect(peers).to.contain(['host1', 'host2']);
+        done();
+      });
+    });
+
+    it('should return no hosts', function (done) {
+      var testData = [{tags: 'runnable,build,run', host: 'http://host1:4242'},
+        {tags: 'runnable,build,run', host: 'http://host2:4242'},
+        {tags: 'codenow,build,run', host: 'http://host3:4242'}];
+      request.get.yieldsAsync(null, {
+        statusCode: 200
+      }, JSON.stringify(testData));
+      Peers.getList('blue', function (err, peers) {
+        expect(err).to.not.exist();
+        expect(peers).to.be.empty();
         done();
       });
     });
   }); // end getList
-
-  describe('addSelf', function () {
-    beforeEach(function (done) {
-      Redis.client = {
-        sadd: sinon.stub()
-      };
-      sinon.stub(Peers, '_handleErr');
-      done();
-    });
-
-    afterEach(function (done) {
-      Peers._handleErr.restore();
-      done();
-    });
-
-    it('should list sadd', function (done) {
-      var testList = ['Watcher', 'in', 'the', 'Water'];
-      Redis.client.sadd.yieldsAsync(null, testList);
-      Peers._handleErr.returnsArg(0);
-      Peers.addSelf(function (err, peers) {
-        expect(err).to.not.exist();
-        expect(peers).to.deep.equal(testList);
-        done();
-      });
-    });
-
-    it('should error if sadd errors', function (done) {
-      var testError = 'Shelob';
-      Redis.client.sadd.yieldsAsync(testError);
-      Peers._handleErr.returnsArg(0);
-      Peers.addSelf(function (err) {
-        expect(err).to.exist();
-        done();
-      });
-    });
-  }); // end addSelf
-
-  describe('_handleErr', function () {
-    it('should cb with args if not err', function (done) {
-      var testData = 'Ungoliant';
-      Peers._handleErr(function (err, data) {
-        expect(err).to.not.exist();
-        expect(data).to.equal(testData);
-        done();
-      })(null, testData);
-    });
-
-    it('should cb original error message', function (done) {
-      var testError = { message: 'as takes longest to finish' };
-      Peers._handleErr(function (err) {
-        expect(err.message)
-          .to.equal('Its the job thats never started:as takes longest to finish');
-        done();
-      }, 'Its the job thats never started', {})(testError);
-    });
-
-    it('should cb passed message', function (done) {
-      var testError = 'never seen';
-      Peers._handleErr(function (err) {
-        expect(err.message)
-          .to.equal('Roads Go Ever On');
-        done();
-      }, 'Roads Go Ever On', {})(testError);
-    });
-  }); // end _handleErr
 }); // end peers.js unit test
