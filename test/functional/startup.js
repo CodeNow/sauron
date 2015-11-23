@@ -10,15 +10,10 @@ var beforeEach = lab.beforeEach;
 var Code = require('code');
 var expect = Code.expect;
 
-var path = require('path');
 var fs = require('fs');
 var Hermes = require('runnable-hermes');
-var redis = require('redis');
-var ip = require('ip');
-
-var testRedisClient = redis.createClient(
-  process.env.REDIS_PORT,
-  process.env.REDIS_IPADDRESS);
+var nock = require('nock');
+var path = require('path');
 
 var publishedEvents = [
   'container.life-cycle.died',
@@ -44,7 +39,7 @@ describe('events functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
     process.env.ORG_ID = '1234124';
-    testRedisClient.flushdb(done);
+    done();
   });
 
   afterEach(function (done) {
@@ -57,7 +52,9 @@ describe('events functional test', function () {
   });
 
   describe('weave launch', function () {
+    var mavisNock;
     beforeEach(function (done) {
+      mavisNock = nock(process.env.MAVIS_URL);
       fs.unlink('./weaveMockArgs', function () {
         done();
       });
@@ -67,47 +64,64 @@ describe('events functional test', function () {
       Start.shutdown(done);
     });
 
-    it('should launch weave and add self to redis', function (done) {
-      var key = process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID;
+    it('should launch weave', function (done) {
+      mavisNock
+        .get('/docks')
+        .reply(200, [{
+          'numContainers': 1,
+          'numBuilds': 5,
+          'host': 'http://10.0.202.22:4242',
+          'tags': '1738,run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://10.0.233.186:4242',
+          'tags': '1660575,run,build'
+        }]);
+
       Start.startup(check);
 
       function check () {
-        testRedisClient.smembers(
-          key, function (err, keys) {
-          var weaveInput;
-          try {
-            weaveInput = fs.readFileSync('./weaveMockArgs');
-            expect(weaveInput.toString())
-              .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
-            expect(keys).to.contain(ip.address());
-          } catch (err) {
-            return process.nextTick(check);
-          }
-          done();
-        });
+        var weaveInput;
+        try {
+          weaveInput = fs.readFileSync('./weaveMockArgs');
+        } catch (err) {
+          return setTimeout(check, 100);
+        }
+        expect(weaveInput.toString())
+          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
+        done();
       }
     });
 
     it('should launch weave with peers', function (done) {
-      var key = process.env.WEAVE_PEER_NAMESPACE + process.env.ORG_ID;
-      testRedisClient.sadd(key, '10.22.33.44', function () {
-        Start.startup(check);
+      mavisNock
+        .get('/docks')
+        .reply(200, [{
+          'numContainers': 1,
+          'numBuilds': 5,
+          'host': 'http://10.22.33.44:4242',
+          'tags': process.env.ORG_ID + ',run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://10.0.233.186:4242',
+          'tags': '1660575,run,build'
+        }]);
 
-        function check () {
-          testRedisClient.smembers(key, function (err, keys) {
-            var weaveInput;
-             try {
-              weaveInput = fs.readFileSync('./weaveMockArgs');
-              expect(weaveInput.toString())
-                .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.22.33.44\n');
-              expect(keys).to.contain(ip.address());
-            } catch (err) {
-              return process.nextTick(check);
-            }
-            done();
-          });
+      Start.startup(check);
+
+      function check () {
+        var weaveInput;
+         try {
+          weaveInput = fs.readFileSync('./weaveMockArgs');
+        } catch (err) {
+          return setTimeout(check, 100);
         }
-      });
+        expect(weaveInput.toString())
+          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.22.33.44\n');
+        done();
+      }
     });
   }); // end runnable:docker:events:start
 }); // end functional test

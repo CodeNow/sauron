@@ -6,7 +6,7 @@ Sauron is the greatest and most trusted servant of Runnable during Two Point O. 
 ## Responsibilities
 Sauron is in charge of adding an overlay network per org and giving each container a ip address. His primary Responsibilities include:
 
-* Maintaining peers per org which is passed when launching weave
+* Launching `weave` with correct peers obtained from Mavis
 * Launching `weave` and restarting it if it dies
 * Call `weave attach` on all started containers
 * Emitting `container.network.attached` or `container.network.attach-failed` events
@@ -20,8 +20,7 @@ If Sauron failed to attach for a fatal or some ignorable reason (container died,
 , it will emit `container.network.attach-failed`
 If Sauron failed to attach for a non-fatal reason, he retries
 
-Sauron uses redis to hold peer information.
-On start, the host IP is added to the list of peers for a specific org.
+Sauron uses mavis to get peer information.
 
 ### Incoming events
 
@@ -78,18 +77,3 @@ them on your machine.
 
 For more information see:
 [RabbitMQ Homebrew Install Instructions](https://www.rabbitmq.com/install-homebrew.html)
-
-#### Redis
-In order to fully test the codebase you will need to install Redis locally
-on your machine. Run the following commands to do so:
-
-* `brew update`
-* `brew install redis`
-
-Once installed, brew should instruct you on how to ensure that Redis is
-launched at reboot and login. Copy the commands from the brew output and execute
-them on your machine.
-
-For more information see:
-[Redis Homebrew Install Instructions](http://jasdeep.ca/2012/05/installing-redis-on-mac-os-x)
-

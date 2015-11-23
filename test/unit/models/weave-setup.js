@@ -24,28 +24,24 @@ describe('weave-setup.js unit test', function () {
   describe('setup', function () {
     beforeEach(function (done) {
       sinon.stub(Peers, 'getList');
-      sinon.stub(Peers, 'addSelf');
       sinon.stub(WeaveWrapper, 'launch');
       done();
     });
 
     afterEach(function (done) {
       Peers.getList.restore();
-      Peers.addSelf.restore();
       WeaveWrapper.launch.restore();
       done();
     });
 
     it('should launch add self', function (done) {
       Peers.getList.yieldsAsync(null, []);
-      Peers.addSelf.yieldsAsync();
       WeaveWrapper.launch.yieldsAsync();
       WeaveSetup.setup()
         .catch(done)
         .then(function (err) {
           expect(err).to.not.exist();
           expect(WeaveWrapper.launch.called);
-          expect(Peers.addSelf.called).to.be.true();
           done();
         });
     });
@@ -69,7 +65,6 @@ describe('weave-setup.js unit test', function () {
         .then(shouldThrow)
         .catch(function (err) {
           expect(err).to.exist();
-          expect(Peers.addSelf.called).to.be.false();
           done();
         });
     });
@@ -77,7 +72,6 @@ describe('weave-setup.js unit test', function () {
     it('should not pass self to launch', function (done) {
       Peers.getList.yieldsAsync(null, [ip.address(), 'a', 'b']);
       WeaveWrapper.launch.yieldsAsync(null);
-      Peers.addSelf.yieldsAsync();
 
       WeaveSetup.setup()
         .catch(shouldThrow)
@@ -92,7 +86,6 @@ describe('weave-setup.js unit test', function () {
     it('should not pass self to launch', function (done) {
       Peers.getList.yieldsAsync(null, [ip.address()]);
       WeaveWrapper.launch.yieldsAsync(null);
-      Peers.addSelf.yieldsAsync();
 
       WeaveSetup.setup()
         .catch(done)
