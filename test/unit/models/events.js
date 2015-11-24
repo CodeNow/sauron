@@ -23,7 +23,7 @@ var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
 
 describe('events.js unit test', function () {
   beforeEach(function (done) {
-    process.env.WEAVE_IMAGE_NAME = 'weaveworks/weave:1.2.0';
+    process.env.WEAVE_IMAGE_NAME = 'weaveworks/weave';
     done();
   });
 
