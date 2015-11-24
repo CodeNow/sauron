@@ -14,6 +14,7 @@ var sinon = require('sinon');
 var ip = require('ip');
 var ErrorCat = require('error-cat');
 var TaskError = require('ponos').TaskError;
+var TaskFatalError = require('ponos').TaskFatalError;
 
 var Events = require('../../../lib/models/events.js');
 var Peers = require('../../../lib/models/peers.js');
@@ -54,7 +55,9 @@ describe('events.js unit test', function () {
     });
 
     it('should launch with no peers', function (done) {
-      Peers.getList.yieldsAsync(null, []);
+      Peers.getList.yieldsAsync(null, [{
+        dockerUri: 'http://10.0.0.1:4242'
+      }]);
       WeaveWrapper.launch.yieldsAsync();
 
       Events.handleStart({
@@ -63,6 +66,17 @@ describe('events.js unit test', function () {
         expect(err).to.not.exist();
         expect(WeaveWrapper.launch.withArgs([], '10.0.0.1:4242').called)
           .to.be.true();
+        done();
+      });
+    });
+
+    it('should cb TaskFatalError if target no in peers', function (done) {
+      Peers.getList.yieldsAsync(null, []);
+
+      Events.handleStart({
+        dockerUri: 'http://10.0.0.1:4242'
+      }, function (err) {
+        expect(err).to.be.an.instanceof(TaskFatalError);
         done();
       });
     });

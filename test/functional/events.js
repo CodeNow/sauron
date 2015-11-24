@@ -112,48 +112,18 @@ describe('events functional test', function () {
           'numContainers': 1,
           'numBuilds': 1,
           'host': 'http://10.0.233.186:4242',
-          'tags': '1660575,run,build'
+          'tags': 'runnable,run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://10.0.233.23:4242',
+          'tags': 'runnable,run,build'
         }]);
     });
 
     it('should launch weave with no peers on container death', function (done) {
       testPublisher.publish('container.life-cycle.died', {
-        host: 'http://localhost:4242',
-        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
-        from: 'weaveworks/weave:1.2.0',
-        tags: 'none,build,run',
-        inspectData: {
-          Config: {
-            ExposedPorts: {
-              '6783/tcp': {},
-              '6783/udp': {}
-            }
-          }
-        }
-      });
-
-      check();
-      function check () {
-        var weaveArgs;
-        var weaveEnvs;
-        try {
-          weaveArgs = fs.readFileSync('./weaveMockArgs');
-          weaveEnvs = fs.readFileSync('./weaveEnvs');
-        } catch (err) {
-          return setTimeout(check, 100);
-        }
-        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=localhost:4242');
-
-        done();
-      }
-    });
-
-    it('should launch weave with peers on container death', function (done) {
-      testPublisher.publish('container.life-cycle.died', {
-        host: 'http://localhost:4242',
+        host: 'http://10.0.202.22:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
         tags: 'testOrg,build,run',
@@ -177,10 +147,45 @@ describe('events functional test', function () {
         } catch (err) {
           return setTimeout(check, 100);
         }
-        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.0.202.22\n');
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=localhost:4242');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=10.0.202.22:4242');
+
+        done();
+      }
+    });
+
+    it('should launch weave with peers on container death', function (done) {
+      testPublisher.publish('container.life-cycle.died', {
+        host: 'http://10.0.233.186:4242',
+        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
+        from: 'weaveworks/weave:1.2.0',
+        tags: 'runnable,build,run',
+        inspectData: {
+          Config: {
+            ExposedPorts: {
+              '6783/tcp': {},
+              '6783/udp': {}
+            }
+          }
+        }
+      });
+
+      check();
+      function check () {
+        var weaveArgs;
+        var weaveEnvs;
+        try {
+          weaveArgs = fs.readFileSync('./weaveMockArgs');
+          weaveEnvs = fs.readFileSync('./weaveEnvs');
+        } catch (err) {
+          return setTimeout(check, 100);
+        }
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.0.233.23\n');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=10.0.233.186:4242');
 
         done();
       }
@@ -199,8 +204,8 @@ describe('events functional test', function () {
         .reply(200, [{
           'numContainers': 1,
           'numBuilds': 5,
-          'host': 'http://10.0.202.22:4242',
-          'tags': '55555,run,build'
+          'host': 'http://10.2.2.2:4242',
+          'tags': 'runnable,build,run'
         }, {
           'numContainers': 1,
           'numBuilds': 1,
@@ -209,10 +214,10 @@ describe('events functional test', function () {
         }]);
     });
 
-    it('should setup weave', function (done) {
+    it('should launch weave container on host with no peers', function (done) {
       testPublisher.publish('weave.start', {
         dockerUri: 'http://10.2.2.2:4242',
-        orgId: 'none,build,run'
+        orgId: 'runnable'
       });
       check();
       function check () {
