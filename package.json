@@ -23,6 +23,9 @@
   "bugs": {
     "url": "https://github.com/codenow/sauron/issues"
   },
+  "engines" : {
+    "node" : ">=0.10.3 <0.12"
+  },
   "homepage": "https://github.com/codenow/sauron",
   "dependencies": {
     "101": "^1.2.0",
@@ -41,8 +44,8 @@
     "which": "^1.2.0"
   },
   "devDependencies": {
-    "code": "^1.5.0",
-    "lab": "7.0.0",
+    "code": "^2.0.1",
+    "lab": "^7.3.0",
     "sinon": "^1.17.2"
   }
 }
