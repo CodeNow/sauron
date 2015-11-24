@@ -65,9 +65,6 @@ describe('weave-wrapper.js unit test', function () {
     var testDockerHost = '10.0.0.1:4242';
 
     beforeEach(function (done) {
-      WeaveWrapper.certs = {
-        cert: 'test'
-      };
       sinon.stub(WeaveWrapper, '_runCmd');
       sinon.stub(WeaveWrapper, '_handleCmdResult');
       process.env.WEAVE_PATH = '/usr/bin/weave';
@@ -76,7 +73,6 @@ describe('weave-wrapper.js unit test', function () {
     });
 
     afterEach(function (done) {
-      delete WeaveWrapper.certs;
       WeaveWrapper._runCmd.restore();
       WeaveWrapper._handleCmdResult.restore();
       delete process.env.WEAVE_PATH;
@@ -94,11 +90,8 @@ describe('weave-wrapper.js unit test', function () {
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
             '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8 ' +
-            '10.0.0.1 10.0.0.2', {
-              DOCKER_HOST: 'tcp://' + testDockerHost,
-              cert: 'test'
-            }).called)
-          .to.be.true();
+            '10.0.0.1 10.0.0.2', testDockerHost)
+          .called).to.be.true();
         done();
       });
     });
@@ -112,10 +105,7 @@ describe('weave-wrapper.js unit test', function () {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
-            '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8', {
-              DOCKER_HOST: 'tcp://' + testDockerHost,
-              cert: 'test'
-            })
+            '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8', testDockerHost)
           .called).to.be.true();
         done();
       });
@@ -146,9 +136,6 @@ describe('weave-wrapper.js unit test', function () {
     var testDockerHost = '10.2.2.2:4242';
 
     beforeEach(function (done) {
-      WeaveWrapper.certs = {
-        cert: 'test'
-      };
       sinon.stub(WeaveWrapper, '_runCmd');
       sinon.stub(WeaveWrapper, '_handleCmdResult');
       process.env.WEAVE_PATH = '/usr/bin/weave';
@@ -156,7 +143,6 @@ describe('weave-wrapper.js unit test', function () {
     });
 
     afterEach(function (done) {
-      delete WeaveWrapper.certs;
       WeaveWrapper._runCmd.restore();
       WeaveWrapper._handleCmdResult.restore();
       delete process.env.WEAVE_PATH;
@@ -170,10 +156,8 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave attach ' + testContainerId, {
-            DOCKER_HOST: 'tcp://' + testDockerHost,
-            cert: 'test'
-          }).called).to.be.true();
+          .withArgs('/usr/bin/weave attach ' + testContainerId, testDockerHost)
+            .called).to.be.true();
         done();
       });
     });
