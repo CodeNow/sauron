@@ -56,7 +56,9 @@ describe('events functional test', function () {
     beforeEach(function (done) {
       mavisNock = nock(process.env.MAVIS_URL);
       fs.unlink('./weaveMockArgs', function () {
-        done();
+        fs.unlink('./weaveEnvs', function () {
+          done();
+        });
       });
     });
 
@@ -64,19 +66,25 @@ describe('events functional test', function () {
       Start.shutdown(done);
     });
 
-    it('should launch weave', function (done) {
+    it('should launch weave for each docker host with correct peers', function (done) {
       mavisNock
         .get('/docks')
+        .times(4)
         .reply(200, [{
           'numContainers': 1,
           'numBuilds': 5,
           'host': 'http://10.0.202.22:4242',
-          'tags': '1738,run,build'
+          'tags': 'one,run,build'
         }, {
           'numContainers': 1,
           'numBuilds': 1,
           'host': 'http://10.0.233.186:4242',
-          'tags': '1660575,run,build'
+          'tags': 'two,run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://10.0.233.186:4242',
+          'tags': 'two,run,build'
         }]);
 
       Start.startup(check);
@@ -90,36 +98,6 @@ describe('events functional test', function () {
         }
         expect(weaveInput.toString())
           .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
-        done();
-      }
-    });
-
-    it('should launch weave with peers', function (done) {
-      mavisNock
-        .get('/docks')
-        .reply(200, [{
-          'numContainers': 1,
-          'numBuilds': 5,
-          'host': 'http://10.22.33.44:4242',
-          'tags': process.env.ORG_ID + ',run,build'
-        }, {
-          'numContainers': 1,
-          'numBuilds': 1,
-          'host': 'http://10.0.233.186:4242',
-          'tags': '1660575,run,build'
-        }]);
-
-      Start.startup(check);
-
-      function check () {
-        var weaveInput;
-         try {
-          weaveInput = fs.readFileSync('./weaveMockArgs');
-        } catch (err) {
-          return setTimeout(check, 100);
-        }
-        expect(weaveInput.toString())
-          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.22.33.44\n');
         done();
       }
     });

@@ -30,5 +30,6 @@ node_modules
 .DS_Store
 dump.rdb
 weaveMockArgs
-
+weaveEnvs
 attempt
+erl_crash

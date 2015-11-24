@@ -10,7 +10,6 @@ var beforeEach = lab.beforeEach;
 var Code = require('code');
 var expect = Code.expect;
 
-var sinon = require('sinon');
 var path = require('path');
 var fs = require('fs');
 var Hermes = require('runnable-hermes');
@@ -50,7 +49,6 @@ var testSubscriber = new Hermes({
     name: 'testSubscriber'
   });
 
-var WeaveSetup = require('../../lib/models/weave-setup.js');
 var Start = require('../../lib/start.js');
 
 describe('events functional test', function () {
@@ -101,7 +99,9 @@ describe('events functional test', function () {
       process.env.ORG_ID = 'testOrg';
 
       fs.unlink('./weaveMockArgs', function () {
-        done();
+        fs.unlink('./weaveEnvs', function () {
+          done();
+        });
       });
       nock(process.env.MAVIS_URL)
         .get('/docks')
@@ -143,13 +143,19 @@ describe('events functional test', function () {
       check();
       function check () {
         var weaveInput;
+        var weaveEnvs;
         try {
           weaveInput = fs.readFileSync('./weaveMockArgs');
+          weaveEnvs = fs.readFileSync('./weaveEnvs');
         } catch (err) {
           return setTimeout(check, 100);
         }
         expect(weaveInput.toString())
           .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=localhost:4242');
+
         done();
       }
     });
@@ -172,13 +178,19 @@ describe('events functional test', function () {
       check();
       function check () {
         var weaveInput;
+        var weaveEnvs;
         try {
           weaveInput = fs.readFileSync('./weaveMockArgs');
+          weaveEnvs = fs.readFileSync('./weaveEnvs');
         } catch (err) {
           return setTimeout(check, 100);
         }
         expect(weaveInput.toString())
           .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.0.202.22\n');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=localhost:4242');
+
         done();
       }
     });
@@ -189,7 +201,9 @@ describe('events functional test', function () {
       process.env.ORG_ID = 'testOrg';
 
       fs.unlink('./weaveMockArgs', function () {
-        done();
+        fs.unlink('./weaveEnvs', function () {
+          done();
+        });
       });
       nock(process.env.MAVIS_URL)
         .get('/docks')
@@ -218,13 +232,18 @@ describe('events functional test', function () {
       check();
       function check () {
         var weaveInput;
+        var weaveEnvs;
         try {
           weaveInput = fs.readFileSync('./weaveMockArgs');
+          weaveEnvs = fs.readFileSync('./weaveEnvs');
         } catch (err) {
           return setTimeout(check, 100);
         }
         expect(weaveInput.toString())
           .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=10.2.2.2:4242');
         done();
       }
     });
@@ -233,7 +252,9 @@ describe('events functional test', function () {
   describe('container.life-cycle.started', function () {
     beforeEach(function (done) {
       fs.unlink('./weaveMockArgs', function () {
-        done();
+        fs.unlink('./weaveEnvs', function () {
+          done();
+        });
       });
     });
 
@@ -241,16 +262,20 @@ describe('events functional test', function () {
       var testId = 'Andune';
       testSubscriber.subscribe('container.network.attached', function (data, cb) {
         expect(data.id).to.equal(testId);
-        expect(data.host).to.equal('http://localhost:4242');
+        expect(data.host).to.equal('http://1.1.1.1:4242');
         expect(data.containerIp).to.equal('10.0.17.38');
         expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
         expect(weaveInput.toString()).to.equal('attach Andune\n');
+        var weaveEnvs = fs.readFileSync('./weaveEnvs');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=1.1.1.1:4242');
         cb();
         done();
       });
       testPublisher.publish('container.life-cycle.started', {
-        host: 'http://localhost:4242',
+        host: 'http://1.1.1.1:4242',
         id: testId,
         from: 'ubuntu',
         inspectData: {
@@ -269,16 +294,20 @@ describe('events functional test', function () {
       process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock died-attach');
       testSubscriber.subscribe('container.network.attach-failed', function (data, cb) {
         expect(data.id).to.equal(testId);
-        expect(data.host).to.equal('http://localhost:4242');
+        expect(data.host).to.equal('http://2.3.4.5:4242');
         expect(data.err.data.err.stderr).to.equal('container died\n');
         expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
         var weaveInput = fs.readFileSync('./weaveMockArgs');
         expect(weaveInput.toString()).to.equal('died-attach attach Andune\n');
+        var weaveEnvs = fs.readFileSync('./weaveEnvs');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=2.3.4.5:4242');
         cb();
         done();
       });
       testPublisher.publish('container.life-cycle.started', {
-        host: 'http://localhost:4242',
+        host: 'http://2.3.4.5:4242',
         id: testId,
         from: 'ubuntu',
         inspectData: {
@@ -294,8 +323,10 @@ describe('events functional test', function () {
 
     describe('attach retry', function () {
       beforeEach(function (done) {
-        fs.unlink('./attempt', function () {
-          done();
+        fs.unlink('./weaveMockArgs', function () {
+          fs.unlink('./weaveEnvs', function () {
+            done();
+          });
         });
       });
 
@@ -304,16 +335,20 @@ describe('events functional test', function () {
         process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock retry-attach');
         testSubscriber.subscribe('container.network.attached', function (data, cb) {
           expect(data.id).to.equal(testId);
-          expect(data.host).to.equal('http://localhost:4242');
+          expect(data.host).to.equal('http://9.9.9.9:4242');
           expect(data.containerIp).to.equal('10.0.17.38');
           expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
           var weaveInput = fs.readFileSync('./weaveMockArgs');
           expect(weaveInput.toString()).to.equal('retry-attach attach Andune\n');
+          var weaveEnvs = fs.readFileSync('./weaveEnvs');
+          expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+          expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+          expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=9.9.9.9:4242');
           cb();
           done();
         });
         testPublisher.publish('container.life-cycle.started', {
-          host: 'http://localhost:4242',
+          host: 'http://9.9.9.9:4242',
           id: testId,
           from: 'ubuntu',
           inspectData: {

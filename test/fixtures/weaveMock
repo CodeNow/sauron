@@ -8,9 +8,9 @@ WEAVE_COMMAND=$1
 echo $* > ./weaveMockArgs
 
 # send env's to a file
-echo $DOCKER_TLS_VERIFY > ./weaveEnvs
-echo $DOCKER_CERT_PATH >> ./weaveEnvs
-echo $DOCKER_HOST >> ./weaveEnvs
+echo "DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY" > ./weaveEnvs
+echo "DOCKER_CERT_PATH=$DOCKER_CERT_PATH" >> ./weaveEnvs
+echo "DOCKER_HOST=$DOCKER_HOST" >> ./weaveEnvs
 
 case "$WEAVE_COMMAND" in
   launch-router)
