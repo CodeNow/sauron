@@ -196,6 +196,7 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeaveStart', function () {
     beforeEach(function (done) {
+      sinon.stub(RabbitMQ, '_dataCheck');
       RabbitMQ._publisher = {
         publish: sinon.stub()
       };
@@ -203,11 +204,13 @@ describe('rabbitmq.js unit test', function () {
     });
 
     afterEach(function (done) {
+      RabbitMQ._dataCheck.restore();
       RabbitMQ._publisher = null;
       done();
     });
 
     it('should throw if missing data', function (done) {
+      RabbitMQ._dataCheck.throws();
       expect(function () {
         RabbitMQ.publishWeaveStart();
       }).to.throw();
@@ -217,13 +220,14 @@ describe('rabbitmq.js unit test', function () {
 
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publish.returns();
-
-      RabbitMQ.publishWeaveStart('dockerHost');
+      var testArgs = {
+        dockerUri: 'http://10.0.0.1:4242',
+        orgID: 'runnable'
+      };
+      RabbitMQ.publishWeaveStart(testArgs);
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.start', {
-            dockerHost: 'dockerHost'
-          }).called).to.be.true();
+        .withArgs('weave.start', testArgs).called).to.be.true();
       done();
     });
   }); // end publishWeaveStart

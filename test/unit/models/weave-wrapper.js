@@ -30,32 +30,38 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should output stdout', function (done) {
       var testStdout = 'all deleted';
-      var testEnv = 'env test';
+      var testDockerHost = 'http://10.0.0.2:4242';
 
       child_process.exec.yieldsAsync(undefined, testStdout);
-      WeaveWrapper._runCmd(testCmd, testEnv, function (err, stdout) {
+      WeaveWrapper._runCmd(testCmd, testDockerHost, function (err, stdout) {
         expect(err).to.not.exist();
         expect(stdout).to.equal(testStdout);
         expect(child_process.exec.withArgs(testCmd, {
-          env: testEnv
-        }).called)
-          .to.be.true();
+          env: {
+            DOCKER_HOST: testDockerHost,
+            DOCKER_TLS_VERIFY: 1,
+            DOCKER_CERT_PATH: process.env.DOCKER_CERT_PATH
+          }
+        }).called).to.be.true();
         done();
       });
     });
 
     it('should cb err with stderr', function (done) {
       var testStderr = 'all deleted';
-      var testEnv = 'env test';
+      var testDockerHost = 'http://10.0.0.2:4242';
 
       child_process.exec.yieldsAsync(new Error('gone'), '', testStderr);
-      WeaveWrapper._runCmd(testCmd, testEnv, function (err) {
+      WeaveWrapper._runCmd(testCmd, testDockerHost, function (err) {
         expect(err).to.exist();
         expect(err.stderr).to.equal(testStderr);
         expect(child_process.exec.withArgs(testCmd, {
-          env: testEnv
-        }).called)
-          .to.be.true();
+          env: {
+            DOCKER_HOST: testDockerHost,
+            DOCKER_TLS_VERIFY: 1,
+            DOCKER_CERT_PATH: process.env.DOCKER_CERT_PATH
+          }
+        }).called).to.be.true();
         done();
       });
     });
