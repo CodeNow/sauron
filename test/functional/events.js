@@ -96,8 +96,6 @@ describe('events functional test', function () {
 
   describe('container.life-cycle.died', function () {
     beforeEach(function (done) {
-      process.env.ORG_ID = 'testOrg';
-
       fs.unlink('./weaveMockArgs', function () {
         fs.unlink('./weaveEnvs', function () {
           done();
@@ -118,18 +116,12 @@ describe('events functional test', function () {
         }]);
     });
 
-    afterEach(function (done) {
-      delete process.env.ORG_ID;
-      done();
-    });
-
     it('should launch weave with no peers on container death', function (done) {
-      process.env.ORG_ID = 'nopeers';
-
       testPublisher.publish('container.life-cycle.died', {
         host: 'http://localhost:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
+        tags: 'none,build,run',
         inspectData: {
           Config: {
             ExposedPorts: {
@@ -142,16 +134,15 @@ describe('events functional test', function () {
 
       check();
       function check () {
-        var weaveInput;
+        var weaveArgs;
         var weaveEnvs;
         try {
-          weaveInput = fs.readFileSync('./weaveMockArgs');
+          weaveArgs = fs.readFileSync('./weaveMockArgs');
           weaveEnvs = fs.readFileSync('./weaveEnvs');
         } catch (err) {
           return setTimeout(check, 100);
         }
-        expect(weaveInput.toString())
-          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
         expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=localhost:4242');
@@ -165,6 +156,7 @@ describe('events functional test', function () {
         host: 'http://localhost:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
+        tags: 'testOrg,build,run',
         inspectData: {
           Config: {
             ExposedPorts: {
@@ -177,16 +169,15 @@ describe('events functional test', function () {
 
       check();
       function check () {
-        var weaveInput;
+        var weaveArgs;
         var weaveEnvs;
         try {
-          weaveInput = fs.readFileSync('./weaveMockArgs');
+          weaveArgs = fs.readFileSync('./weaveMockArgs');
           weaveEnvs = fs.readFileSync('./weaveEnvs');
         } catch (err) {
           return setTimeout(check, 100);
         }
-        expect(weaveInput.toString())
-          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.0.202.22\n');
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.0.202.22\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
         expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=localhost:4242');
@@ -198,8 +189,6 @@ describe('events functional test', function () {
 
   describe('weave.start', function () {
     beforeEach(function (done) {
-      process.env.ORG_ID = 'testOrg';
-
       fs.unlink('./weaveMockArgs', function () {
         fs.unlink('./weaveEnvs', function () {
           done();
@@ -220,27 +209,22 @@ describe('events functional test', function () {
         }]);
     });
 
-    afterEach(function (done) {
-      delete process.env.ORG_ID;
-      done();
-    });
-
     it('should setup weave', function (done) {
       testPublisher.publish('weave.start', {
-        dockerHost: 'http://10.2.2.2:4242'
+        dockerUri: 'http://10.2.2.2:4242',
+        orgId: 'none,build,run'
       });
       check();
       function check () {
-        var weaveInput;
+        var weaveArgs;
         var weaveEnvs;
         try {
-          weaveInput = fs.readFileSync('./weaveMockArgs');
+          weaveArgs = fs.readFileSync('./weaveMockArgs');
           weaveEnvs = fs.readFileSync('./weaveEnvs');
         } catch (err) {
           return setTimeout(check, 100);
         }
-        expect(weaveInput.toString())
-          .to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
         expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=10.2.2.2:4242');
@@ -265,8 +249,8 @@ describe('events functional test', function () {
         expect(data.host).to.equal('http://1.1.1.1:4242');
         expect(data.containerIp).to.equal('10.0.17.38');
         expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
-        var weaveInput = fs.readFileSync('./weaveMockArgs');
-        expect(weaveInput.toString()).to.equal('attach Andune\n');
+        var weaveArgs = fs.readFileSync('./weaveMockArgs');
+        expect(weaveArgs.toString()).to.equal('attach Andune\n');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
@@ -297,8 +281,8 @@ describe('events functional test', function () {
         expect(data.host).to.equal('http://2.3.4.5:4242');
         expect(data.err.data.err.stderr).to.equal('container died\n');
         expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
-        var weaveInput = fs.readFileSync('./weaveMockArgs');
-        expect(weaveInput.toString()).to.equal('died-attach attach Andune\n');
+        var weaveArgs = fs.readFileSync('./weaveMockArgs');
+        expect(weaveArgs.toString()).to.equal('died-attach attach Andune\n');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
@@ -338,8 +322,8 @@ describe('events functional test', function () {
           expect(data.host).to.equal('http://9.9.9.9:4242');
           expect(data.containerIp).to.equal('10.0.17.38');
           expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
-          var weaveInput = fs.readFileSync('./weaveMockArgs');
-          expect(weaveInput.toString()).to.equal('retry-attach attach Andune\n');
+          var weaveArgs = fs.readFileSync('./weaveMockArgs');
+          expect(weaveArgs.toString()).to.equal('retry-attach attach Andune\n');
           var weaveEnvs = fs.readFileSync('./weaveEnvs');
           expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
           expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
