@@ -267,6 +267,7 @@ describe('events functional test', function () {
         host: 'http://1.1.1.1:4242',
         id: testId,
         from: 'ubuntu',
+        tags: 'tag,your,it',
         inspectData: {
           Config: {
             Labels: {
@@ -299,6 +300,7 @@ describe('events functional test', function () {
         host: 'http://2.3.4.5:4242',
         id: testId,
         from: 'ubuntu',
+        tags: 'tag,your,it',
         inspectData: {
           Config: {
             Labels: {
@@ -340,6 +342,7 @@ describe('events functional test', function () {
           host: 'http://9.9.9.9:4242',
           id: testId,
           from: 'ubuntu',
+          tags: 'tag,your,it',
           inspectData: {
             Config: {
               Labels: {

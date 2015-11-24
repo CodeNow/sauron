@@ -11,7 +11,6 @@ var Code = require('code');
 var expect = Code.expect;
 
 var sinon = require('sinon');
-var ip = require('ip');
 var ErrorCat = require('error-cat');
 var TaskError = require('ponos').TaskError;
 var TaskFatalError = require('ponos').TaskFatalError;
@@ -348,10 +347,10 @@ describe('events.js unit test', function () {
     });
   }); // end _isNetworkNeeded
 
-  describe('validateJob', function () {
+  describe('validateContainerJob', function () {
     it('should return false if no id', function (done) {
       var testData = {};
-      expect(Events.validateJob(testData))
+      expect(Events.validateContainerJob(testData))
         .to.be.false();
       done();
     });
@@ -360,7 +359,7 @@ describe('events.js unit test', function () {
       var testData = {
         id: '12352524',
       };
-      expect(Events.validateJob(testData))
+      expect(Events.validateContainerJob(testData))
         .to.be.false();
       done();
     });
@@ -368,9 +367,20 @@ describe('events.js unit test', function () {
     it('should return false if no from', function (done) {
       var testData = {
         id: '12352524',
-        host: 'http://' + ip.address() + ':4242',
+        host: 'http://localhost:4242',
       };
-      expect(Events.validateJob(testData))
+      expect(Events.validateContainerJob(testData))
+        .to.be.false();
+      done();
+    });
+
+    it('should return false if no tag', function (done) {
+      var testData = {
+        id: '12352524',
+        host: 'http://localhost:4242',
+        from: 'something',
+      };
+      expect(Events.validateContainerJob(testData))
         .to.be.false();
       done();
     });
@@ -378,12 +388,50 @@ describe('events.js unit test', function () {
     it('should return true', function (done) {
       var testData = {
         id: '12352524',
-        host: 'http://' + ip.address() + ':4242',
-        from: 'something'
+        host: 'http://localhost:4242',
+        from: 'something',
+        tags: 'me,you,myDogBlue'
       };
-      expect(Events.validateJob(testData))
+      expect(Events.validateContainerJob(testData))
         .to.be.true();
       done();
     });
-  }); // end validateJob
+  }); // end validateContainerJob
+
+  describe('validateDockerJob', function () {
+    it('should return false if no tag or host', function (done) {
+      var testData = {};
+      expect(Events.validateDockerJob(testData))
+        .to.be.false();
+      done();
+    });
+
+    it('should return false if missing tag', function (done) {
+      var testData = {
+        host: 'http://localhost:4242',
+      };
+      expect(Events.validateDockerJob(testData))
+        .to.be.false();
+      done();
+    });
+
+    it('should return false if missing host', function (done) {
+      var testData = {
+        tags: 'me,you,myDogBlue'
+      };
+      expect(Events.validateDockerJob(testData))
+        .to.be.false();
+      done();
+    });
+
+    it('should return true', function (done) {
+      var testData = {
+        host: 'http://localhost:4242',
+        tags: 'me,you,myDogBlue'
+      };
+      expect(Events.validateDockerJob(testData))
+        .to.be.true();
+      done();
+    });
+  }); // end validateDockerJob
 }); // end events.js unit test
