@@ -10,6 +10,7 @@ var beforeEach = lab.beforeEach;
 var Code = require('code');
 var expect = Code.expect;
 
+var sinon = require('sinon');
 var path = require('path');
 var fs = require('fs');
 var Hermes = require('runnable-hermes');
@@ -51,6 +52,7 @@ var testSubscriber = new Hermes({
   });
 
 var Start = require('../../lib/start.js');
+var WeaveWrapper = require('../../lib/models/weave-wrapper.js');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
@@ -76,7 +78,20 @@ describe('events functional test', function () {
         'host': 'http://2.2.2.2:4242',
         'tags': '1660575,run,build'
       }]);
+    sinon.spy(WeaveWrapper, '_runCmd');
     Start.startup(done);
+  });
+
+  beforeEach(function (done) {
+    check();
+    function check () {
+      try {
+        expect(WeaveWrapper._runCmd.callCount).to.equal(2);
+      } catch (err) {
+        return setTimeout(check, 100);
+      }
+      done();
+    }
   });
 
   beforeEach(function (done) {
@@ -84,6 +99,7 @@ describe('events functional test', function () {
   });
 
   afterEach(function (done) {
+    WeaveWrapper._runCmd.restore();
     Start.shutdown(done);
   });
 
