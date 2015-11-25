@@ -17,7 +17,8 @@ var nock = require('nock');
 
 var publishedEvents = [
   'container.life-cycle.died',
-  'container.life-cycle.started'
+  'container.life-cycle.started',
+  'docker.events-stream.connected'
 ];
 
 var subscribedEvents = [
@@ -67,12 +68,12 @@ describe('events functional test', function () {
       .reply(200, [{
         'numContainers': 1,
         'numBuilds': 5,
-        'host': 'http://10.0.202.22:4242',
+        'host': 'http://1.1.1.1:4242',
         'tags': '1738,run,build'
       }, {
         'numContainers': 1,
         'numBuilds': 1,
-        'host': 'http://10.0.233.186:4242',
+        'host': 'http://2.2.2.2:4242',
         'tags': '1660575,run,build'
       }]);
     Start.startup(done);
@@ -106,24 +107,24 @@ describe('events functional test', function () {
         .reply(200, [{
           'numContainers': 1,
           'numBuilds': 5,
-          'host': 'http://10.0.202.22:4242',
+          'host': 'http://1.1.1.1:4242',
           'tags': 'testOrg,run,build'
         }, {
           'numContainers': 1,
           'numBuilds': 1,
-          'host': 'http://10.0.233.186:4242',
+          'host': 'http://2.2.2.2:4242',
           'tags': 'runnable,run,build'
         }, {
           'numContainers': 1,
           'numBuilds': 1,
-          'host': 'http://10.0.233.23:4242',
+          'host': 'http://3.3.3.3:4242',
           'tags': 'runnable,run,build'
         }]);
     });
 
     it('should launch weave with no peers on container death', function (done) {
       testPublisher.publish('container.life-cycle.died', {
-        host: 'http://10.0.202.22:4242',
+        host: 'http://1.1.1.1:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
         tags: 'testOrg,build,run',
@@ -150,7 +151,7 @@ describe('events functional test', function () {
         expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=10.0.202.22:4242');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=1.1.1.1:4242');
 
         done();
       }
@@ -158,7 +159,7 @@ describe('events functional test', function () {
 
     it('should launch weave with peers on container death', function (done) {
       testPublisher.publish('container.life-cycle.died', {
-        host: 'http://10.0.233.186:4242',
+        host: 'http://2.2.2.2:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
         tags: 'runnable,build,run',
@@ -182,10 +183,10 @@ describe('events functional test', function () {
         } catch (err) {
           return setTimeout(check, 100);
         }
-        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 10.0.233.23\n');
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 3.3.3.3\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=10.0.233.186:4242');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=2.2.2.2:4242');
 
         done();
       }
@@ -209,7 +210,7 @@ describe('events functional test', function () {
         }, {
           'numContainers': 1,
           'numBuilds': 1,
-          'host': 'http://10.0.233.186:4242',
+          'host': 'http://2.2.2.2:4242',
           'tags': '1660575,run,build'
         }]);
     });
@@ -355,4 +356,82 @@ describe('events functional test', function () {
       });
     }); // end attach retry
   }); // end container.life-cycle.started
+
+  describe('docker.events-stream.connected', function () {
+    beforeEach(function (done) {
+      fs.unlink('./weaveMockArgs', function () {
+        fs.unlink('./weaveEnvs', function () {
+          done();
+        });
+      });
+      nock(process.env.MAVIS_URL)
+        .get('/docks')
+        .reply(200, [{
+          'numContainers': 1,
+          'numBuilds': 5,
+          'host': 'http://1.1.1.1:4242',
+          'tags': 'testOrg,run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://2.2.2.2:4242',
+          'tags': 'runnable,run,build'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://3.3.3.3:4242',
+          'tags': 'runnable,run,build'
+        }]);
+    });
+
+    it('should launch weave with no peers on dock up', function (done) {
+      testPublisher.publish('docker.events-stream.connected', {
+        host: 'http://1.1.1.1:4242',
+        tags: 'testOrg,build,run'
+      });
+
+      check();
+      function check () {
+        var weaveArgs;
+        var weaveEnvs;
+        try {
+          weaveArgs = fs.readFileSync('./weaveMockArgs');
+          weaveEnvs = fs.readFileSync('./weaveEnvs');
+        } catch (err) {
+          return setTimeout(check, 100);
+        }
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16\n');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=1.1.1.1:4242');
+
+        done();
+      }
+    });
+
+    it('should launch weave with peers on dock up', function (done) {
+      testPublisher.publish('docker.events-stream.connected', {
+        host: 'http://2.2.2.2:4242',
+        tags: 'runnable,build,run'
+      });
+
+      check();
+      function check () {
+        var weaveArgs;
+        var weaveEnvs;
+        try {
+          weaveArgs = fs.readFileSync('./weaveMockArgs');
+          weaveEnvs = fs.readFileSync('./weaveEnvs');
+        } catch (err) {
+          return setTimeout(check, 100);
+        }
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 3.3.3.3\n');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=2.2.2.2:4242');
+
+        done();
+      }
+    });
+  }); // end docker.events-stream.connected
 }); // end functional test

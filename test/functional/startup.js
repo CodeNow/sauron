@@ -15,11 +15,11 @@ var fs = require('fs');
 var Hermes = require('runnable-hermes');
 var nock = require('nock');
 var path = require('path');
-var hasKeypaths = require('101/has-keypaths');
 
 var publishedEvents = [
   'container.life-cycle.died',
-  'container.life-cycle.started'
+  'container.life-cycle.started',
+  'docker.events-stream.connected'
 ];
 
 var testPublisher = new Hermes({
