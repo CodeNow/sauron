@@ -30,30 +30,46 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should output stdout', function (done) {
       var testStdout = 'all deleted';
+      var testDockerHost = 'http://10.0.0.2:4242';
+
       child_process.exec.yieldsAsync(undefined, testStdout);
-      WeaveWrapper._runCmd(testCmd, function (err, stdout) {
+      WeaveWrapper._runCmd(testCmd, testDockerHost, function (err, stdout) {
         expect(err).to.not.exist();
         expect(stdout).to.equal(testStdout);
-        expect(child_process.exec.withArgs(testCmd).called)
-          .to.be.true();
+        expect(child_process.exec.withArgs(testCmd, {
+          env: {
+            DOCKER_HOST: testDockerHost,
+            DOCKER_TLS_VERIFY: 1,
+            DOCKER_CERT_PATH: process.env.DOCKER_CERT_PATH
+          }
+        }).called).to.be.true();
         done();
       });
     });
 
     it('should cb err with stderr', function (done) {
       var testStderr = 'all deleted';
+      var testDockerHost = 'http://10.0.0.2:4242';
+
       child_process.exec.yieldsAsync(new Error('gone'), '', testStderr);
-      WeaveWrapper._runCmd(testCmd, function (err) {
+      WeaveWrapper._runCmd(testCmd, testDockerHost, function (err) {
         expect(err).to.exist();
         expect(err.stderr).to.equal(testStderr);
-        expect(child_process.exec.withArgs(testCmd).called)
-          .to.be.true();
+        expect(child_process.exec.withArgs(testCmd, {
+          env: {
+            DOCKER_HOST: testDockerHost,
+            DOCKER_TLS_VERIFY: 1,
+            DOCKER_CERT_PATH: process.env.DOCKER_CERT_PATH
+          }
+        }).called).to.be.true();
         done();
       });
     });
   }); // end _runCmd
 
   describe('launch', function () {
+    var testDockerHost = '10.0.0.1:4242';
+
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, '_runCmd');
       sinon.stub(WeaveWrapper, '_handleCmdResult');
@@ -75,13 +91,13 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = ['10.0.0.1', '10.0.0.2'];
 
-      WeaveWrapper.launch(peers, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
             '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8 ' +
-            '10.0.0.1 10.0.0.2').called)
-          .to.be.true();
+            '10.0.0.1 10.0.0.2', testDockerHost)
+          .called).to.be.true();
         done();
       });
     });
@@ -91,11 +107,11 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = [];
 
-      WeaveWrapper.launch(peers, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
-            '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8')
+            '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8', testDockerHost)
           .called).to.be.true();
         done();
       });
@@ -105,7 +121,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync();
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = 'no valid';
-      WeaveWrapper.launch(peers, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -114,7 +130,7 @@ describe('weave-wrapper.js unit test', function () {
     it('should fail if missing peers', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
       WeaveWrapper._handleCmdResult.returnsArg(0);
-      WeaveWrapper.launch(null, function (err) {
+      WeaveWrapper.launch(null, testDockerHost, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -123,6 +139,7 @@ describe('weave-wrapper.js unit test', function () {
 
   describe('attach', function () {
     var testContainerId = '1738';
+    var testDockerHost = '10.2.2.2:4242';
 
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, '_runCmd');
@@ -142,11 +159,11 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync(null, '10.0.0.0\n');
       WeaveWrapper._handleCmdResult.returnsArg(0);
 
-      WeaveWrapper.attach(testContainerId, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave attach ' + testContainerId).called)
-          .to.be.true();
+          .withArgs('/usr/bin/weave attach ' + testContainerId, testDockerHost)
+            .called).to.be.true();
         done();
       });
     });
@@ -155,7 +172,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync(null, 'not an ip\n');
       WeaveWrapper._handleCmdResult.returnsArg(0);
 
-      WeaveWrapper.attach(testContainerId, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
         expect(err).to.exist();
         done();
       });
@@ -163,7 +180,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should fail if missing containerId', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.attach(null, function (err) {
+      WeaveWrapper.attach(null, testDockerHost, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -172,7 +189,7 @@ describe('weave-wrapper.js unit test', function () {
     it('should _handleCmdResult if runCmd failed', function (done) {
       WeaveWrapper._runCmd.yieldsAsync(new Error('Gollum'));
       WeaveWrapper._handleCmdResult.returnsArg(0);
-      WeaveWrapper.attach(testContainerId, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
         expect(err).to.exist();
         done();
       });

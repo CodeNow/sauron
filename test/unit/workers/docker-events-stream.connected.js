@@ -15,25 +15,26 @@ var ponos = require('ponos');
 var TaskFatalError = ponos.TaskFatalError;
 
 var Events = require('../../../lib/models/events.js');
-var containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js');
+var RabbitMQ = require('../../../lib/models/rabbitmq.js');
+var dockerEventsStreamConnected = require('../../../lib/workers/docker.events-stream.connected.js');
 
-describe('container-life-cycle-died.js unit test', function () {
+describe('docker.events-stream.connected.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleDied');
-      sinon.stub(Events, 'validateContainerJob');
+      sinon.stub(RabbitMQ, 'publishWeaveStart');
+      sinon.stub(Events, 'validateDockerJob');
       done();
     });
 
     afterEach(function (done) {
-      Events.handleDied.restore();
-      Events.validateContainerJob.restore();
+      RabbitMQ.publishWeaveStart.restore();
+      Events.validateDockerJob.restore();
       done();
     });
 
     it('should throw error if invalid job', function (done) {
-      Events.validateContainerJob.returns(false);
-      containerLifeCycleDied({})
+      Events.validateDockerJob.returns(false);
+      dockerEventsStreamConnected({})
         .then(function () {
           throw new Error('should have thrown');
         })
@@ -43,10 +44,10 @@ describe('container-life-cycle-died.js unit test', function () {
         });
     });
 
-    it('should throw error if handleDied throws', function (done) {
-      Events.validateContainerJob.returns(true);
-      Events.handleDied.throws(new Error('test'));
-      containerLifeCycleDied({})
+    it('should throw error if publishWeaveStart throws', function (done) {
+      Events.validateDockerJob.returns(true);
+      RabbitMQ.publishWeaveStart.throws(new Error('test'));
+      dockerEventsStreamConnected({})
         .then(function () {
           throw new Error('should have thrown');
         })
@@ -57,13 +58,14 @@ describe('container-life-cycle-died.js unit test', function () {
     });
 
     it('should be fine if no errors', function (done) {
-      Events.validateContainerJob.returns(true);
-      Events.handleDied.returns();
-      containerLifeCycleDied({})
-        .then(function () {
-          done();
-        })
-        .catch(done);
+      Events.validateDockerJob.returns(true);
+      RabbitMQ.publishWeaveStart.returns();
+      dockerEventsStreamConnected({
+        host: 'testHost',
+        tags: 'projectx,projecty,projectz'
+      })
+      .then(done)
+      .catch(done);
     });
   }); // end run
-}); // end container-life-cycle-died unit test
+}); // end docker.events-stream.connected unit test

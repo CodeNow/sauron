@@ -21,18 +21,18 @@ describe('container-life-cycle-started.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
       sinon.stub(Events, 'handleStartedAsync');
-      sinon.stub(Events, 'validateJob');
+      sinon.stub(Events, 'validateContainerJob');
       done();
     });
 
     afterEach(function (done) {
       Events.handleStartedAsync.restore();
-      Events.validateJob.restore();
+      Events.validateContainerJob.restore();
       done();
     });
 
     it('should throw error if invalid job', function (done) {
-      Events.validateJob.returns(false);
+      Events.validateContainerJob.returns(false);
       containerLifeCycleStarted({})
         .then(function () {
           throw new Error('should have thrown');
@@ -44,7 +44,7 @@ describe('container-life-cycle-started.js unit test', function () {
     });
 
     it('should throw error if handleStartedAsync failed', function (done) {
-      Events.validateJob.returns(true);
+      Events.validateContainerJob.returns(true);
       Events.handleStartedAsync.throws(new Error('test'));
       containerLifeCycleStarted({})
         .then(function () {
@@ -57,7 +57,7 @@ describe('container-life-cycle-started.js unit test', function () {
     });
 
     it('should be fine if no errors', function (done) {
-      Events.validateJob.returns(true);
+      Events.validateContainerJob.returns(true);
       Events.handleStartedAsync.returns();
       containerLifeCycleStarted({})
         .then(function () {

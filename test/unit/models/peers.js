@@ -30,7 +30,7 @@ describe('peers.js unit test', function () {
       done();
     });
 
-    it('should error is request errored', function (done) {
+    it('should error is request err', function (done) {
       request.get.yieldsAsync('firestone');
       Peers.getList('', function (err) {
         expect(err.output.statusCode).to.equal(502);
@@ -49,15 +49,25 @@ describe('peers.js unit test', function () {
     });
 
     it('should return correct hosts based on org', function (done) {
-      var testData = [{tags: 'runnable,build,run', host: 'http://host1:4242'},
+      var testData = [
+        {tags: 'runnable,build,run', host: 'http://host1:4242'},
         {tags: 'runnable,build,run', host: 'http://host2:4242'},
-        {tags: 'codenow,build,run', host: 'http://host3:4242'}];
+        {tags: 'codenow,build,run', host: 'http://host3:4242'}
+      ];
       request.get.yieldsAsync(null, {
         statusCode: 200
       }, JSON.stringify(testData));
+
       Peers.getList('runnable', function (err, peers) {
         expect(err).to.not.exist();
-        expect(peers).to.contain(['host1', 'host2']);
+        expect(peers).to.deep.contain({
+          dockerUri: 'http://host1:4242',
+          orgId: 'runnable'
+        });
+        expect(peers).to.deep.contain({
+          dockerUri: 'http://host2:4242',
+          orgId: 'runnable'
+        });
         done();
       });
     });

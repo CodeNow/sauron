@@ -1,7 +1,6 @@
 'use strict';
 require('loadenv')();
 
-var ip = require('ip');
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
@@ -120,7 +119,7 @@ describe('rabbitmq.js unit test', function () {
 
       var data = {
         containerIp: '10.0.0.2',
-        host: 'http://' + ip.address() + ':4242',
+        host: 'http://localhost:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
         inspectData: {
@@ -171,7 +170,7 @@ describe('rabbitmq.js unit test', function () {
       RabbitMQ._publisher.publish.returns();
       var data = {
         containerIp: '10.0.0.2',
-        host: 'http://' + ip.address() + ':4242',
+        host: 'http://localhost:4242',
         id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
         from: 'weaveworks/weave:1.2.0',
         inspectData: {
@@ -197,6 +196,7 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeaveStart', function () {
     beforeEach(function (done) {
+      sinon.stub(RabbitMQ, '_dataCheck');
       RabbitMQ._publisher = {
         publish: sinon.stub()
       };
@@ -204,16 +204,30 @@ describe('rabbitmq.js unit test', function () {
     });
 
     afterEach(function (done) {
+      RabbitMQ._dataCheck.restore();
       RabbitMQ._publisher = null;
+      done();
+    });
+
+    it('should throw if missing data', function (done) {
+      RabbitMQ._dataCheck.throws();
+      expect(function () {
+        RabbitMQ.publishWeaveStart();
+      }).to.throw();
+
       done();
     });
 
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publish.returns();
+      var testArgs = {
+        dockerUri: 'http://10.0.0.1:4242',
+        orgID: 'runnable'
+      };
+      RabbitMQ.publishWeaveStart(testArgs);
 
-      RabbitMQ.publishWeaveStart();
       expect(RabbitMQ._publisher.publish
-        .withArgs(ip.address() + '.weave.start', {}).called).to.be.true();
+        .withArgs('weave.start', testArgs).called).to.be.true();
       done();
     });
   }); // end publishWeaveStart
