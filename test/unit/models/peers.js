@@ -86,4 +86,59 @@ describe('peers.js unit test', function () {
       });
     });
   }); // end getList
+
+  describe('doesDockExist', function () {
+    beforeEach(function (done) {
+      sinon.stub(Peers, 'getList');
+      done();
+    });
+
+    afterEach(function (done) {
+      Peers.getList.restore();
+      done();
+    });
+
+    it('should cb error if getList failed', function (done) {
+      var error = new Error('Gandalf');
+      Peers.getList.yieldsAsync(error);
+
+      Peers.doesDockExist('', function (err) {
+        expect(err).to.equal(error);
+        done();
+      });
+    });
+
+    it('should cb false if getList returns empty', function (done) {
+      Peers.getList.yieldsAsync(null, []);
+
+      Peers.doesDockExist('', function (err, doesExist) {
+        expect(doesExist).to.be.false();
+        done();
+      });
+    });
+
+    it('should cb false if dock not in list', function (done) {
+      Peers.getList.yieldsAsync(null, [{
+        dockerUri: 'fake'
+      }]);
+
+      Peers.doesDockExist('notMe', function (err, doesExist) {
+        expect(doesExist).to.be.false();
+        done();
+      });
+    });
+
+    it('should cb true if dock not in list', function (done) {
+      Peers.getList.yieldsAsync(null, [{
+        dockerUri: 'here'
+      }, {
+        dockerUri: '1'
+      }]);
+
+      Peers.doesDockExist('here', function (err, doesExist) {
+        expect(doesExist).to.be.true();
+        done();
+      });
+    });
+  }); // end doesDockExist
 }); // end peers.js unit test

@@ -146,6 +146,7 @@ describe('events.js unit test', function () {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttachFailed');
       sinon.stub(Events, '_isNetworkNeeded');
       sinon.stub(WeaveWrapper, 'attach');
+      sinon.stub(Peers, 'doesDockExist');
       done();
     });
 
@@ -154,6 +155,7 @@ describe('events.js unit test', function () {
       RabbitMQ.publishContainerNetworkAttachFailed.restore();
       Events._isNetworkNeeded.restore();
       WeaveWrapper.attach.restore();
+      Peers.doesDockExist.restore();
       done();
     });
 
@@ -167,15 +169,39 @@ describe('events.js unit test', function () {
       });
     });
 
-    it('should cb TaskError if 500', function (done) {
+    it('should cb TaskError if doesDockExist failed', function (done) {
       var testErr = ErrorCat.create(500, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
 
       Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(testErr);
-      RabbitMQ.publishContainerNetworkAttachFailed.returns();
+      Peers.doesDockExist.yieldsAsync(testErr);
+      Events.handleStarted({
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
+      }, function (err) {
+        expect(err).to.be.an.instanceof(TaskError);
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttachFailed);
+        sinon.assert.notCalled(WeaveWrapper.attach);
+        done();
+      });
+    });
 
+    it('should cb TaskFatalError if dock does not exist', function (done) {
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
+
+      Events._isNetworkNeeded.returns(true);
+      RabbitMQ.publishContainerNetworkAttachFailed.returns();
+      Peers.doesDockExist.yieldsAsync(null, false);
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -193,7 +219,33 @@ describe('events.js unit test', function () {
       });
     });
 
-    it('should publish on non 500 error', function (done) {
+    it('should cb TaskError if attach 500', function (done) {
+      var testErr = ErrorCat.create(500, 'Dunlendings');
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
+
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(testErr);
+      RabbitMQ.publishContainerNetworkAttachFailed.returns();
+      Peers.doesDockExist.yieldsAsync(null, true);
+      Events.handleStarted({
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        }
+      }, function (err) {
+        expect(err).to.be.an.instanceof(TaskError);
+        done();
+      });
+    });
+
+    it('should publish on attach non 500 error', function (done) {
       var testErr = ErrorCat.create(409, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
@@ -201,6 +253,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
       RabbitMQ.publishContainerNetworkAttachFailed.returns();
+      Peers.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
         host: testHost,
@@ -229,6 +282,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
+      Peers.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
         host: testHost,
@@ -241,6 +295,7 @@ describe('events.js unit test', function () {
           }
         }
       };
+
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist();
         jobData.containerIp = testIp;
@@ -248,6 +303,10 @@ describe('events.js unit test', function () {
           .withArgs(jobData).called).to.be.true();
         expect(WeaveWrapper.attach.withArgs(testId, '172.123.12.3:4242').called)
           .to.be.true();
+        sinon.assert.calledWith(
+          Peers.doesDockExist,
+          testHost
+        );
         done();
       });
     });

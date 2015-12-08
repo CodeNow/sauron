@@ -262,6 +262,20 @@ describe('events functional test', function () {
           done();
         });
       });
+      // nock for host check
+      nock(process.env.MAVIS_URL)
+        .get('/docks')
+        .reply(200, [{
+          'numContainers': 1,
+          'numBuilds': 5,
+          'host': 'http://1.1.1.1:4242',
+          'tags': 'runnable,build,run'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://2.3.4.5:4242',
+          'tags': '1660575,run,build'
+        }]);
     });
 
     it('should call weave attach on container and emit event', function (done) {
@@ -328,50 +342,65 @@ describe('events functional test', function () {
         }
       });
     });
+  }); // end container.life-cycle.started
 
-    describe('attach retry', function () {
-      beforeEach(function (done) {
-        fs.unlink('./weaveMockArgs', function () {
-          fs.unlink('./weaveEnvs', function () {
-            done();
-          });
-        });
-      });
-
-      it('should retry weave attach on fail and emit event on success', function (done) {
-        var testId = 'Andune';
-        process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock retry-attach');
-        testSubscriber.subscribe('container.network.attached', function (data, cb) {
-          expect(data.id).to.equal(testId);
-          expect(data.host).to.equal('http://9.9.9.9:4242');
-          expect(data.containerIp).to.equal('10.0.17.38');
-          expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
-          var weaveArgs = fs.readFileSync('./weaveMockArgs');
-          expect(weaveArgs.toString()).to.equal('retry-attach attach Andune\n');
-          var weaveEnvs = fs.readFileSync('./weaveEnvs');
-          expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
-          expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-          expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=9.9.9.9:4242');
-          cb();
+  describe('attach retry', function () {
+    beforeEach(function (done) {
+      fs.unlink('./weaveMockArgs', function () {
+        fs.unlink('./weaveEnvs', function () {
           done();
         });
-        testPublisher.publish('container.life-cycle.started', {
-          host: 'http://9.9.9.9:4242',
-          id: testId,
-          from: 'ubuntu',
-          tags: 'tag,your,it',
-          inspectData: {
-            Config: {
-              Labels: {
-                instanceId: '5633e9273e2b5b0c0077fd41',
-                contextVersionId: '563a808f9359ef0c00df34e6'
-              }
+      });
+      // nock for host check
+      nock(process.env.MAVIS_URL)
+        .get('/docks')
+        .times(2)
+        .reply(200, [{
+          'numContainers': 1,
+          'numBuilds': 5,
+          'host': 'http://1.1.1.1:4242',
+          'tags': 'runnable,build,run'
+        }, {
+          'numContainers': 1,
+          'numBuilds': 1,
+          'host': 'http://2.3.4.5:4242',
+          'tags': '1660575,run,build'
+        }]);
+    });
+
+    it('should retry weave attach on fail and emit event on success', function (done) {
+      var testId = 'Andune';
+      process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock retry-attach');
+      testSubscriber.subscribe('container.network.attached', function (data, cb) {
+        expect(data.id).to.equal(testId);
+        expect(data.host).to.equal('http://2.3.4.5:4242');
+        expect(data.containerIp).to.equal('10.0.17.38');
+        expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
+        var weaveArgs = fs.readFileSync('./weaveMockArgs');
+        expect(weaveArgs.toString()).to.equal('retry-attach attach Andune\n');
+        var weaveEnvs = fs.readFileSync('./weaveEnvs');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=2.3.4.5:4242');
+        cb();
+        done();
+      });
+      testPublisher.publish('container.life-cycle.started', {
+        host: 'http://2.3.4.5:4242',
+        id: testId,
+        from: 'ubuntu',
+        tags: 'tag,your,it',
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
             }
           }
-        });
+        }
       });
-    }); // end attach retry
-  }); // end container.life-cycle.started
+    });
+  }); // end attach retry
 
   describe('docker.events-stream.connected', function () {
     beforeEach(function (done) {
