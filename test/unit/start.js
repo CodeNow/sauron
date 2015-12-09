@@ -78,7 +78,7 @@ describe('start.js unit test', function () {
         expect(err).to.exist();
         sinon.assert.calledOnce(WorkerServer.listen);
         sinon.assert.calledOnce(Peers.getList);
-        sinon.assert.called(RabbitMQ.publishWeaveStart);
+        sinon.assert.calledOnce(RabbitMQ.publishWeaveStart);
         done();
       });
     });
@@ -125,7 +125,6 @@ describe('start.js unit test', function () {
       RabbitMQ.disconnectPublisher.yieldsAsync(new Error());
 
       Start.shutdown(function (err) {
-        expect(err).to.exist();
         expect(err).to.be.an.instanceof(Error);
         done();
       });
