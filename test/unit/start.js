@@ -47,7 +47,7 @@ describe('start.js unit test', function () {
       });
     });
 
-    it('should err if getList err', function (done) {
+    it('should throw an error if `Peers.getList` throws an error', function (done) {
       RabbitMQ.publishWeaveStart.returns();
       WorkerServer.listen.yieldsAsync();
       Peers.getList.yieldsAsync('err');
@@ -59,7 +59,7 @@ describe('start.js unit test', function () {
       });
     });
 
-    it('should err if listen err', function (done) {
+    it('should throw an error if `WorkerServer.listen` throws an error', function (done) {
       WorkerServer.listen.yieldsAsync('err');
 
       Start.startup(function (err) {
@@ -68,6 +68,21 @@ describe('start.js unit test', function () {
         done();
       });
     });
+
+    it('should throw an error if `RabbitMQ.publishWeaveStart` throws an error', function (done) {
+      RabbitMQ.publishWeaveStart.throws();
+      WorkerServer.listen.yieldsAsync();
+      Peers.getList.yieldsAsync(null, [1, 2, 3]);
+
+      Start.startup(function (err) {
+        expect(err).to.exist();
+        sinon.assert.calledOnce(WorkerServer.listen);
+        sinon.assert.calledOnce(Peers.getList);
+        sinon.assert.calledOnce(RabbitMQ.publishWeaveStart);
+        done();
+      });
+    });
+
   }); // end startup
 
   describe('shutdown', function () {
@@ -95,11 +110,26 @@ describe('start.js unit test', function () {
       });
     });
 
-    it('should cb err if worker server failed', function (done) {
-      WorkerServer.stop.yieldsAsync('Balrogs');
+    it('should throw an error if `WorkerServer` failed', function (done) {
+      var errMessage = 'WorkerServer error';
+      WorkerServer.stop.yieldsAsync(new Error(errMessage));
 
       Start.shutdown(function (err) {
         expect(err).to.exist();
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal(errMessage);
+        done();
+      });
+    });
+
+    it('should throw an error if `RabbitMQ.disconnectPublisher` failed', function (done) {
+      var errMessage = 'RabbitMQ.disconnectPublisher error';
+      WorkerServer.stop.yieldsAsync();
+      RabbitMQ.disconnectPublisher.yieldsAsync(new Error(errMessage));
+
+      Start.shutdown(function (err) {
+        expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal(errMessage);
         done();
       });
     });
