@@ -111,21 +111,25 @@ describe('start.js unit test', function () {
     });
 
     it('should throw an error if `WorkerServer` failed', function (done) {
-      WorkerServer.stop.yieldsAsync(new Error());
+      var errMessage = 'WorkerServer error';
+      WorkerServer.stop.yieldsAsync(new Error(errMessage));
 
       Start.shutdown(function (err) {
         expect(err).to.exist();
         expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal(errMessage);
         done();
       });
     });
 
     it('should throw an error if `RabbitMQ.disconnectPublisher` failed', function (done) {
+      var errMessage = 'RabbitMQ.disconnectPublisher error';
       WorkerServer.stop.yieldsAsync();
-      RabbitMQ.disconnectPublisher.yieldsAsync(new Error());
+      RabbitMQ.disconnectPublisher.yieldsAsync(new Error(errMessage));
 
       Start.shutdown(function (err) {
         expect(err).to.be.an.instanceof(Error);
+        expect(err.message).to.equal(errMessage);
         done();
       });
     });
