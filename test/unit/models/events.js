@@ -186,7 +186,8 @@ describe('events.js unit test', function () {
               contextVersionId: '563a808f9359ef0c00df34e6'
             }
           }
-        }
+        },
+        tags: '1q2qswedasdasdad,123'
       }, function (err) {
         expect(err).to.be.an.instanceof(TaskError);
         sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttachFailed);
@@ -212,7 +213,8 @@ describe('events.js unit test', function () {
               contextVersionId: '563a808f9359ef0c00df34e6'
             }
           }
-        }
+        },
+        tags: '1q2qswedasdasdad,123'
       }, function (err) {
         expect(err).to.be.an.instanceof(TaskError);
         done();
@@ -239,6 +241,7 @@ describe('events.js unit test', function () {
             }
           }
         },
+        tags: '1q2qswedasdasdad,123'
       }, function (err) {
         expect(err).to.be.an.instanceof(TaskError);
         done();
@@ -266,7 +269,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        orgId: orgId
+        tags: orgId + ',1q2qswedasdasdad,123'
       };
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist();
