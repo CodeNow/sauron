@@ -238,7 +238,7 @@ describe('events.js unit test', function () {
               contextVersionId: '563a808f9359ef0c00df34e6'
             }
           }
-        }
+        },
       }, function (err) {
         expect(err).to.be.an.instanceof(TaskError);
         done();
@@ -249,6 +249,7 @@ describe('events.js unit test', function () {
       var testErr = ErrorCat.create(409, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
+      var orgId = '868976908769078';
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
@@ -264,10 +265,14 @@ describe('events.js unit test', function () {
               contextVersionId: '563a808f9359ef0c00df34e6'
             }
           }
-        }
+        },
+        orgId: orgId
       };
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist();
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
+        // dockerHost is null, since the initial value was given incorrectly
+
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
         jobData.err = testErr;
         expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs(jobData).called).to.be.true();
@@ -279,6 +284,7 @@ describe('events.js unit test', function () {
       var testIp = '10.0.0.0';
       var testHost = 'http://172.123.12.3:4242';
       var testId = '23984765893264';
+      var orgId = '868976908769078';
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
@@ -293,7 +299,8 @@ describe('events.js unit test', function () {
               contextVersionId: '563a808f9359ef0c00df34e6'
             }
           }
-        }
+        },
+        tags: orgId + ',1q2qswedasdasdad,123'
       };
 
       Events.handleStarted(jobData, function (err) {
@@ -301,8 +308,7 @@ describe('events.js unit test', function () {
         jobData.containerIp = testIp;
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true();
-        expect(WeaveWrapper.attach.withArgs(testId, '172.123.12.3:4242').called)
-          .to.be.true();
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, '172.123.12.3:4242', orgId, sinon.match.func);
         sinon.assert.calledWith(
           Peers.doesDockExist,
           testHost
