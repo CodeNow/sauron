@@ -311,6 +311,7 @@ describe('events.js unit test', function () {
         jobData.containerIp = testIp;
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true();
+        sinon.assert.calledOnce(WeaveWrapper.attach);
         sinon.assert.calledWith(WeaveWrapper.attach, testId, '172.123.12.3:4242', orgId, sinon.match.func);
         sinon.assert.calledWith(
           Peers.doesDockExist,
