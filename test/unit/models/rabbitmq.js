@@ -265,4 +265,56 @@ describe('rabbitmq.js unit test', function () {
       done();
     });
   }); // end _dataCheck
+
+  describe('publishOnDockUnhealthy', function () {
+    beforeEach(function (done) {
+      RabbitMQ._publisher = {
+        publish: sinon.stub()
+      };
+      done();
+    });
+
+    it('should publish on-dock-unhealthy', function (done) {
+      var testData = {
+        host: 'testHost',
+        githubId: 1253543
+      };
+      RabbitMQ._publisher.publish.returns();
+
+      RabbitMQ.publishOnDockUnhealthy(testData);
+
+      expect(RabbitMQ._publisher.publish
+        .withArgs('on-dock-unhealthy').called).to.be.true();
+      expect(RabbitMQ._publisher.publish
+        .args[0][1].timestamp).to.exist();
+      expect(RabbitMQ._publisher.publish
+        .args[0][1].dockerHealthCheckId).to.exist();
+      expect(RabbitMQ._publisher.publish
+        .args[0][1].host).to.equal(testData.host);
+      expect(RabbitMQ._publisher.publish
+        .args[0][1].githubId).to.equal(testData.githubId);
+
+      done();
+    });
+
+    it('should throw if missing keys', function (done) {
+      var testData = {
+        host: 'testHost',
+        githubId: 1253543
+      };
+
+      Object.keys(testData).forEach(function (key) {
+        var test = {
+          host: 'testHost',
+          githubId: 1253543
+        };
+        delete test[key];
+        expect(function () {
+          RabbitMQ.publishOnDockUnhealthy(test);
+        }).to.throw();
+      });
+
+      done();
+    });
+  }); // end publishOnDockUnhealthy
 }); // end rabbitmq.js unit test

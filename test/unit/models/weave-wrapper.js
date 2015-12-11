@@ -12,6 +12,7 @@ var expect = Code.expect;
 var sinon = require('sinon');
 var child_process = require('child_process');
 
+var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
 
 describe('weave-wrapper.js unit test', function () {
@@ -69,6 +70,7 @@ describe('weave-wrapper.js unit test', function () {
 
   describe('launch', function () {
     var testDockerHost = '10.0.0.1:4242';
+    var testDockerOrgId = '123412';
 
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, '_runCmd');
@@ -91,7 +93,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = ['10.0.0.1', '10.0.0.2'];
 
-      WeaveWrapper.launch(peers, testDockerHost, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, testDockerOrgId, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
@@ -107,7 +109,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = [];
 
-      WeaveWrapper.launch(peers, testDockerHost, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, testDockerOrgId, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave launch-router --no-dns ' +
@@ -121,7 +123,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync();
       WeaveWrapper._handleCmdResult.returnsArg(0);
       var peers = 'no valid';
-      WeaveWrapper.launch(peers, testDockerHost, function (err) {
+      WeaveWrapper.launch(peers, testDockerHost, testDockerOrgId, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -130,7 +132,7 @@ describe('weave-wrapper.js unit test', function () {
     it('should fail if missing peers', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
       WeaveWrapper._handleCmdResult.returnsArg(0);
-      WeaveWrapper.launch(null, testDockerHost, function (err) {
+      WeaveWrapper.launch(null, testDockerHost, testDockerOrgId, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -139,6 +141,7 @@ describe('weave-wrapper.js unit test', function () {
 
   describe('attach', function () {
     var testContainerId = '1738';
+    var testDockerOrgId = '123412';
     var testDockerHost = '10.2.2.2:4242';
 
     beforeEach(function (done) {
@@ -159,7 +162,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync(null, '10.0.0.0\n');
       WeaveWrapper._handleCmdResult.returnsArg(0);
 
-      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, testDockerOrgId, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
           .withArgs('/usr/bin/weave attach ' + testContainerId, testDockerHost)
@@ -172,7 +175,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._runCmd.yieldsAsync(null, 'not an ip\n');
       WeaveWrapper._handleCmdResult.returnsArg(0);
 
-      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, testDockerOrgId, function (err) {
         expect(err).to.exist();
         done();
       });
@@ -180,7 +183,7 @@ describe('weave-wrapper.js unit test', function () {
 
     it('should fail if missing containerId', function (done) {
       WeaveWrapper._runCmd.yieldsAsync();
-      WeaveWrapper.attach(null, testDockerHost, function (err) {
+      WeaveWrapper.attach(null, testDockerHost, testDockerOrgId, function (err) {
         expect(err.output.statusCode).to.equal(400);
         done();
       });
@@ -189,7 +192,7 @@ describe('weave-wrapper.js unit test', function () {
     it('should _handleCmdResult if runCmd failed', function (done) {
       WeaveWrapper._runCmd.yieldsAsync(new Error('Gollum'));
       WeaveWrapper._handleCmdResult.returnsArg(0);
-      WeaveWrapper.attach(testContainerId, testDockerHost, function (err) {
+      WeaveWrapper.attach(testContainerId, testDockerHost, testDockerOrgId, function (err) {
         expect(err).to.exist();
         done();
       });
@@ -200,11 +203,13 @@ describe('weave-wrapper.js unit test', function () {
   describe('_handleCmdResult', function () {
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, '_isIgnorable');
+      sinon.stub(RabbitMQ, 'publishOnDockUnhealthy');
       done();
     });
 
     afterEach(function (done) {
       WeaveWrapper._isIgnorable.restore();
+      RabbitMQ.publishOnDockUnhealthy.restore();
       done();
     });
 
@@ -221,6 +226,20 @@ describe('weave-wrapper.js unit test', function () {
         expect(err).to.not.exist();
         done();
       }, 'test', {})(testErr);
+    });
+
+    it('should cb with error and publish dock unhealthy on Out Of Memory', function (done) {
+      var testErr = { message: 'Error response from daemon: Untar error on re-exec cmd: fork/exec /proc/self/exe: cannot allocate memory' };
+      var debug = {
+        githubId: 1234,
+        host: 'asdasdasasdasadsgasdgdsg'
+      };
+      WeaveWrapper._handleCmdResult(function (err) {
+        expect(err.output.statusCode).to.equal(500);
+        sinon.assert.calledOnce(RabbitMQ.publishOnDockUnhealthy);
+        sinon.assert.calledWith(RabbitMQ.publishOnDockUnhealthy, debug);
+        done();
+      }, 'test', debug)(testErr);
     });
 
     it('should cb 500 for unknown err', function (done) {
@@ -278,7 +297,8 @@ describe('weave-wrapper.js unit test', function () {
       [
         'is running.',
         'alive',
-        'such container 189237590128375'
+        'such container 189237590128375',
+        'Error response from daemon: Untar error on re-exec cmd: fork/exec /proc/self/exe: cannot allocate memory'
       ].forEach(function (m) {
         var testErr = { message: m };
         expect(WeaveWrapper._isIgnorable(testErr), m)
