@@ -26,8 +26,12 @@ var subscribedEvents = [
   'container.network.attached',
   'container.network.attach-failed'
 ];
+var publishQueues = [
+  'on-dock-unhealthy',
+  'weave.start'
+];
 
-var queues = [
+var subscribeQueues = [
   'weave.start'
 ];
 
@@ -37,7 +41,7 @@ var testPublisher = new Hermes({
     port: process.env.RABBITMQ_PORT,
     username: process.env.RABBITMQ_USERNAME,
     publishedEvents: publishedEvents,
-    queues: queues,
+    queues: publishQueues,
     name: 'testPublisher'
   });
 
@@ -47,7 +51,7 @@ var testSubscriber = new Hermes({
     port: process.env.RABBITMQ_PORT,
     username: process.env.RABBITMQ_USERNAME,
     subscribedEvents: subscribedEvents,
-    queues: queues,
+    queues: subscribeQueues,
     name: 'testSubscriber'
   });
 
