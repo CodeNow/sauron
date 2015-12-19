@@ -283,6 +283,41 @@ describe('events.js unit test', function () {
       });
     });
 
+    it('should cb error if publishing threw', function (done) {
+      var testErr = ErrorCat.create(409, 'Dunlendings');
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
+      var orgId = '868976908769078';
+
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(testErr);
+      RabbitMQ.publishContainerNetworkAttachFailed.throws(testErr);
+      Peers.doesDockExist.yieldsAsync(null, true);
+      var jobData = {
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        },
+        tags: orgId + ',1q2qswedasdasdad,123'
+      };
+      Events.handleStarted(jobData, function (err) {
+        expect(err).to.deep.equal(testErr);
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
+        // dockerHost is null, since the initial value was given incorrectly
+
+        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
+        jobData.err = testErr;
+        expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs(jobData).called).to.be.true();
+        done();
+      });
+    });
+
     it('should publish correct data', function (done) {
       var testIp = '10.0.0.0';
       var testHost = 'http://172.123.12.3:4242';
@@ -308,6 +343,45 @@ describe('events.js unit test', function () {
 
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist();
+        jobData.containerIp = testIp;
+        expect(RabbitMQ.publishContainerNetworkAttached
+          .withArgs(jobData).called).to.be.true();
+        sinon.assert.calledOnce(WeaveWrapper.attach);
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, '172.123.12.3:4242', orgId, sinon.match.func);
+        sinon.assert.calledWith(
+          Peers.doesDockExist,
+          testHost
+        );
+        done();
+      });
+    });
+
+    it('should cb error if publish threw', function (done) {
+      var testIp = '10.0.0.0';
+      var testHost = 'http://172.123.12.3:4242';
+      var testId = '23984765893264';
+      var orgId = '868976908769078';
+      var testErr = new Error('shadowflax');
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(null, testIp);
+      RabbitMQ.publishContainerNetworkAttached.throws(testErr);
+      Peers.doesDockExist.yieldsAsync(null, true);
+      var jobData = {
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        },
+        tags: orgId + ',1q2qswedasdasdad,123'
+      };
+
+      Events.handleStarted(jobData, function (err) {
+        expect(err).to.deep.equals(testErr);
         jobData.containerIp = testIp;
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true();
