@@ -317,13 +317,13 @@ describe('events.js unit test', function () {
     });
 
     it('should cb error if publishing threw', function (done) {
-      var testErr = ErrorCat.create(409, 'Dunlendings');
+      var testErr = ErrorCat.create(404, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
       var orgId = '868976908769078';
 
       Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(testErr);
+      WeaveWrapper.attach.yields(null);
       RabbitMQ.publishContainerNetworkAttachFailed.throws(testErr);
       Peers.doesDockExist.yieldsAsync(null, true);
       var jobData = {
