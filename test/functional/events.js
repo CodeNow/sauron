@@ -316,7 +316,7 @@ describe('events functional test', function () {
 
     it('should call emit fail if attach failed', function (done) {
       var testId = 'Andune';
-      process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock died-attach');
+      process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock weave-failed');
       testSubscriber.subscribe('container.network.attach-failed', function (data, cb) {
         expect(data.id).to.equal(testId);
         expect(data.host).to.equal('http://2.3.4.5:4242');

@@ -23,6 +23,10 @@ case "$WEAVE_COMMAND" in
     echo "container died" >&2
     exit 1
     ;;
+  weave-failed)
+    echo "weave failed" >&2
+    exit 1
+    ;;
   retry-attach)
     if [[ -f ./attempt ]]; then
       rm ./attempt
