@@ -143,7 +143,6 @@ describe('events.js unit test', function () {
   describe('handleStarted', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
-      sinon.stub(RabbitMQ, 'publishContainerNetworkAttachFailed');
       sinon.stub(Events, '_isNetworkNeeded');
       sinon.stub(WeaveWrapper, 'attach');
       sinon.stub(Peers, 'doesDockExist');
@@ -152,7 +151,6 @@ describe('events.js unit test', function () {
 
     afterEach(function (done) {
       RabbitMQ.publishContainerNetworkAttached.restore();
-      RabbitMQ.publishContainerNetworkAttachFailed.restore();
       Events._isNetworkNeeded.restore();
       WeaveWrapper.attach.restore();
       Peers.doesDockExist.restore();
@@ -190,7 +188,7 @@ describe('events.js unit test', function () {
         tags: '1q2qswedasdasdad,123'
       }, function (err) {
         expect(err).to.be.an.instanceof(TaskError);
-        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttachFailed);
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached);
         sinon.assert.notCalled(WeaveWrapper.attach);
         done();
       });
@@ -201,7 +199,6 @@ describe('events.js unit test', function () {
       var testId = '23984765893264';
 
       Events._isNetworkNeeded.returns(true);
-      RabbitMQ.publishContainerNetworkAttachFailed.returns();
       Peers.doesDockExist.yieldsAsync(null, false);
       Events.handleStarted({
         id: testId,
@@ -228,7 +225,6 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      RabbitMQ.publishContainerNetworkAttachFailed.returns();
       Peers.doesDockExist.yieldsAsync(null, true);
       Events.handleStarted({
         id: testId,
@@ -256,7 +252,6 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      RabbitMQ.publishContainerNetworkAttachFailed.returns();
       Peers.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
@@ -276,7 +271,6 @@ describe('events.js unit test', function () {
         expect(err.report).to.be.false()
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-        expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs(jobData).called).to.be.false();
         done();
       });
     });
@@ -289,7 +283,6 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      RabbitMQ.publishContainerNetworkAttachFailed.returns();
       Peers.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
@@ -307,46 +300,7 @@ describe('events.js unit test', function () {
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist();
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
-        // dockerHost is null, since the initial value was given incorrectly
-
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-        jobData.err = testErr;
-        expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs(jobData).called).to.be.true();
-        done();
-      });
-    });
-
-    it('should cb error if publishing threw', function (done) {
-      var testErr = ErrorCat.create(404, 'Dunlendings');
-      var testHost = '172.123.12.3';
-      var testId = '23984765893264';
-      var orgId = '868976908769078';
-
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(testErr);
-      RabbitMQ.publishContainerNetworkAttachFailed.throws(testErr);
-      Peers.doesDockExist.yieldsAsync(null, true);
-      var jobData = {
-        id: testId,
-        host: testHost,
-        inspectData: {
-          Config: {
-            Labels: {
-              instanceId: '5633e9273e2b5b0c0077fd41',
-              contextVersionId: '563a808f9359ef0c00df34e6'
-            }
-          }
-        },
-        tags: orgId + ',1q2qswedasdasdad,123'
-      };
-      Events.handleStarted(jobData, function (err) {
-        expect(err).to.deep.equal(testErr);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
-        // dockerHost is null, since the initial value was given incorrectly
-
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-        jobData.err = testErr;
-        expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs(jobData).called).to.be.true();
         done();
       });
     });

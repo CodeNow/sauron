@@ -313,39 +313,6 @@ describe('events functional test', function () {
         }
       });
     });
-
-    it('should call emit fail if attach failed', function (done) {
-      var testId = 'Andune';
-      process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock weave-failed');
-      testSubscriber.subscribe('container.network.attach-failed', function (data, cb) {
-        expect(data.id).to.equal(testId);
-        expect(data.host).to.equal('http://2.3.4.5:4242');
-        expect(data.err.data.err.stderr).to.equal('container died\n');
-        expect(data.inspectData.Config.Labels.instanceId).to.equal('5633e9273e2b5b0c0077fd41');
-        var weaveArgs = fs.readFileSync('./weaveMockArgs');
-        expect(weaveArgs.toString()).to.equal('died-attach attach Andune\n');
-        var weaveEnvs = fs.readFileSync('./weaveEnvs');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=2.3.4.5:4242');
-        cb();
-        done();
-      });
-      testPublisher.publish('container.life-cycle.started', {
-        host: 'http://2.3.4.5:4242',
-        id: testId,
-        from: 'ubuntu',
-        tags: 'tag,your,it',
-        inspectData: {
-          Config: {
-            Labels: {
-              instanceId: '5633e9273e2b5b0c0077fd41',
-              contextVersionId: '563a808f9359ef0c00df34e6'
-            }
-          }
-        }
-      });
-    });
   }); // end container.life-cycle.started
 
   describe('attach retry', function () {
