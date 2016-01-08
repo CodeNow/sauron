@@ -323,7 +323,7 @@ describe('events.js unit test', function () {
       var orgId = '868976908769078';
 
       Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(null);
+      WeaveWrapper.attach.yields(testErr);
       RabbitMQ.publishContainerNetworkAttachFailed.throws(testErr);
       Peers.doesDockExist.yieldsAsync(null, true);
       var jobData = {
