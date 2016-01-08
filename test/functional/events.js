@@ -23,8 +23,7 @@ var publishedEvents = [
 ];
 
 var subscribedEvents = [
-  'container.network.attached',
-  'container.network.attach-failed'
+  'container.network.attached'
 ];
 var publishQueues = [
   'on-dock-unhealthy',
