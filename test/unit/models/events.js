@@ -273,6 +273,7 @@ describe('events.js unit test', function () {
       };
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(TaskFatalError);
+        expect(err.report).to.be.false()
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
         expect(RabbitMQ.publishContainerNetworkAttachFailed.withArgs(jobData).called).to.be.false();
