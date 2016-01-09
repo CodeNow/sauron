@@ -140,60 +140,6 @@ describe('rabbitmq.js unit test', function () {
     });
   }); // end publishContainerNetworkAttached
 
-  describe('publishContainerNetworkAttachFailed', function () {
-    beforeEach(function (done) {
-      sinon.stub(RabbitMQ, '_dataCheck');
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      };
-      done();
-    });
-
-    afterEach(function (done) {
-      RabbitMQ._dataCheck.restore();
-      RabbitMQ._publisher = null;
-      done();
-    });
-
-    it('should throw if missing data', function (done) {
-      RabbitMQ._dataCheck.throws();
-
-      expect(function () {
-        RabbitMQ.publishContainerNetworkAttachFailed();
-      }).to.throw();
-
-      done();
-    });
-
-    it('should call publish with correct key and data', function (done) {
-      RabbitMQ._dataCheck.returns();
-      RabbitMQ._publisher.publish.returns();
-      var data = {
-        containerIp: '10.0.0.2',
-        host: 'http://localhost:4242',
-        id: '237c9ccf14e89a6e23fb15f2d9132efd98878f6267b9f128f603be3b3e362472',
-        from: 'weaveworks/weave:1.2.0',
-        inspectData: {
-          Config: {
-            ExposedPorts: {
-              '6783/tcp': {},
-              '6783/udp': {}
-            }
-          }
-        },
-        err: 'Some errr'
-      };
-
-      RabbitMQ.publishContainerNetworkAttachFailed(data);
-
-      expect(RabbitMQ._publisher.publish.withArgs('container.network.attach-failed')
-        .calledOnce).to.be.true();
-      expect(Object.keys(RabbitMQ._publisher.publish.args[0][1]))
-        .to.contain(['id', 'inspectData', 'err']);
-      done();
-    });
-  }); // end publishContainerNetworkAttachFailed
-
   describe('publishWeaveStart', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, '_dataCheck');
