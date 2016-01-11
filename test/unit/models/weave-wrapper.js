@@ -168,7 +168,7 @@ describe('weave-wrapper.js unit test', function () {
         done();
       });
     });
-  }); // launch
+  }); // forget
 
   describe('attach', function () {
     var testContainerId = '1738';
