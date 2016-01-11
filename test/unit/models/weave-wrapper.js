@@ -139,6 +139,37 @@ describe('weave-wrapper.js unit test', function () {
     });
   }); // launch
 
+  describe('forget', function () {
+    var testDockerHost = '10.0.0.1';
+
+    beforeEach(function (done) {
+      sinon.stub(WeaveWrapper, '_runCmd');
+      sinon.stub(WeaveWrapper, '_handleCmdResult');
+      process.env.WEAVE_PATH = '/usr/bin/weave';
+      done();
+    });
+
+    afterEach(function (done) {
+      WeaveWrapper._runCmd.restore();
+      WeaveWrapper._handleCmdResult.restore();
+      delete process.env.WEAVE_PATH;
+      done();
+    });
+
+    it('should forget', function (done) {
+      WeaveWrapper._runCmd.yieldsAsync();
+      WeaveWrapper._handleCmdResult.returnsArg(0);
+
+      WeaveWrapper.forget(testDockerHost, '10.0.0.99', function (err) {
+        expect(err).to.not.exist();
+        expect(WeaveWrapper._runCmd
+          .withArgs('/usr/bin/weave forget 10.0.0.99', testDockerHost)
+          .called).to.be.true();
+        done();
+      });
+    });
+  }); // launch
+
   describe('attach', function () {
     var testContainerId = '1738';
     var testDockerOrgId = '123412';
