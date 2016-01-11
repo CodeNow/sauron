@@ -19,7 +19,8 @@ var nock = require('nock');
 var publishedEvents = [
   'container.life-cycle.died',
   'container.life-cycle.started',
-  'docker.events-stream.connected'
+  'docker.events-stream.connected',
+  'dock.removed'
 ];
 
 var subscribedEvents = [
