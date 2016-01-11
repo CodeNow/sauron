@@ -178,6 +178,44 @@ describe('rabbitmq.js unit test', function () {
     });
   }); // end publishWeaveStart
 
+  describe('publishWeaveForget', function () {
+    beforeEach(function (done) {
+      sinon.stub(RabbitMQ, '_dataCheck');
+      RabbitMQ._publisher = {
+        publish: sinon.stub()
+      };
+      done();
+    });
+
+    afterEach(function (done) {
+      RabbitMQ._dataCheck.restore();
+      RabbitMQ._publisher = null;
+      done();
+    });
+
+    it('should throw if missing data', function (done) {
+      RabbitMQ._dataCheck.throws();
+      expect(function () {
+        RabbitMQ.publishWeaveForget();
+      }).to.throw();
+
+      done();
+    });
+
+    it('should publish _publisher', function (done) {
+      RabbitMQ._publisher.publish.returns();
+      var testArgs = {
+        dockerUri: 'http://10.0.0.1:4242',
+        host: '10.0.0.99'
+      };
+      RabbitMQ.publishWeaveForget(testArgs);
+
+      expect(RabbitMQ._publisher.publish
+        .withArgs('weave.forget', testArgs).called).to.be.true();
+      done();
+    });
+  }); // end publishWeaveForget
+
   describe('_dataCheck', function () {
     it('should throw if missing keys', function (done) {
       var testData = {
