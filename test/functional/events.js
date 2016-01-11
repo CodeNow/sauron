@@ -60,6 +60,7 @@ var WeaveWrapper = require('../../lib/models/weave-wrapper.js');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
+    sinon.spy(WeaveWrapper, '_runCmd');
     testPublisher.connect(done);
   });
 
@@ -82,7 +83,6 @@ describe('events functional test', function () {
         'host': 'http://2.2.2.2:4242',
         'tags': '1660575,run,build'
       }]);
-    sinon.spy(WeaveWrapper, '_runCmd');
     Start.startup(done);
   });
 
