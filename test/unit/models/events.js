@@ -102,6 +102,75 @@ describe('events.js unit test', function () {
 
   }); // end handleStart
 
+
+  describe('handleDockRemoved', function () {
+    beforeEach(function (done) {
+      sinon.stub(Peers, 'getList');
+      sinon.stub(RabbitMQ, 'publishWeaveForget').returns();
+      done();
+    });
+
+    afterEach(function (done) {
+      Peers.getList.restore();
+      RabbitMQ.publishWeaveForget.restore();
+      done();
+    });
+
+    it('should cb err if getList err', function (done) {
+      Peers.getList.yieldsAsync('err');
+
+      Events.handleDockRemoved({}, function (err) {
+        expect(err).to.exist();
+        done();
+      });
+    });
+
+    it('should do nothing if no peers', function (done) {
+      Peers.getList.yieldsAsync(null, []);
+
+      Events.handleDockRemoved({
+        host: 'http://10.0.0.1:4242',
+        githubId: '11213123'
+      }, function (err) {
+        expect(err).to.not.exist();
+        expect(RabbitMQ.publishWeaveForget.called)
+          .to.be.false();
+        done();
+      });
+    });
+
+    it('should call RabbitMQ.publishWeaveForget for each peer', function (done) {
+      Peers.getList.yieldsAsync(null, [{
+        dockerUri: 'http://10.0.0.1:4242'
+      }, {
+        dockerUri: 'http://10.0.0.2:4242'
+      }, {
+        dockerUri: 'http://10.0.0.3:4242'
+      }]);
+
+      Events.handleDockRemoved({
+        host: 'http://10.0.0.1:4242',
+        githubId: '11213123'
+      }, function (err) {
+        expect(err).to.not.exist();
+        expect(RabbitMQ.publishWeaveForget.callCount).to.equal(3);
+        expect(RabbitMQ.publishWeaveForget.getCall(0).args[0]).to.deep.equal({
+          dockerUri: 'http://10.0.0.1:4242',
+          host: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeaveForget.getCall(1).args[0]).to.deep.equal({
+          dockerUri: 'http://10.0.0.2:4242',
+          host: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeaveForget.getCall(2).args[0]).to.deep.equal({
+          dockerUri: 'http://10.0.0.3:4242',
+          host: '10.0.0.1'
+        });
+        done();
+      });
+    });
+  }); // end handleDockRemoved
+
   describe('handleDied', function () {
     beforeEach(function (done) {
       sinon.stub(Events, '_isWeaveContainer');
