@@ -28,18 +28,6 @@ describe('weave.forget.js unit test', function () {
       done();
     });
 
-    it('should throw error if setup failed', function (done) {
-      WeaveWrapper.forget.throws(new Error('test'));
-      weaveForget({})
-        .then(function () {
-          throw new Error('should have thrown');
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(Error);
-          done();
-        });
-    });
-
     it('should throw missing dockerUri', function (done) {
       weaveForget({})
         .then(function () {
@@ -69,6 +57,21 @@ describe('weave.forget.js unit test', function () {
         dockerUri: 'http://10.0.0.1:4224',
         host: '10.0.0.99'
       }).asCallback(done);
+    });
+
+    it('should throw error if setup failed', function (done) {
+      WeaveWrapper.forget.throws(new Error('test'));
+      weaveForget({
+        dockerUri: 'http://10.0.0.1:4224',
+        host: '10.0.0.99'
+      })
+      .then(function () {
+        throw new Error('should have thrown');
+      })
+      .catch(function (err) {
+        expect(err).to.be.instanceOf(Error);
+        done();
+      });
     });
   }); // end run
 }); // end weave.forget
