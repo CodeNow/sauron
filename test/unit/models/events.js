@@ -155,15 +155,15 @@ describe('events.js unit test', function () {
         expect(err).to.not.exist();
         expect(RabbitMQ.publishWeaveForget.callCount).to.equal(3);
         expect(RabbitMQ.publishWeaveForget.getCall(0).args[0]).to.deep.equal({
-          dockerUri: 'http://10.0.0.1:4242',
+          dockerHost: '10.0.0.1:4242',
           host: '10.0.0.1'
         });
         expect(RabbitMQ.publishWeaveForget.getCall(1).args[0]).to.deep.equal({
-          dockerUri: 'http://10.0.0.2:4242',
+          dockerHost: '10.0.0.2:4242',
           host: '10.0.0.1'
         });
         expect(RabbitMQ.publishWeaveForget.getCall(2).args[0]).to.deep.equal({
-          dockerUri: 'http://10.0.0.3:4242',
+          dockerHost: '10.0.0.3:4242',
           host: '10.0.0.1'
         });
         done();
