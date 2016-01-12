@@ -14,34 +14,22 @@ var sinon = require('sinon');
 var TaskFatalError = require('ponos').TaskFatalError;
 
 var Events = require('../../../lib/models/events.js');
-var weaveStart = require('../../../lib/workers/weave-start.js');
+var dockRemoved = require('../../../lib/workers/dock.removed.js');
 
-describe('weave-start.js unit test', function () {
+describe('dock.removed.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleStartAsync');
+      sinon.stub(Events, 'handleDockRemovedAsync').returns();
       done();
     });
 
     afterEach(function (done) {
-      Events.handleStartAsync.restore();
+      Events.handleDockRemovedAsync.restore();
       done();
     });
 
-    it('should throw error if setup failed', function (done) {
-      Events.handleStartAsync.throws(new Error('test'));
-      weaveStart({})
-        .then(function () {
-          throw new Error('should have thrown');
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(Error);
-          done();
-        });
-    });
-
-    it('should throw missing dockerUri', function (done) {
-      weaveStart({})
+    it('should throw missing host', function (done) {
+      dockRemoved({})
         .then(function () {
           throw new Error('should have thrown');
         })
@@ -51,9 +39,9 @@ describe('weave-start.js unit test', function () {
         });
     });
 
-    it('should throw missing orgId', function (done) {
-      weaveStart({
-        dockerUri: 'http:12.12.1.2:4242'
+    it('should throw missing githubId', function (done) {
+      dockRemoved({
+        host: 'http://10.0.0.1:4224',
       })
       .then(function () {
         throw new Error('should have thrown');
@@ -65,12 +53,26 @@ describe('weave-start.js unit test', function () {
     });
 
     it('should be fine if no errors', function (done) {
-      Events.handleStartAsync.returns();
-      weaveStart({
-        dockerUri: '10.0.0.1:4224',
-        orgId: 'runnable'
+      dockRemoved({
+        host: 'http://10.0.0.1:4224',
+        githubId: '12345'
       })
       .asCallback(done);
     });
+    
+    it('should throw error if setup failed', function (done) {
+      Events.handleDockRemovedAsync.throws(new Error('test'));
+      dockRemoved({
+        host: 'http://10.0.0.1:4224',
+        githubId: '12345'
+      })
+      .then(function () {
+        throw new Error('should have thrown');
+      })
+      .catch(function (err) {
+        expect(err).to.be.instanceOf(Error);
+        done();
+      });
+    });
   }); // end run
-}); // end weave-start
+}); // end dock.removed
