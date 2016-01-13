@@ -34,9 +34,11 @@ var testPublisher = new Hermes({
 
 var Start = require('../../lib/start.js');
 var WeaveWrapper = require('../../lib/models/weave-wrapper.js');
+var Docker = require('../../lib/models/docker');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
+    sinon.spy(Docker, 'loadCerts')
     testPublisher.connect(done);
   });
 
@@ -69,6 +71,7 @@ describe('events functional test', function () {
 
     afterEach(function (done) {
       WeaveWrapper._runCmd.restore();
+      Docker.loadCerts.restore()
       Start.shutdown(done);
     });
 
@@ -94,14 +97,13 @@ describe('events functional test', function () {
         }]);
 
       Start.startup(check);
-
       function check () {
+        expect(Docker.loadCerts.calledOnce).to.be.true()
         try {
           expect(WeaveWrapper._runCmd.callCount).to.equal(3);
         } catch (err) {
           return setTimeout(check, 100);
         }
-        console.log('WeaveWrapper._runCmd.args', WeaveWrapper._runCmd.args);
         var d1 = WeaveWrapper._runCmd.args.filter(function (args) {
           return args[1] === '1.0.0.1:4242';
         })[0];

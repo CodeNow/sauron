@@ -34,7 +34,7 @@ describe('lib/models/docker unit test', function () {
     });
   }); // end loadCerts
 
-  describe('ensureDockRemoved', function () {
+  describe('doesDockExist', function () {
     beforeEach(function (done) {
       sinon.stub(Dockerode.prototype, 'info');
       done();
@@ -49,7 +49,7 @@ describe('lib/models/docker unit test', function () {
       var testError = new Error('bee');
       Dockerode.prototype.info.yieldsAsync(testError);
 
-      Docker.ensureDockRemoved('http://8.8.8.8:4242', function (err) {
+      Docker.doesDockExist('http://8.8.8.8:4242', function (err) {
         expect(err).to.equal(testError);
         sinon.assert.calledOnce(Dockerode.prototype.info);
 
@@ -57,7 +57,7 @@ describe('lib/models/docker unit test', function () {
       });
     });
 
-    it('should cb error if dock in list', function (done) {
+    it('should cb true if dock in list', function (done) {
       Dockerode.prototype.info.yieldsAsync(null, {
         DriverStatus: [
           ['yellowjacket', 'mosquito'],
@@ -66,10 +66,10 @@ describe('lib/models/docker unit test', function () {
         ]
       });
 
-      Docker.ensureDockRemoved('http://10.0.0.1:4242', function (err) {
-        expect(err.output.statusCode).to.equal(412);
+      Docker.doesDockExist('http://10.0.0.1:4242', function (err, exists) {
+        expect(err).to.not.exist()
+        expect(exists).to.be.true()
         sinon.assert.calledOnce(Dockerode.prototype.info);
-
         done();
       });
     });
@@ -83,12 +83,12 @@ describe('lib/models/docker unit test', function () {
         ]
       });
 
-      Docker.ensureDockRemoved('http://10.0.0.2:4242', function (err) {
+      Docker.doesDockExist('http://10.0.0.2:4242', function (err, exists) {
         if (err) { return done(err); }
+        expect(exists).to.be.false()
         sinon.assert.calledOnce(Dockerode.prototype.info);
-
         done();
       });
     });
-  }); // end ensureDockRemoved
+  }); // end doesDockExist
 });
