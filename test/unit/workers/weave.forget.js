@@ -1,6 +1,7 @@
 'use strict';
 require('loadenv')();
 
+var Promise = require('bluebird');
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
@@ -59,21 +60,23 @@ describe('weave.forget.js unit test', function () {
       }).asCallback(done);
     });
 
-    // it('should throw error if setup failed', function (done) {
-    //   var rejectionPromise = Promise.reject(new Error('test'))
-    //   rejectionPromise.suppressUnhandledRejections()
-    //   WeaveWrapper.forgetAsync.returns(rejectionPromise)
-    //   weaveForget({
-    //     dockerHost: '10.0.0.1:4224',
-    //     host: '10.0.0.99'
-    //   })
-    //   // .then(function () {
-    //   //   throw new Error('should have thrown');
-    //   // })
-    //   .catch(function (err) {
-    //     expect(err).to.be.instanceOf(Error);
-    //     done();
-    //   });
-    // });
+    it('should throw error if setup failed', function (done) {
+      var rejectError = new Error('test')
+      var rejectionPromise = Promise.reject(rejectError)
+      rejectionPromise.suppressUnhandledRejections()
+      WeaveWrapper.forgetAsync.returns(rejectionPromise)
+      weaveForget({
+        dockerHost: '10.0.0.1:4224',
+        host: '10.0.0.99'
+      })
+      .then(function () {
+        throw new Error('should have thrown');
+      })
+      .catch(function (err) {
+        expect(err).to.be.instanceOf(Error);
+        expect(err).to.equal(rejectError)
+        done();
+      });
+    });
   }); // end run
 }); // end weave.forget
