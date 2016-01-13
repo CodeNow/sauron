@@ -106,14 +106,14 @@ describe('events.js unit test', function () {
   describe('handleDockRemoved', function () {
     beforeEach(function (done) {
       sinon.stub(Peers, 'getList');
-      sinon.stub(RabbitMQ, 'publishWeaveForget').returns();
+      sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns();
       sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns();
       done();
     });
 
     afterEach(function (done) {
       Peers.getList.restore();
-      RabbitMQ.publishWeaveForget.restore();
+      RabbitMQ.publishWeavePeerForget.restore();
       RabbitMQ.publishWeavePeerRemove.restore();
       done();
     });
@@ -135,7 +135,7 @@ describe('events.js unit test', function () {
         githubId: '11213123'
       }, function (err) {
         expect(err).to.not.exist();
-        expect(RabbitMQ.publishWeaveForget.called)
+        expect(RabbitMQ.publishWeavePeerForget.called)
           .to.be.false();
         expect(RabbitMQ.publishWeavePeerRemove.called)
           .to.be.false();
@@ -157,16 +157,16 @@ describe('events.js unit test', function () {
         githubId: '11213123'
       }, function (err) {
         expect(err).to.not.exist();
-        expect(RabbitMQ.publishWeaveForget.callCount).to.equal(3);
-        expect(RabbitMQ.publishWeaveForget.getCall(0).args[0]).to.deep.equal({
+        expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3);
+        expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.deep.equal({
           dockerHost: '10.0.0.1:4242',
           hostname: '10.0.0.1'
         });
-        expect(RabbitMQ.publishWeaveForget.getCall(1).args[0]).to.deep.equal({
+        expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.deep.equal({
           dockerHost: '10.0.0.2:4242',
           hostname: '10.0.0.1'
         });
-        expect(RabbitMQ.publishWeaveForget.getCall(2).args[0]).to.deep.equal({
+        expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.deep.equal({
           dockerHost: '10.0.0.3:4242',
           hostname: '10.0.0.1'
         });

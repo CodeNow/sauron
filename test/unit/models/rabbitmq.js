@@ -170,7 +170,7 @@ describe('rabbitmq.js unit test', function () {
     });
   }); // end publishWeaveStart
 
-  describe('publishWeaveForget', function () {
+  describe('publishWeavePeerForget', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
@@ -185,7 +185,7 @@ describe('rabbitmq.js unit test', function () {
 
     it('should throw if missing data', function (done) {
       expect(function () {
-        RabbitMQ.publishWeaveForget();
+        RabbitMQ.publishWeavePeerForget();
       }).to.throw();
 
       done();
@@ -197,13 +197,13 @@ describe('rabbitmq.js unit test', function () {
         dockerHost: '10.0.0.1:4242',
         hostname: '10.0.0.99'
       };
-      RabbitMQ.publishWeaveForget(testArgs);
+      RabbitMQ.publishWeavePeerForget(testArgs);
 
       expect(RabbitMQ._publisher.publish
         .withArgs('weave.peer.forget', testArgs).called).to.be.true();
       done();
     });
-  }); // end publishWeaveForget
+  }); // end publishWeavePeerForget
 
   describe('publishWeavePeerRemove', function () {
     beforeEach(function (done) {
