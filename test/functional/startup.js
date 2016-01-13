@@ -41,6 +41,10 @@ describe('events functional test', function () {
     sinon.spy(Docker, 'loadCerts')
     testPublisher.connect(done);
   });
+  afterEach(function (done) {
+    Docker.loadCerts.restore()
+    done()
+  })
 
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
@@ -71,7 +75,6 @@ describe('events functional test', function () {
 
     afterEach(function (done) {
       WeaveWrapper._runCmd.restore();
-      Docker.loadCerts.restore()
       Start.shutdown(done);
     });
 
