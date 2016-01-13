@@ -43,7 +43,7 @@ describe('weave.peer.remove.js unit test', function () {
         });
     });
 
-    it('should throw missing host', function (done) {
+    it('should throw missing hostname', function (done) {
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
       })
@@ -63,7 +63,7 @@ describe('weave.peer.remove.js unit test', function () {
       WeaveWrapper.reportAsync.returns(rejectionPromise)
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
-        host: '10.0.0.99'
+        hostname: '10.0.0.99'
       })
       .then(function () {
         throw new Error('should have thrown');
@@ -81,7 +81,7 @@ describe('weave.peer.remove.js unit test', function () {
       WeaveWrapper.rmpeerAsync.returns(rejectionPromise)
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
-        host: '10.4.145.68'
+        hostname: '10.4.145.68'
       })
       .then(function () {
         throw new Error('should have thrown');
@@ -99,7 +99,7 @@ describe('weave.peer.remove.js unit test', function () {
     it('should fattaly fail if peer not found', function (done) {
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
-        host: '10.4.145.67'
+        hostname: '10.4.145.67'
       })
       .then(function () {
         throw new Error('should have thrown');
@@ -115,7 +115,7 @@ describe('weave.peer.remove.js unit test', function () {
     it('should work if nothing failed', function (done) {
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
-        host: '10.4.145.68'
+        hostname: '10.4.145.68'
       }).asCallback(function (err) {
         expect(err).to.not.exist()
         expect(WeaveWrapper.reportAsync.calledOnce).to.be.true()

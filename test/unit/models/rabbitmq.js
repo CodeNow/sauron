@@ -195,7 +195,7 @@ describe('rabbitmq.js unit test', function () {
       RabbitMQ._publisher.publish.returns();
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
-        host: '10.0.0.99'
+        hostname: '10.0.0.99'
       };
       RabbitMQ.publishWeaveForget(testArgs);
 
@@ -230,7 +230,7 @@ describe('rabbitmq.js unit test', function () {
       RabbitMQ._publisher.publish.returns();
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
-        host: '10.0.0.99'
+        hostname: '10.0.0.99'
       };
       RabbitMQ.publishWeavePeerRemove(testArgs);
 
