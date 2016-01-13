@@ -51,8 +51,8 @@ describe('lib/models/docker unit test', function () {
 
       Docker.doesDockExist('8.8.8.8:4242', function (err) {
         expect(err).to.equal(testError);
-        sinon.assert.calledOnce(Dockerode.prototype.info);
-
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
         done();
       });
     });
@@ -69,7 +69,8 @@ describe('lib/models/docker unit test', function () {
       Docker.doesDockExist('10.0.0.1:4242', function (err, exists) {
         expect(err).to.not.exist()
         expect(exists).to.be.true()
-        sinon.assert.calledOnce(Dockerode.prototype.info);
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
         done();
       });
     });
@@ -86,7 +87,8 @@ describe('lib/models/docker unit test', function () {
       Docker.doesDockExist('10.0.0.2:4242', function (err, exists) {
         if (err) { return done(err); }
         expect(exists).to.be.false()
-        sinon.assert.calledOnce(Dockerode.prototype.info);
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
         done();
       });
     });

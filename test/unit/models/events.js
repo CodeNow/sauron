@@ -143,7 +143,7 @@ describe('events.js unit test', function () {
       });
     });
 
-    it('should publish two jobs for each peer for each peer', function (done) {
+    it('should publish two jobs for each peer', function (done) {
       Peers.getList.yieldsAsync(null, [{
         dockerUri: 'http://10.0.0.1:4242'
       }, {
