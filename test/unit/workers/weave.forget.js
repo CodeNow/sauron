@@ -14,18 +14,21 @@ var expect = Code.expect;
 var sinon = require('sinon');
 var TaskFatalError = require('ponos').TaskFatalError;
 
-var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
-var weaveForget = require('../../../lib/workers/weave.forget.js');
+var Docker = require('../../../lib/models/docker');
+var WeaveWrapper = require('../../../lib/models/weave-wrapper');
+var weaveForget = require('../../../lib/workers/weave.forget');
 
 describe('weave.forget.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, 'forgetAsync').returns(null);
+      sinon.stub(Docker, 'doesDockExistAsync').returns(true);
       done();
     });
 
     afterEach(function (done) {
       WeaveWrapper.forgetAsync.restore();
+      Docker.doesDockExistAsync.restore();
       done();
     });
 
@@ -57,10 +60,55 @@ describe('weave.forget.js unit test', function () {
       weaveForget({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
-      }).asCallback(done);
+      }).asCallback(function (err) {
+        expect(err).to.not.exist()
+        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
+        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
+        expect(WeaveWrapper.forgetAsync.calledOnce).to.be.true()
+        expect(WeaveWrapper.forgetAsync.withArgs('10.0.0.1:4224', '10.0.0.99').called).to.be.true()
+        done()
+      });
     });
-
-    it('should throw error if setup failed', function (done) {
+    it('should throw error if dock check failed', function (done) {
+      var rejectError = new Error('test')
+      var rejectionPromise = Promise.reject(rejectError)
+      rejectionPromise.suppressUnhandledRejections()
+      Docker.doesDockExistAsync.returns(rejectionPromise)
+      weaveForget({
+        dockerHost: '10.0.0.1:4224',
+        hostname: '10.0.0.99'
+      })
+      .then(function () {
+        throw new Error('should have thrown');
+      })
+      .catch(function (err) {
+        expect(err).to.be.instanceOf(Error)
+        expect(err).to.equal(rejectError)
+        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
+        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
+        expect(WeaveWrapper.forgetAsync.notCalled).to.be.true()
+        done();
+      });
+    });
+    it('should throw fatal error if dock does not exist', function (done) {
+      Docker.doesDockExistAsync.returns(false)
+      weaveForget({
+        dockerHost: '10.0.0.1:4224',
+        hostname: '10.0.0.99'
+      })
+      .then(function () {
+        throw new Error('should have thrown');
+      })
+      .catch(function (err) {
+        expect(err).to.be.instanceOf(TaskFatalError)
+        expect(err.message).to.equal('weave.forget: Dock was removed')
+        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
+        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
+        expect(WeaveWrapper.forgetAsync.notCalled).to.be.true()
+        done();
+      });
+    });
+    it('should throw error if weave command failed', function (done) {
       var rejectError = new Error('test')
       var rejectionPromise = Promise.reject(rejectError)
       rejectionPromise.suppressUnhandledRejections()
@@ -73,8 +121,12 @@ describe('weave.forget.js unit test', function () {
         throw new Error('should have thrown');
       })
       .catch(function (err) {
-        expect(err).to.be.instanceOf(Error);
+        expect(err).to.be.instanceOf(Error)
         expect(err).to.equal(rejectError)
+        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
+        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
+        expect(WeaveWrapper.forgetAsync.calledOnce).to.be.true()
+        expect(WeaveWrapper.forgetAsync.withArgs('10.0.0.1:4224', '10.0.0.99').called).to.be.true()
         done();
       });
     });
