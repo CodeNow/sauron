@@ -200,7 +200,7 @@ describe('rabbitmq.js unit test', function () {
       RabbitMQ.publishWeaveForget(testArgs);
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.forget', testArgs).called).to.be.true();
+        .withArgs('weave.peer.forget', testArgs).called).to.be.true();
       done();
     });
   }); // end publishWeaveForget

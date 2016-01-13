@@ -16,9 +16,9 @@ var TaskFatalError = require('ponos').TaskFatalError;
 
 var Docker = require('../../../lib/models/docker');
 var WeaveWrapper = require('../../../lib/models/weave-wrapper');
-var weaveForget = require('../../../lib/workers/weave.forget');
+var weaveForget = require('../../../lib/workers/weave.peer.forget');
 
-describe('weave.forget.js unit test', function () {
+describe('weave.peer.forget.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
       sinon.stub(WeaveWrapper, 'forgetAsync').returns(null);
@@ -101,7 +101,7 @@ describe('weave.forget.js unit test', function () {
       })
       .catch(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError)
-        expect(err.message).to.equal('weave.forget: Dock was removed')
+        expect(err.message).to.equal('weave.peer.forget: Dock was removed')
         expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
         expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
         expect(WeaveWrapper.forgetAsync.notCalled).to.be.true()
@@ -131,4 +131,4 @@ describe('weave.forget.js unit test', function () {
       });
     });
   }); // end run
-}); // end weave.forget
+}); // end weave.peer.forget

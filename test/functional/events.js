@@ -29,13 +29,13 @@ var subscribedEvents = [
 var publishQueues = [
   'on-dock-unhealthy',
   'weave.start',
-  'weave.forget',
+  'weave.peer.forget',
   'weave.peer.remove'
 ];
 
 var subscribeQueues = [
   'weave.start',
-  'weave.forget'
+  'weave.peer.forget'
 ];
 
 var testPublisher = new Hermes({
