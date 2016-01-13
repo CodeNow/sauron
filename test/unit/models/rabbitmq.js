@@ -90,7 +90,6 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishContainerNetworkAttached', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, '_dataCheck');
       RabbitMQ._publisher = {
         publish: sinon.stub()
       };
@@ -98,14 +97,11 @@ describe('rabbitmq.js unit test', function () {
     });
 
     afterEach(function (done) {
-      RabbitMQ._dataCheck.restore();
       RabbitMQ._publisher = null;
       done();
     });
 
     it('should throw if missing data', function (done) {
-      RabbitMQ._dataCheck.throws();
-
       expect(function () {
         RabbitMQ.publishContainerNetworkAttached();
       }).to.throw();
@@ -114,7 +110,6 @@ describe('rabbitmq.js unit test', function () {
     });
 
     it('should call publish with correct key and data', function (done) {
-      RabbitMQ._dataCheck.returns();
       RabbitMQ._publisher.publish.returns();
 
       var data = {
@@ -142,7 +137,6 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeaveStart', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, '_dataCheck');
       RabbitMQ._publisher = {
         publish: sinon.stub()
       };
@@ -150,15 +144,13 @@ describe('rabbitmq.js unit test', function () {
     });
 
     afterEach(function (done) {
-      RabbitMQ._dataCheck.restore();
       RabbitMQ._publisher = null;
       done();
     });
 
     it('should throw if missing data', function (done) {
-      RabbitMQ._dataCheck.throws();
       expect(function () {
-        RabbitMQ.publishWeaveStart();
+        RabbitMQ.publishWeaveStart({});
       }).to.throw();
 
       done();
@@ -168,7 +160,7 @@ describe('rabbitmq.js unit test', function () {
       RabbitMQ._publisher.publish.returns();
       var testArgs = {
         dockerUri: 'http://10.0.0.1:4242',
-        orgID: 'runnable'
+        orgId: 'runnable'
       };
       RabbitMQ.publishWeaveStart(testArgs);
 
@@ -180,7 +172,6 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeaveForget', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, '_dataCheck');
       RabbitMQ._publisher = {
         publish: sinon.stub()
       };
@@ -188,13 +179,11 @@ describe('rabbitmq.js unit test', function () {
     });
 
     afterEach(function (done) {
-      RabbitMQ._dataCheck.restore();
       RabbitMQ._publisher = null;
       done();
     });
 
     it('should throw if missing data', function (done) {
-      RabbitMQ._dataCheck.throws();
       expect(function () {
         RabbitMQ.publishWeaveForget();
       }).to.throw();
@@ -205,7 +194,7 @@ describe('rabbitmq.js unit test', function () {
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publish.returns();
       var testArgs = {
-        dockerUri: 'http://10.0.0.1:4242',
+        dockerHost: '10.0.0.1:4242',
         host: '10.0.0.99'
       };
       RabbitMQ.publishWeaveForget(testArgs);
@@ -215,6 +204,41 @@ describe('rabbitmq.js unit test', function () {
       done();
     });
   }); // end publishWeaveForget
+
+  describe('publishWeavePeerRemove', function () {
+    beforeEach(function (done) {
+      RabbitMQ._publisher = {
+        publish: sinon.stub()
+      };
+      done();
+    });
+
+    afterEach(function (done) {
+      RabbitMQ._publisher = null;
+      done();
+    });
+
+    it('should throw if missing data', function (done) {
+      expect(function () {
+        RabbitMQ.publishWeavePeerRemove();
+      }).to.throw();
+
+      done();
+    });
+
+    it('should publish _publisher', function (done) {
+      RabbitMQ._publisher.publish.returns();
+      var testArgs = {
+        dockerHost: '10.0.0.1:4242',
+        host: '10.0.0.99'
+      };
+      RabbitMQ.publishWeavePeerRemove(testArgs);
+
+      expect(RabbitMQ._publisher.publish
+        .withArgs('weave.peer.remove', testArgs).called).to.be.true();
+      done();
+    });
+  }); // end publishWeavePeerRemove
 
   describe('_dataCheck', function () {
     it('should throw if missing keys', function (done) {
