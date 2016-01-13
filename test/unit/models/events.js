@@ -107,12 +107,14 @@ describe('events.js unit test', function () {
     beforeEach(function (done) {
       sinon.stub(Peers, 'getList');
       sinon.stub(RabbitMQ, 'publishWeaveForget').returns();
+      sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns();
       done();
     });
 
     afterEach(function (done) {
       Peers.getList.restore();
       RabbitMQ.publishWeaveForget.restore();
+      RabbitMQ.publishWeavePeerRemove.restore();
       done();
     });
 
@@ -135,11 +137,13 @@ describe('events.js unit test', function () {
         expect(err).to.not.exist();
         expect(RabbitMQ.publishWeaveForget.called)
           .to.be.false();
+        expect(RabbitMQ.publishWeavePeerRemove.called)
+          .to.be.false();
         done();
       });
     });
 
-    it('should call RabbitMQ.publishWeaveForget for each peer', function (done) {
+    it('should publish two jobs for each peer for each peer', function (done) {
       Peers.getList.yieldsAsync(null, [{
         dockerUri: 'http://10.0.0.1:4242'
       }, {
@@ -163,6 +167,19 @@ describe('events.js unit test', function () {
           host: '10.0.0.1'
         });
         expect(RabbitMQ.publishWeaveForget.getCall(2).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.3:4242',
+          host: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerRemove.callCount).to.equal(3);
+        expect(RabbitMQ.publishWeavePeerRemove.getCall(0).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.1:4242',
+          host: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerRemove.getCall(1).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.2:4242',
+          host: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerRemove.getCall(2).args[0]).to.deep.equal({
           dockerHost: '10.0.0.3:4242',
           host: '10.0.0.1'
         });
