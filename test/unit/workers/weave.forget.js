@@ -19,12 +19,12 @@ var weaveForget = require('../../../lib/workers/weave.forget.js');
 describe('weave.forget.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(WeaveWrapper, 'forget').yieldsAsync(null);
+      sinon.stub(WeaveWrapper, 'forgetAsync').returns(null);
       done();
     });
 
     afterEach(function (done) {
-      WeaveWrapper.forget.restore();
+      WeaveWrapper.forgetAsync.restore();
       done();
     });
 
@@ -62,14 +62,14 @@ describe('weave.forget.js unit test', function () {
     // it('should throw error if setup failed', function (done) {
     //   var rejectionPromise = Promise.reject(new Error('test'))
     //   rejectionPromise.suppressUnhandledRejections()
-    //   WeaveWrapper.forget.returns(rejectionPromise)
+    //   WeaveWrapper.forgetAsync.returns(rejectionPromise)
     //   weaveForget({
     //     dockerHost: '10.0.0.1:4224',
     //     host: '10.0.0.99'
     //   })
-    //   .then(function () {
-    //     throw new Error('should have thrown');
-    //   })
+    //   // .then(function () {
+    //   //   throw new Error('should have thrown');
+    //   // })
     //   .catch(function (err) {
     //     expect(err).to.be.instanceOf(Error);
     //     done();
