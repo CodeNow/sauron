@@ -37,23 +37,17 @@ describe('weave.peer.remove.js unit test', function () {
 
     it('should throw missing dockerHost', function (done) {
       weavePeerRemove({})
-        .then(function () {
-          throw new Error('should have thrown');
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(TaskFatalError);
-          done();
-        });
+      .asCallback(function (err) {
+        expect(err).to.be.instanceOf(TaskFatalError);
+        done();
+      });
     });
 
     it('should throw missing hostname', function (done) {
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError);
         done();
       });
@@ -67,16 +61,13 @@ describe('weave.peer.remove.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error)
         expect(err).to.equal(rejectError)
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.reportAsync.notCalled).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.notCalled).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.notCalled(WeaveWrapper.reportAsync)
+        sinon.assert.notCalled(WeaveWrapper.rmpeerAsync)
         done();
       });
     });
@@ -86,16 +77,13 @@ describe('weave.peer.remove.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError)
         expect(err.message).to.equal('weave.peer.remove: Dock was removed')
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.reportAsync.notCalled).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.notCalled).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.notCalled(WeaveWrapper.reportAsync)
+        sinon.assert.notCalled(WeaveWrapper.rmpeerAsync)
         done();
       });
     });
@@ -108,15 +96,14 @@ describe('weave.peer.remove.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error)
         expect(err).to.equal(rejectError)
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.notCalled).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.reportAsync)
+        sinon.assert.calledWith(WeaveWrapper.reportAsync, '10.0.0.1:4224')
+        sinon.assert.notCalled(WeaveWrapper.rmpeerAsync)
         done();
       });
     });
@@ -129,18 +116,15 @@ describe('weave.peer.remove.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.4.145.68'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error);
         expect(err).to.equal(rejectError)
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.reportAsync.calledOnce).to.be.true()
-        expect(WeaveWrapper.reportAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.calledOnce).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.withArgs('10.0.0.1:4224', 'b2:88:af:6b:2a:d5').called).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.reportAsync)
+        sinon.assert.calledWith(WeaveWrapper.reportAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.rmpeerAsync)
+        sinon.assert.calledWith(WeaveWrapper.rmpeerAsync, '10.0.0.1:4224', 'b2:88:af:6b:2a:d5')
         done();
       });
     });
@@ -149,16 +133,13 @@ describe('weave.peer.remove.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.4.145.67'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError);
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.reportAsync.calledOnce).to.be.true()
-        expect(WeaveWrapper.reportAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.notCalled).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.reportAsync)
+        sinon.assert.calledWith(WeaveWrapper.reportAsync, '10.0.0.1:4224')
+        sinon.assert.notCalled(WeaveWrapper.rmpeerAsync)
         done();
       });
     });
@@ -166,14 +147,15 @@ describe('weave.peer.remove.js unit test', function () {
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.4.145.68'
-      }).asCallback(function (err) {
+      })
+      .asCallback(function (err) {
         expect(err).to.not.exist()
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.reportAsync.calledOnce).to.be.true()
-        expect(WeaveWrapper.reportAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.calledOnce).to.be.true()
-        expect(WeaveWrapper.rmpeerAsync.withArgs('10.0.0.1:4224', 'b2:88:af:6b:2a:d5').called).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.reportAsync)
+        sinon.assert.calledWith(WeaveWrapper.reportAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.rmpeerAsync)
+        sinon.assert.calledWith(WeaveWrapper.rmpeerAsync, '10.0.0.1:4224', 'b2:88:af:6b:2a:d5')
         done()
       })
     });
