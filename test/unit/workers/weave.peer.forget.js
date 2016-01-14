@@ -34,38 +34,33 @@ describe('weave.peer.forget.js unit test', function () {
 
     it('should throw missing dockerHost', function (done) {
       weaveForget({})
-        .then(function () {
-          throw new Error('should have thrown');
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(TaskFatalError);
-          done();
-        });
+      .asCallback(function (err) {
+        expect(err).to.be.instanceOf(TaskFatalError);
+        done();
+      });
     });
 
     it('should throw missing hostname', function (done) {
       weaveForget({
         dockerHost: '10.0.0.1:4224',
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError);
-        done();
-      });
+        done()
+      })
     });
 
     it('should be fine if no errors', function (done) {
       weaveForget({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
-      }).asCallback(function (err) {
+      })
+      .asCallback(function (err) {
         expect(err).to.not.exist()
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.forgetAsync.calledOnce).to.be.true()
-        expect(WeaveWrapper.forgetAsync.withArgs('10.0.0.1:4224', '10.0.0.99').called).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.forgetAsync)
+        sinon.assert.calledWith(WeaveWrapper.forgetAsync, '10.0.0.1:4224', '10.0.0.99')
         done()
       });
     });
@@ -78,15 +73,12 @@ describe('weave.peer.forget.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error)
         expect(err).to.equal(rejectError)
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.forgetAsync.notCalled).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.notCalled(WeaveWrapper.forgetAsync)
         done();
       });
     });
@@ -96,15 +88,12 @@ describe('weave.peer.forget.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError)
         expect(err.message).to.equal('weave.peer.forget: Dock was removed')
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.forgetAsync.notCalled).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.notCalled(WeaveWrapper.forgetAsync)
         done();
       });
     });
@@ -117,16 +106,13 @@ describe('weave.peer.forget.js unit test', function () {
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error)
         expect(err).to.equal(rejectError)
-        expect(Docker.doesDockExistAsync.calledOnce).to.be.true()
-        expect(Docker.doesDockExistAsync.withArgs('10.0.0.1:4224').called).to.be.true()
-        expect(WeaveWrapper.forgetAsync.calledOnce).to.be.true()
-        expect(WeaveWrapper.forgetAsync.withArgs('10.0.0.1:4224', '10.0.0.99').called).to.be.true()
+        sinon.assert.calledOnce(Docker.doesDockExistAsync)
+        sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
+        sinon.assert.calledOnce(WeaveWrapper.forgetAsync)
+        sinon.assert.calledWith(WeaveWrapper.forgetAsync, '10.0.0.1:4224', '10.0.0.99')
         done();
       });
     });

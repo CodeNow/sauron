@@ -161,9 +161,8 @@ describe('weave-wrapper.js unit test', function () {
     it('should forget', function (done) {
       WeaveWrapper.forget(testDockerHost, '10.0.0.99', function (err) {
         expect(err).to.not.exist();
-        expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave forget 10.0.0.99', testDockerHost)
-          .called).to.be.true();
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave forget 10.0.0.99', testDockerHost)
         done();
       });
     });
@@ -172,9 +171,8 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.forget(testDockerHost, '10.0.0.99', function (err) {
         expect(err).to.exist();
         expect(err.message).to.equal('Weave error')
-        expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave forget 10.0.0.99', testDockerHost)
-          .called).to.be.true();
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave forget 10.0.0.99', testDockerHost)
         done();
       });
     });
@@ -200,9 +198,8 @@ describe('weave-wrapper.js unit test', function () {
     it('should remove peer', function (done) {
       WeaveWrapper.rmpeer(testDockerHost, '06:d9:13:68:49:1d', function (err) {
         expect(err).to.not.exist();
-        expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave rmpeer 06:d9:13:68:49:1d', testDockerHost)
-          .called).to.be.true();
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave rmpeer 06:d9:13:68:49:1d', testDockerHost)
         done();
       });
     });
@@ -211,9 +208,8 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.rmpeer(testDockerHost, '06:d9:13:68:49:1d', function (err) {
         expect(err).to.exist();
         expect(err.message).to.equal('Weave error')
-        expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave rmpeer 06:d9:13:68:49:1d', testDockerHost)
-          .called).to.be.true();
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave rmpeer 06:d9:13:68:49:1d', testDockerHost)
         done();
       });
     });
@@ -239,9 +235,7 @@ describe('weave-wrapper.js unit test', function () {
     it('should remove peer', function (done) {
       WeaveWrapper.report(testDockerHost, function (err, data) {
         expect(err).to.not.exist();
-        expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave report', testDockerHost)
-          .called).to.be.true();
+        sinon.assert.calledWith(WeaveWrapper._runCmd, '/usr/bin/weave report', testDockerHost)
         expect(data).to.deep.equal(reportFixture)
         done();
       });
@@ -251,9 +245,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.report(testDockerHost, function (err) {
         expect(err).to.exist();
         expect(err.message).to.equal('Weave error')
-        expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave report', testDockerHost)
-          .called).to.be.true();
+        sinon.assert.calledWith(WeaveWrapper._runCmd, '/usr/bin/weave report', testDockerHost)
         done();
       });
     });

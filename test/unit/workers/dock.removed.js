@@ -30,26 +30,20 @@ describe('dock.removed.js unit test', function () {
 
     it('should throw missing host', function (done) {
       dockRemoved({})
-        .then(function () {
-          throw new Error('should have thrown');
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(TaskFatalError);
-          done();
-        });
+      .asCallback(function (err) {
+        expect(err).to.be.instanceOf(TaskFatalError);
+        done();
+      })
     });
 
     it('should throw missing githubId', function (done) {
       dockRemoved({
         host: 'http://10.0.0.1:4224',
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
+      .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError);
         done();
-      });
+      })
     });
 
     it('should be fine if no errors', function (done) {
@@ -59,20 +53,17 @@ describe('dock.removed.js unit test', function () {
       })
       .asCallback(done);
     });
-    
+
     it('should throw error if setup failed', function (done) {
       Events.handleDockRemovedAsync.throws(new Error('test'));
       dockRemoved({
         host: 'http://10.0.0.1:4224',
         githubId: '12345'
       })
-      .then(function () {
-        throw new Error('should have thrown');
-      })
-      .catch(function (err) {
-        expect(err).to.be.instanceOf(Error);
+      .asCallback(function (err) {
+        expect(err).to.be.instanceOf(Error)
         done();
-      });
+      })
     });
   }); // end run
 }); // end dock.removed
