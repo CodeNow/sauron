@@ -14,6 +14,8 @@ var child_process = require('child_process');
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
+var reportFixture = require('../../fixtures/report')
+
 
 describe('weave-wrapper.js unit test', function () {
   describe('_runCmd', function () {
@@ -138,6 +140,116 @@ describe('weave-wrapper.js unit test', function () {
       });
     });
   }); // launch
+
+  describe('forget', function () {
+    var testDockerHost = '10.0.0.1';
+
+    beforeEach(function (done) {
+      sinon.stub(WeaveWrapper, '_runCmd').yieldsAsync();
+      sinon.stub(WeaveWrapper, '_handleCmdResult').returnsArg(0);
+      process.env.WEAVE_PATH = '/usr/bin/weave';
+      done();
+    });
+
+    afterEach(function (done) {
+      WeaveWrapper._runCmd.restore();
+      WeaveWrapper._handleCmdResult.restore();
+      delete process.env.WEAVE_PATH;
+      done();
+    });
+
+    it('should forget', function (done) {
+      WeaveWrapper.forget(testDockerHost, '10.0.0.99', function (err) {
+        expect(err).to.not.exist();
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave forget 10.0.0.99', testDockerHost)
+        done();
+      });
+    });
+    it('should fail if command failed', function (done) {
+      WeaveWrapper._runCmd.yieldsAsync(new Error('Weave error'))
+      WeaveWrapper.forget(testDockerHost, '10.0.0.99', function (err) {
+        expect(err).to.exist();
+        expect(err.message).to.equal('Weave error')
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave forget 10.0.0.99', testDockerHost)
+        done();
+      });
+    });
+  }); // forget
+
+  describe('rmpeer', function () {
+    var testDockerHost = '10.0.0.1';
+
+    beforeEach(function (done) {
+      sinon.stub(WeaveWrapper, '_runCmd').yieldsAsync();
+      sinon.stub(WeaveWrapper, '_handleCmdResult').returnsArg(0);
+      process.env.WEAVE_PATH = '/usr/bin/weave';
+      done();
+    });
+
+    afterEach(function (done) {
+      WeaveWrapper._runCmd.restore();
+      WeaveWrapper._handleCmdResult.restore();
+      delete process.env.WEAVE_PATH;
+      done();
+    });
+
+    it('should remove peer', function (done) {
+      WeaveWrapper.rmpeer(testDockerHost, '06:d9:13:68:49:1d', function (err) {
+        expect(err).to.not.exist();
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave rmpeer 06:d9:13:68:49:1d', testDockerHost)
+        done();
+      });
+    });
+    it('should fail if command failed', function (done) {
+      WeaveWrapper._runCmd.yieldsAsync(new Error('Weave error'))
+      WeaveWrapper.rmpeer(testDockerHost, '06:d9:13:68:49:1d', function (err) {
+        expect(err).to.exist();
+        expect(err.message).to.equal('Weave error')
+        sinon.assert.calledWith(WeaveWrapper._runCmd,
+          '/usr/bin/weave rmpeer 06:d9:13:68:49:1d', testDockerHost)
+        done();
+      });
+    });
+  }); // rmpeer
+
+  describe('report', function () {
+    var testDockerHost = '10.0.0.1';
+
+    beforeEach(function (done) {
+      sinon.stub(WeaveWrapper, '_runCmd').yieldsAsync(null, JSON.stringify(reportFixture));
+      sinon.stub(WeaveWrapper, '_handleCmdResult').returnsArg(0);
+      process.env.WEAVE_PATH = '/usr/bin/weave';
+      done();
+    });
+
+    afterEach(function (done) {
+      WeaveWrapper._runCmd.restore();
+      WeaveWrapper._handleCmdResult.restore();
+      delete process.env.WEAVE_PATH;
+      done();
+    });
+
+    it('should remove peer', function (done) {
+      WeaveWrapper.report(testDockerHost, function (err, data) {
+        expect(err).to.not.exist();
+        sinon.assert.calledWith(WeaveWrapper._runCmd, '/usr/bin/weave report', testDockerHost)
+        expect(data).to.deep.equal(reportFixture)
+        done();
+      });
+    });
+    it('should fail if command failed', function (done) {
+      WeaveWrapper._runCmd.yieldsAsync(new Error('Weave error'))
+      WeaveWrapper.report(testDockerHost, function (err) {
+        expect(err).to.exist();
+        expect(err.message).to.equal('Weave error')
+        sinon.assert.calledWith(WeaveWrapper._runCmd, '/usr/bin/weave report', testDockerHost)
+        done();
+      });
+    });
+  }); // rmpeer
 
   describe('attach', function () {
     var testContainerId = '1738';

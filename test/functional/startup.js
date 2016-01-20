@@ -19,7 +19,8 @@ var path = require('path');
 var publishedEvents = [
   'container.life-cycle.died',
   'container.life-cycle.started',
-  'docker.events-stream.connected'
+  'docker.events-stream.connected',
+  'dock.removed'
 ];
 
 var testPublisher = new Hermes({
@@ -33,11 +34,17 @@ var testPublisher = new Hermes({
 
 var Start = require('../../lib/start.js');
 var WeaveWrapper = require('../../lib/models/weave-wrapper.js');
+var Docker = require('../../lib/models/docker');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
+    sinon.spy(Docker, 'loadCerts')
     testPublisher.connect(done);
   });
+  afterEach(function (done) {
+    Docker.loadCerts.restore()
+    done()
+  })
 
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../fixtures/weaveMock');
@@ -93,14 +100,13 @@ describe('events functional test', function () {
         }]);
 
       Start.startup(check);
-
       function check () {
+        expect(Docker.loadCerts.calledOnce).to.be.true()
         try {
           expect(WeaveWrapper._runCmd.callCount).to.equal(3);
         } catch (err) {
           return setTimeout(check, 100);
         }
-        console.log('WeaveWrapper._runCmd.args', WeaveWrapper._runCmd.args);
         var d1 = WeaveWrapper._runCmd.args.filter(function (args) {
           return args[1] === '1.0.0.1:4242';
         })[0];

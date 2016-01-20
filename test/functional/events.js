@@ -19,7 +19,8 @@ var nock = require('nock');
 var publishedEvents = [
   'container.life-cycle.died',
   'container.life-cycle.started',
-  'docker.events-stream.connected'
+  'docker.events-stream.connected',
+  'dock.removed'
 ];
 
 var subscribedEvents = [
@@ -27,11 +28,14 @@ var subscribedEvents = [
 ];
 var publishQueues = [
   'on-dock-unhealthy',
-  'weave.start'
+  'weave.start',
+  'weave.peer.forget',
+  'weave.peer.remove'
 ];
 
 var subscribeQueues = [
-  'weave.start'
+  'weave.start',
+  'weave.peer.forget'
 ];
 
 var testPublisher = new Hermes({
@@ -59,6 +63,7 @@ var WeaveWrapper = require('../../lib/models/weave-wrapper.js');
 
 describe('events functional test', function () {
   beforeEach(function (done) {
+    sinon.spy(WeaveWrapper, '_runCmd');
     testPublisher.connect(done);
   });
 
@@ -81,7 +86,6 @@ describe('events functional test', function () {
         'host': 'http://2.2.2.2:4242',
         'tags': '1660575,run,build'
       }]);
-    sinon.spy(WeaveWrapper, '_runCmd');
     Start.startup(done);
   });
 

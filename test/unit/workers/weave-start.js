@@ -70,8 +70,7 @@ describe('weave-start.js unit test', function () {
         dockerUri: '10.0.0.1:4224',
         orgId: 'runnable'
       })
-      .then(done)
-      .catch(done);
+      .asCallback(done);
     });
   }); // end run
 }); // end weave-start

@@ -102,6 +102,92 @@ describe('events.js unit test', function () {
 
   }); // end handleStart
 
+
+  describe('handleDockRemoved', function () {
+    beforeEach(function (done) {
+      sinon.stub(Peers, 'getList');
+      sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns();
+      sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns();
+      done();
+    });
+
+    afterEach(function (done) {
+      Peers.getList.restore();
+      RabbitMQ.publishWeavePeerForget.restore();
+      RabbitMQ.publishWeavePeerRemove.restore();
+      done();
+    });
+
+    it('should cb err if getList err', function (done) {
+      Peers.getList.yieldsAsync('err');
+
+      Events.handleDockRemoved({}, function (err) {
+        expect(err).to.exist();
+        done();
+      });
+    });
+
+    it('should do nothing if no peers', function (done) {
+      Peers.getList.yieldsAsync(null, []);
+
+      Events.handleDockRemoved({
+        host: 'http://10.0.0.1:4242',
+        githubId: '11213123'
+      }, function (err) {
+        expect(err).to.not.exist();
+        expect(RabbitMQ.publishWeavePeerForget.called)
+          .to.be.false();
+        expect(RabbitMQ.publishWeavePeerRemove.called)
+          .to.be.false();
+        done();
+      });
+    });
+
+    it('should publish two jobs for each peer', function (done) {
+      Peers.getList.yieldsAsync(null, [{
+        dockerUri: 'http://10.0.0.1:4242'
+      }, {
+        dockerUri: 'http://10.0.0.2:4242'
+      }, {
+        dockerUri: 'http://10.0.0.3:4242'
+      }]);
+
+      Events.handleDockRemoved({
+        host: 'http://10.0.0.1:4242',
+        githubId: '11213123'
+      }, function (err) {
+        expect(err).to.not.exist();
+        expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3);
+        expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.1:4242',
+          hostname: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.2:4242',
+          hostname: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.3:4242',
+          hostname: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerRemove.callCount).to.equal(3);
+        expect(RabbitMQ.publishWeavePeerRemove.getCall(0).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.1:4242',
+          hostname: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerRemove.getCall(1).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.2:4242',
+          hostname: '10.0.0.1'
+        });
+        expect(RabbitMQ.publishWeavePeerRemove.getCall(2).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.3:4242',
+          hostname: '10.0.0.1'
+        });
+        done();
+      });
+    });
+  }); // end handleDockRemoved
+
   describe('handleDied', function () {
     beforeEach(function (done) {
       sinon.stub(Events, '_isWeaveContainer');
