@@ -124,6 +124,58 @@ describe('lib/models/docker unit test', function () {
       done()
     })
   })
+  describe('_findDocksByOrgId', function () {
+    it('should find 3 docks for an org', function (done) {
+      var nodes = Docker._parseSwarmInfo(SwarmInfo)
+      expect(nodes.length).to.equal(61)
+      var orgDocks = Docker._findDocksByOrgId(nodes, '4643352')
+      expect(orgDocks.length).to.equal(3)
+      done()
+    })
+    it('should return [] if no docks were found', function (done) {
+      var nodes = Docker._parseSwarmInfo(SwarmInfo)
+      expect(nodes.length).to.equal(61)
+      var orgDocks = Docker._findDocksByOrgId(nodes, '1111111')
+      expect(orgDocks.length).to.equal(0)
+      done()
+    })
+  })
+
+  describe('findLightestOrgDock', function () {
+    beforeEach(function (done) {
+      sinon.stub(Dockerode.prototype, 'info');
+      done();
+    });
+
+    afterEach(function (done) {
+      Dockerode.prototype.info.restore();
+      done();
+    });
+
+    it('should cb swarm error', function (done) {
+      var testError = new Error('bee');
+      Dockerode.prototype.info.yieldsAsync(testError);
+
+      Docker.findLightestOrgDock('4643352', function (err) {
+        expect(err).to.equal(testError);
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        done();
+      });
+    });
+
+    it('should with the lightest node', function (done) {
+      Dockerode.prototype.info.yieldsAsync(null, SwarmInfo);
+
+      Docker.findLightestOrgDock('4643352', function (err, dock) {
+        expect(err).to.not.exist()
+        expect(dock.Containers).to.equal('2')
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        done();
+      });
+    });
+  });
 
   describe('info', function () {
     beforeEach(function (done) {
@@ -148,7 +200,7 @@ describe('lib/models/docker unit test', function () {
       });
     });
 
-    it('should cb true if dock in list', function (done) {
+    it('should cb with the list of all docks', function (done) {
       Dockerode.prototype.info.yieldsAsync(null, SwarmInfo);
 
       Docker.info(function (err, docks) {
@@ -159,6 +211,5 @@ describe('lib/models/docker unit test', function () {
         done();
       });
     });
-
   });
 });
