@@ -175,6 +175,18 @@ describe('lib/models/docker unit test', function () {
         done();
       });
     });
+
+    it('should cb with null if no nodes found for an org', function (done) {
+      Dockerode.prototype.info.yieldsAsync(null, SwarmInfo);
+
+      Docker.findLightestOrgDock('111111', function (err, dock) {
+        expect(err).to.not.exist()
+        expect(dock).to.not.exist()
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        done();
+      });
+    });
   });
 
   describe('info', function () {
