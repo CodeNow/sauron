@@ -16,6 +16,7 @@ var Dockerode = require('dockerode');
 var sinon = require('sinon');
 
 var Docker = require('../../../lib/models/docker.js');
+var SwarmInfo = require('../../fixtures/swarm-info');
 
 describe('lib/models/docker unit test', function () {
   describe('loadCerts', function () {
@@ -93,4 +94,34 @@ describe('lib/models/docker unit test', function () {
       });
     });
   }); // end doesDockExist
+
+  describe('_parseSwarmInfo', function () {
+    it('should parse fixture data', function (done) {
+      var nodes = Docker._parseSwarmInfo(SwarmInfo)
+      expect(nodes.length).to.equal(61)
+      var firstNode = nodes[0]
+      expect(firstNode['Containers']).to.equal('13')
+      expect(firstNode['Reserved CPUs']).to.equal('0 / 2')
+      expect(firstNode['Reserved Memory']).to.equal('5.245 GiB / 8.187 GiB')
+      expect(firstNode['Status']).to.equal('Healthy')
+      expect(firstNode['ip-10-8-192-11']).to.equal('10.8.192.11:4242')
+      expect(firstNode['Labels'].length).to.equal(5)
+      expect(firstNode['Labels'][0].name).to.equal('executiondriver')
+      expect(firstNode['Labels'][0].value).to.equal('native-0.2')
+      expect(firstNode['Labels'][3].name).to.equal('org')
+      expect(firstNode['Labels'][3].value).to.equal('445457')
+      var lastNode = nodes[60]
+      expect(lastNode['Containers']).to.equal('2')
+      expect(lastNode['Reserved CPUs']).to.equal('0 / 2')
+      expect(lastNode['Reserved Memory']).to.equal('0 B / 8.187 GiB')
+      expect(lastNode['Status']).to.equal('Healthy')
+      expect(lastNode['ip-10-8-223-224']).to.equal('10.8.223.224:4242')
+      expect(lastNode['Labels'].length).to.equal(5)
+      expect(lastNode['Labels'][0].name).to.equal('executiondriver')
+      expect(lastNode['Labels'][0].value).to.equal('native-0.2')
+      expect(lastNode['Labels'][3].name).to.equal('org')
+      expect(lastNode['Labels'][3].value).to.equal('1529064')
+      done()
+    })
+  })
 });
