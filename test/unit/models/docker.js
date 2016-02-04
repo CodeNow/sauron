@@ -124,4 +124,41 @@ describe('lib/models/docker unit test', function () {
       done()
     })
   })
+
+  describe('info', function () {
+    beforeEach(function (done) {
+      sinon.stub(Dockerode.prototype, 'info');
+      done();
+    });
+
+    afterEach(function (done) {
+      Dockerode.prototype.info.restore();
+      done();
+    });
+
+    it('should cb swarm error', function (done) {
+      var testError = new Error('bee');
+      Dockerode.prototype.info.yieldsAsync(testError);
+
+      Docker.info(function (err) {
+        expect(err).to.equal(testError);
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        done();
+      });
+    });
+
+    it('should cb true if dock in list', function (done) {
+      Dockerode.prototype.info.yieldsAsync(null, SwarmInfo);
+
+      Docker.info(function (err, docks) {
+        expect(err).to.not.exist()
+        expect(docks.length).to.equal(61)
+        sinon.assert.calledOnce(Dockerode.prototype.info)
+        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        done();
+      });
+    });
+
+  });
 });
