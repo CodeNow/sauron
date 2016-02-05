@@ -139,6 +139,14 @@ describe('lib/models/docker unit test', function () {
       expect(orgDocks.length).to.equal(0)
       done()
     })
+    it('should return [] if no doc has no labels', function (done) {
+      var nodes = Docker._parseSwarmInfo(SwarmInfo)
+      expect(nodes.length).to.equal(61)
+      delete nodes[0].Labels
+      var orgDocks = Docker._findDocksByOrgId(nodes, '445457')
+      expect(orgDocks.length).to.equal(0)
+      done()
+    })
   })
 
   describe('findLightestOrgDock', function () {
