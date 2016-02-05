@@ -106,9 +106,7 @@ describe('events.js unit test', function () {
   describe('_removeWeavePeer', function () {
     beforeEach(function (done) {
       sinon.stub(Docker, 'findLightestOrgDock').yieldsAsync(null, {
-        Labels: [
-          { name: 'dockerHost', value: '10.0.0.1:4242' }
-        ]
+        dockerHost: '10.0.0.1:4242'
       })
       sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns();
       done()
@@ -139,11 +137,9 @@ describe('events.js unit test', function () {
         done()
       })
     })
-    it('should cb with fatal error if dock data was invalid', function (done) {
+    it('should cb with fatal error if dockHost was not found', function (done) {
       Docker.findLightestOrgDock.yieldsAsync(null, {
-        Labels: [
-          { name: 'notAdockerHost', value: '10.0.0.1:4242' }
-        ]
+        dockerHost: null
       })
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()

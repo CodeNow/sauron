@@ -101,7 +101,7 @@ describe('lib/models/docker unit test', function () {
       var nodes = Docker._parseSwarmInfo(SwarmInfo)
       expect(nodes.length).to.equal(61)
       var firstNode = nodes[0]
-      expect(firstNode['Containers']).to.equal('13')
+      expect(firstNode['Containers']).to.equal(13)
       expect(firstNode['Reserved CPUs']).to.equal('0 / 2')
       expect(firstNode['Reserved Memory']).to.equal('5.245 GiB / 8.187 GiB')
       expect(firstNode['Status']).to.equal('Healthy')
@@ -112,7 +112,7 @@ describe('lib/models/docker unit test', function () {
       expect(firstNode['Labels'][3].name).to.equal('org')
       expect(firstNode['Labels'][3].value).to.equal('445457')
       var lastNode = nodes[60]
-      expect(lastNode['Containers']).to.equal('2')
+      expect(lastNode['Containers']).to.equal(2)
       expect(lastNode['Reserved CPUs']).to.equal('0 / 2')
       expect(lastNode['Reserved Memory']).to.equal('0 B / 8.187 GiB')
       expect(lastNode['Status']).to.equal('Healthy')
@@ -128,7 +128,7 @@ describe('lib/models/docker unit test', function () {
       var nodes = Docker._parseSwarmInfo(SwarmInfoWithQuestionMarks)
       expect(nodes.length).to.equal(61)
       var firstNode = nodes[0]
-      expect(firstNode['Containers']).to.equal('13')
+      expect(firstNode['Containers']).to.equal(13)
       expect(firstNode['Reserved CPUs']).to.equal('0 / 2')
       expect(firstNode['Reserved Memory']).to.equal('5.245 GiB / 8.187 GiB')
       expect(firstNode['Status']).to.equal('Healthy')
@@ -139,7 +139,7 @@ describe('lib/models/docker unit test', function () {
       expect(firstNode['Labels'][3].name).to.equal('org')
       expect(firstNode['Labels'][3].value).to.equal('445457')
       var lastNode = nodes[60]
-      expect(lastNode['Containers']).to.equal('2')
+      expect(lastNode['Containers']).to.equal(2)
       expect(lastNode['Reserved CPUs']).to.equal('0 / 2')
       expect(lastNode['Reserved Memory']).to.equal('0 B / 8.187 GiB')
       expect(lastNode['Status']).to.equal('Healthy')
@@ -205,7 +205,7 @@ describe('lib/models/docker unit test', function () {
 
       Docker.findLightestOrgDock('4643352', function (err, dock) {
         expect(err).to.not.exist()
-        expect(dock.Containers).to.equal('2')
+        expect(dock.Containers).to.equal(2)
         sinon.assert.calledOnce(Dockerode.prototype.info)
         sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
         done();
