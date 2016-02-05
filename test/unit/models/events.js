@@ -244,7 +244,6 @@ describe('events.js unit test', function () {
         sinon.assert.calledWith(Events._forgetWeavePeer, '10.0.0.1', '11213123')
         done()
       })
-      done()
     })
     it('should fail if remove peer failed', function (done) {
       var error = new Error('Weave error')
@@ -261,7 +260,6 @@ describe('events.js unit test', function () {
         sinon.assert.calledWith(Events._forgetWeavePeer, '10.0.0.1', '11213123')
         done()
       })
-      done()
     })
     it('should fail if forget peer failed', function (done) {
       var error = new Error('Weave error')
@@ -278,7 +276,6 @@ describe('events.js unit test', function () {
         sinon.assert.calledWith(Events._forgetWeavePeer, '10.0.0.1', '11213123')
         done()
       })
-      done()
     })
   })
 
