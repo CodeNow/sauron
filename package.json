@@ -30,6 +30,7 @@
   "homepage": "https://github.com/codenow/sauron",
   "dependencies": {
     "101": "^1.2.0",
+    "async": "^1.5.2",
     "bluebird": "^3.0.5",
     "bunyan": "^1.5.1",
     "callsite": "^1.0.0",

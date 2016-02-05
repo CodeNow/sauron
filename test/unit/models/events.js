@@ -15,6 +15,7 @@ var ErrorCat = require('error-cat');
 var TaskError = require('ponos').TaskError;
 var TaskFatalError = require('ponos').TaskFatalError;
 
+var Docker = require('../../../lib/models/docker.js');
 var Events = require('../../../lib/models/events.js');
 var Peers = require('../../../lib/models/peers.js');
 var RabbitMQ = require('../../../lib/models/rabbitmq.js');
@@ -102,91 +103,184 @@ describe('events.js unit test', function () {
 
   }); // end handleStart
 
-
-  describe('handleDockRemoved', function () {
+  describe('_removeWeavePeer', function () {
     beforeEach(function (done) {
-      sinon.stub(Peers, 'getList');
-      sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns();
+      sinon.stub(Docker, 'findLightestOrgDock').yieldsAsync(null, {
+        Labels: [
+          { name: 'dockerHost', value: '10.0.0.1:4242' }
+        ]
+      })
       sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns();
-      done();
-    });
-
+      done()
+    })
     afterEach(function (done) {
-      Peers.getList.restore();
-      RabbitMQ.publishWeavePeerForget.restore();
-      RabbitMQ.publishWeavePeerRemove.restore();
-      done();
-    });
+      Docker.findLightestOrgDock.restore()
+      RabbitMQ.publishWeavePeerRemove.restore()
+      done()
+    })
+    it('should publish new job to remove weave peer', function (done) {
+      Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(RabbitMQ.publishWeavePeerRemove)
+        sinon.assert.calledWith(RabbitMQ.publishWeavePeerRemove, {
+          dockerHost: '10.0.0.1:4242',
+          hostname: '10.0.0.4'
+        })
+        done()
+      })
+    })
+    it('should cb with fatal error if no dock was found', function (done) {
+      Docker.findLightestOrgDock.yieldsAsync(null, null)
+      Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
+        expect(err).to.exist()
+        expect(err).to.be.an.instanceof(TaskFatalError)
+        expect(err.message).to.equal('dock-removed: No docks left for an org')
+        sinon.assert.notCalled(RabbitMQ.publishWeavePeerRemove)
+        done()
+      })
+    })
+    it('should cb with fatal error if dock data was invalid', function (done) {
+      Docker.findLightestOrgDock.yieldsAsync(null, {
+        Labels: [
+          { name: 'notAdockerHost', value: '10.0.0.1:4242' }
+        ]
+      })
+      Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
+        expect(err).to.exist()
+        expect(err).to.be.an.instanceof(TaskFatalError)
+        expect(err.message).to.equal('dock-removed: Dock has not host data')
+        sinon.assert.notCalled(RabbitMQ.publishWeavePeerRemove)
+        done()
+      })
+    })
+    it('should cb with error if finding dock failed', function (done) {
+      var swarmError = new Error('Swarm error')
+      Docker.findLightestOrgDock.yieldsAsync(swarmError)
+      Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
+        expect(err).to.exist()
+        expect(err).to.equal(swarmError)
+        sinon.assert.notCalled(RabbitMQ.publishWeavePeerRemove)
+        done()
+      })
+    })
+  })
 
-    it('should cb err if getList err', function (done) {
-      Peers.getList.yieldsAsync('err');
-
-      Events.handleDockRemoved({}, function (err) {
-        expect(err).to.exist();
-        done();
-      });
-    });
-
-    it('should do nothing if no peers', function (done) {
-      Peers.getList.yieldsAsync(null, []);
-
-      Events.handleDockRemoved({
-        host: 'http://10.0.0.1:4242',
-        githubId: '11213123'
-      }, function (err) {
-        expect(err).to.not.exist();
-        expect(RabbitMQ.publishWeavePeerForget.called)
-          .to.be.false();
-        expect(RabbitMQ.publishWeavePeerRemove.called)
-          .to.be.false();
-        done();
-      });
-    });
-
-    it('should publish two jobs for each peer', function (done) {
-      Peers.getList.yieldsAsync(null, [{
+  describe('_forgetWeavePeer', function () {
+    beforeEach(function (done) {
+      sinon.stub(Peers, 'getList').yieldsAsync(null, [{
         dockerUri: 'http://10.0.0.1:4242'
       }, {
         dockerUri: 'http://10.0.0.2:4242'
       }, {
         dockerUri: 'http://10.0.0.3:4242'
       }]);
+      sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns();
+      done()
+    })
+    afterEach(function (done) {
+      Peer.getList.restore()
+      RabbitMQ.publishWeavePeerForget.restore()
+      done()
+    })
+    it('should publish new job to forget weave peer', function (done) {
+      Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
+        expect(err).to.not.exist()
+        expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3);
+        expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.1:4242',
+          hostname: '10.0.0.4'
+        });
+        expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.2:4242',
+          hostname: '10.0.0.4'
+        });
+        expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.deep.equal({
+          dockerHost: '10.0.0.3:4242',
+          hostname: '10.0.0.4'
+        });
+        done()
+      })
+    })
+    it('should publish nothing if no peers were found', function (done) {
+      Peers.getList.yieldsAsync(null, [])
+      Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.notCalled(RabbitMQ.publishWeavePeerForget)
+        done()
+      })
+    })
+    it('should cb with error if getting peers failed', function (done) {
+      var mavisError = new Error('Mavis error')
+      Peers.getList.yieldsAsync(mavisError)
+      Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
+        expect(err).to.exist()
+        expect(err).to.equal(mavisError)
+        sinon.assert.notCalled(RabbitMQ.publishWeavePeerForget)
+        done()
+      })
+    })
+  })
 
+  describe('handleDockRemoved', function () {
+    beforeEach(function (done) {
+      sinon.stub(Events, '_removeWeavePeer').yieldsAsync()
+      sinon.stub(Events, '_forgetWeavePeer').yieldsAsync()
+      done()
+    })
+    afterEach(function (done) {
+      Events._removeWeavePeer.restore()
+      Events._forgetWeavePeer.restore()
+      done()
+    })
+    it('should not fail if nothing failed', function (done) {
       Events.handleDockRemoved({
         host: 'http://10.0.0.1:4242',
         githubId: '11213123'
       }, function (err) {
-        expect(err).to.not.exist();
-        expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3);
-        expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.deep.equal({
-          dockerHost: '10.0.0.1:4242',
-          hostname: '10.0.0.1'
-        });
-        expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.deep.equal({
-          dockerHost: '10.0.0.2:4242',
-          hostname: '10.0.0.1'
-        });
-        expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.deep.equal({
-          dockerHost: '10.0.0.3:4242',
-          hostname: '10.0.0.1'
-        });
-        expect(RabbitMQ.publishWeavePeerRemove.callCount).to.equal(3);
-        expect(RabbitMQ.publishWeavePeerRemove.getCall(0).args[0]).to.deep.equal({
-          dockerHost: '10.0.0.1:4242',
-          hostname: '10.0.0.1'
-        });
-        expect(RabbitMQ.publishWeavePeerRemove.getCall(1).args[0]).to.deep.equal({
-          dockerHost: '10.0.0.2:4242',
-          hostname: '10.0.0.1'
-        });
-        expect(RabbitMQ.publishWeavePeerRemove.getCall(2).args[0]).to.deep.equal({
-          dockerHost: '10.0.0.3:4242',
-          hostname: '10.0.0.1'
-        });
-        done();
-      });
-    });
-  }); // end handleDockRemoved
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(Events._removeWeavePeer)
+        sinon.assert.calledWith(Events._removeWeavePeer, '10.0.0.1', '11213123')
+        sinon.assert.calledOnce(Events._forgetWeavePeer)
+        sinon.assert.calledWith(Events._forgetWeavePeer, '10.0.0.1', '11213123')
+        done()
+      })
+      done()
+    })
+    it('should fail if remove peer failed', function (done) {
+      var error = new Error('Weave error')
+      Events._removeWeavePeer.yieldsAsync(error)
+      Events.handleDockRemoved({
+        host: 'http://10.0.0.1:4242',
+        githubId: '11213123'
+      }, function (err) {
+        expect(err).to.exist()
+        expect(err).to.equal(error)
+        sinon.assert.calledOnce(Events._removeWeavePeer)
+        sinon.assert.calledWith(Events._removeWeavePeer, '10.0.0.1', '11213123')
+        sinon.assert.calledOnce(Events._forgetWeavePeer)
+        sinon.assert.calledWith(Events._forgetWeavePeer, '10.0.0.1', '11213123')
+        done()
+      })
+      done()
+    })
+    it('should fail if forget peer failed', function (done) {
+      var error = new Error('Weave error')
+      Events._forgetWeavePeer.yieldsAsync(error)
+      Events.handleDockRemoved({
+        host: 'http://10.0.0.1:4242',
+        githubId: '11213123'
+      }, function (err) {
+        expect(err).to.exist()
+        expect(err).to.equal(error)
+        sinon.assert.calledOnce(Events._removeWeavePeer)
+        sinon.assert.calledWith(Events._removeWeavePeer, '10.0.0.1', '11213123')
+        sinon.assert.calledOnce(Events._forgetWeavePeer)
+        sinon.assert.calledWith(Events._forgetWeavePeer, '10.0.0.1', '11213123')
+        done()
+      })
+      done()
+    })
+  })
 
   describe('handleDied', function () {
     beforeEach(function (done) {
