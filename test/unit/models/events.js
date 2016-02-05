@@ -178,7 +178,7 @@ describe('events.js unit test', function () {
       done()
     })
     afterEach(function (done) {
-      Peer.getList.restore()
+      Peers.getList.restore()
       RabbitMQ.publishWeavePeerForget.restore()
       done()
     })
