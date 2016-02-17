@@ -1,28 +1,28 @@
-'use strict';
-require('loadenv')();
+'use strict'
+require('loadenv')()
 
-var Code = require('code');
-var Hermes = require('runnable-hermes');
-var Lab = require('lab');
-var sinon = require('sinon');
+var Code = require('code')
+var Hermes = require('runnable-hermes')
+var Lab = require('lab')
+var sinon = require('sinon')
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var afterEach = lab.afterEach;
-var beforeEach = lab.beforeEach;
-var expect = Code.expect;
+var lab = exports.lab = Lab.script()
+var describe = lab.describe
+var it = lab.it
+var afterEach = lab.afterEach
+var beforeEach = lab.beforeEach
+var expect = Code.expect
 
 var subscribedEvents = [
   'container.network.attached'
-];
+]
 
 var subscribeQueues = [
   'weave.start',
   'weave.peer.forget'
-];
+]
 
 var testSubscriber = new Hermes({
   hostname: process.env.RABBITMQ_HOSTNAME,
@@ -32,25 +32,25 @@ var testSubscriber = new Hermes({
   subscribedEvents: subscribedEvents,
   queues: subscribeQueues,
   name: 'testSubscriber'
-});
+})
 
 describe('rabbitmq integration test', function () {
   beforeEach(function (done) {
     RabbitMQ.create()
     done()
-  });
+  })
 
   beforeEach(function (done) {
-    testSubscriber.connect(done);
-  });
+    testSubscriber.connect(done)
+  })
 
   afterEach(function (done) {
-    RabbitMQ.disconnectPublisher(done);
-  });
+    RabbitMQ.disconnectPublisher(done)
+  })
 
   afterEach(function (done) {
-    testSubscriber.close(done);
-  });
+    testSubscriber.close(done)
+  })
 
   describe('check publishing', function () {
     it('should publish container.network.attached job', function (done) {
@@ -62,9 +62,9 @@ describe('rabbitmq integration test', function () {
 
       testSubscriber.subscribe('container.network.attached', function (data, cb) {
         expect(data).to.deep.equal(testJob)
-        cb();
-        done();
-      });
+        cb()
+        done()
+      })
 
       RabbitMQ.publishContainerNetworkAttached(testJob)
     })

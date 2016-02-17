@@ -3,9 +3,9 @@ require('loadenv')()
 
 var Code = require('code')
 var Lab = require('lab')
-var sinon = require('sinon')
 var nock = require('nock')
 var pluck = require('101/pluck')
+var sinon = require('sinon')
 
 var Docker = require('../../../lib/models/docker.js')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic')
