@@ -10,7 +10,7 @@ var sinon = require('sinon')
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic');
-var weavePeerForget = require('../../../lib/workers/weave.peer.forget.js')
+var weavePeerRemove = require('../../../lib/workers/weave.peer.remove.js')
 
 var lab = exports.lab = Lab.script()
 var afterEach = lab.afterEach
@@ -19,7 +19,7 @@ var describe = lab.describe
 var expect = Code.expect
 var it = lab.it
 
-describe('weave.peer.forget functional test', function () {
+describe('weave.peer.remove functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
     sinon.stub(Docker.prototype, 'info')
@@ -53,14 +53,14 @@ describe('weave.peer.forget functional test', function () {
       done()
     })
 
-    it('should call forget with right peer', function (done) {
+    it('should call rmpeer', function (done) {
       var testDockerHost = testDockIp + ':4242'
       var testJob = {
         dockerHost: testDockerHost,
         hostname: testRmDock
       }
 
-      weavePeerForget(testJob).asCallback(function (err) {
+      weavePeerRemove(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
         sinon.assert.calledOnce(Docker.prototype.info)
@@ -69,12 +69,12 @@ describe('weave.peer.forget functional test', function () {
         var weaveArgs = fs.readFileSync('./weaveMockArgs');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');
 
-        expect(weaveArgs.toString()).to.equal('forget ' + testRmDock + '\n');
+        expect(weaveArgs.toString()).to.equal('rmpeer ip-' + testRmDock.replace(/\./g, '-') + '\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
         expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242');
         done()
       })
-    }) // end should launch weave
+    }) // end should call rmpeer
   }) // end normal job
-}) // end weave.peer.forget functional test
+}) // end weave.peer.remove functional test
