@@ -37,7 +37,7 @@ var testSubscriber = new Hermes({
 describe('rabbitmq integration test', function () {
   beforeEach(function (done) {
     RabbitMQ.create()
-    done()
+    RabbitMQ._publisher.on('ready', done)
   })
 
   beforeEach(function (done) {
