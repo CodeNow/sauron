@@ -416,7 +416,7 @@ describe('events.js unit test', function () {
       });
     });
 
-    it('should fail if error 409', function (done) {
+    it('should TaskFatalError if error 409', function (done) {
       var testErr = ErrorCat.create(409, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
@@ -441,6 +441,36 @@ describe('events.js unit test', function () {
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(TaskFatalError);
         expect(err.report).to.be.false()
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
+        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
+        done();
+      });
+    });
+
+    it('should TaskFatalError if error 400', function (done) {
+      var testErr = ErrorCat.create(400, 'Dunlendings');
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
+      var orgId = '868976908769078';
+
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(testErr);
+      Docker.doesDockExist.yieldsAsync(null, true);
+      var jobData = {
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        },
+        tags: orgId + ',1q2qswedasdasdad,123'
+      };
+      Events.handleStarted(jobData, function (err) {
+        expect(err).to.be.an.instanceof(TaskFatalError);
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
         done();
