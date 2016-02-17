@@ -162,7 +162,7 @@ describe('container-life-cycle-started functional test', function () {
 
           var weaveArgs = fs.readFileSync('./weaveMockArgs');
           var weaveEnvs = fs.readFileSync('./weaveEnvs');
-          console.log('weaveArgs.toString()', weaveArgs.toString())
+
           expect(weaveArgs.toString()).to.equal('attach ' + testContainerId + '\n');
           expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
           expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
