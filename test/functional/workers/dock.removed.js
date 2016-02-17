@@ -34,6 +34,7 @@ describe('dock.removed functional test', function () {
   describe('normal dock removed', function () {
     var lightestDock = '10.1.1.1'
     var secondDock = '10.1.1.2'
+    var randomDock = '10.1.1.3'
     var testGithibId = '12312312'
 
     beforeEach(function (done) {
@@ -46,7 +47,7 @@ describe('dock.removed functional test', function () {
         numContainers: 2,
         org: testGithibId
       }, {
-        ip: '10.1.1.3',
+        ip: randomDock,
         numContainers: 1,
         org: 'badOrg'
       }]))
@@ -69,6 +70,14 @@ describe('dock.removed functional test', function () {
         sinon.assert.called(RabbitMQ._publisher.publish)
         sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.peer.remove', {
           dockerHost: lightestDock + ':4242',
+          hostname: testHost
+        })
+        sinon.assert.neverCalledWith(RabbitMQ._publisher.publish, 'weave.peer.remove', {
+          dockerHost: secondDock + ':4242',
+          hostname: testHost
+        })
+        sinon.assert.neverCalledWith(RabbitMQ._publisher.publish, 'weave.peer.remove', {
+          dockerHost: randomDock + ':4242',
           hostname: testHost
         })
         done()
@@ -95,6 +104,10 @@ describe('dock.removed functional test', function () {
         })
         sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.peer.forget', {
           dockerHost: secondDock + ':4242',
+          hostname: testHost
+        })
+        sinon.assert.neverCalledWith(RabbitMQ._publisher.publish, 'weave.peer.forget', {
+          dockerHost: randomDock + ':4242',
           hostname: testHost
         })
         done()
