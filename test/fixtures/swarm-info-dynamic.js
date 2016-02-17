@@ -2,8 +2,8 @@
 
 module.exports = function (docks) {
   var numContainers = docks.reduce(function (prev, current) {
-    return prev.numContainers + current.numContainers
-  })
+    return prev + (current.numContainers || 0)
+  }, 0)
 
   var info = {
     ID: '',
@@ -56,8 +56,8 @@ module.exports = function (docks) {
 
   docks.forEach(function (dock) {
     info.DriverStatus.push([
-      'ip-' + dock.ip ? dock.ip.replace('.','-') : '10-8-192-11',
-      dock.ip || '10.8.192.11' + ':4242'
+      'ip-' + (dock.ip ? dock.ip.replace(/\./g,'-') : '10-8-192-11'),
+      (dock.ip || '10.8.192.11') + ':4242'
     ])
     info.DriverStatus.push([
       ' └ Status',
@@ -65,7 +65,7 @@ module.exports = function (docks) {
     ])
     info.DriverStatus.push([
       ' └ Containers',
-      dock.numContainers ? dock.numContainers + '' : '1'
+      dock.numContainers ? dock.numContainers + '' : '0'
     ])
     info.DriverStatus.push([
       ' └ Reserved CPUs',
