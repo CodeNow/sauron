@@ -65,7 +65,7 @@ module.exports = function (docks) {
     ])
     info.DriverStatus.push([
       ' └ Containers',
-      dock.numContainers ? dock.numContainers + '' : '0'
+      dock.numContainers ? (dock.numContainers + '') : '0'
     ])
     info.DriverStatus.push([
       ' └ Reserved CPUs',

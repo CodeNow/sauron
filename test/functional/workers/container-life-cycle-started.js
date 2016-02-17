@@ -3,11 +3,11 @@ require('loadenv')()
 
 var Code = require('code')
 var Docker = require('dockerode')
+var fs = require('fs')
 var Lab = require('lab')
+var path = require('path')
 var sinon = require('sinon')
 var TaskFatalError = require('ponos').TaskFatalError;
-var fs = require('fs')
-var path = require('path')
 
 var containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js')
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
