@@ -479,7 +479,9 @@ describe('events.js unit test', function () {
 
     it('should publish correct data', function (done) {
       var testIp = '10.0.0.0';
-      var testHost = 'http://172.123.12.3:4242';
+      var testHostname = '172.123.12.3';
+      var testHost = testHostname + ':4242'
+      var testUri = 'http://' + testHost;
       var testId = '23984765893264';
       var orgId = '868976908769078';
       Events._isNetworkNeeded.returns(true);
@@ -488,7 +490,7 @@ describe('events.js unit test', function () {
       Docker.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
-        host: testHost,
+        host: testUri,
         inspectData: {
           Config: {
             Labels: {
@@ -506,18 +508,17 @@ describe('events.js unit test', function () {
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true();
         sinon.assert.calledOnce(WeaveWrapper.attach);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, '172.123.12.3:4242', orgId, sinon.match.func);
-        sinon.assert.calledWith(
-          Docker.doesDockExist,
-          testHost
-        );
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
+        sinon.assert.calledWith(Docker.doesDockExist, testHost);
         done();
       });
     });
 
     it('should cb error if publish threw', function (done) {
       var testIp = '10.0.0.0';
-      var testHost = 'http://172.123.12.3:4242';
+      var testHostname = '172.123.12.3';
+      var testHost = testHostname + ':4242'
+      var testUri = 'http://' + testHost;
       var testId = '23984765893264';
       var orgId = '868976908769078';
       var testErr = new Error('shadowflax');
@@ -527,7 +528,7 @@ describe('events.js unit test', function () {
       Docker.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
-        host: testHost,
+        host: testUri,
         inspectData: {
           Config: {
             Labels: {
@@ -545,11 +546,8 @@ describe('events.js unit test', function () {
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true();
         sinon.assert.calledOnce(WeaveWrapper.attach);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, '172.123.12.3:4242', orgId, sinon.match.func);
-        sinon.assert.calledWith(
-          Docker.doesDockExist,
-          testHost
-        );
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
+        sinon.assert.calledWith(Docker.doesDockExist, testHost);
         done();
       });
     });
