@@ -11,24 +11,24 @@ var expect = Code.expect;
 
 var sinon = require('sinon');
 
-var WorkerServer = require('../../lib/models/worker-server.js');
-var Peers = require('../../lib/models/peers.js');
+var Docker = require('../../lib/models/docker.js');
 var RabbitMQ = require('../../lib/models/rabbitmq.js');
 var Start = require('../../lib/start.js');
+var WorkerServer = require('../../lib/models/worker-server.js');
 
 describe('start.js unit test', function () {
   describe('startup', function () {
     beforeEach(function (done) {
       sinon.stub(WorkerServer, 'listen');
       sinon.stub(RabbitMQ, 'publishWeaveStart');
-      sinon.stub(Peers, 'getList');
+      sinon.stub(Docker, 'info');
       done();
     });
 
     afterEach(function (done) {
       WorkerServer.listen.restore();
       RabbitMQ.publishWeaveStart.restore();
-      Peers.getList.restore();
+      Docker.info.restore();
       done();
     });
 
@@ -36,7 +36,7 @@ describe('start.js unit test', function () {
       var peers = ['a', 'b'];
       RabbitMQ.publishWeaveStart.returns();
       WorkerServer.listen.yieldsAsync();
-      Peers.getList.yieldsAsync(null, peers);
+      Docker.info.yieldsAsync(null, peers);
 
       Start.startup(function (err) {
         expect(err).to.not.exist();
@@ -47,10 +47,10 @@ describe('start.js unit test', function () {
       });
     });
 
-    it('should throw an error if `Peers.getList` throws an error', function (done) {
+    it('should throw an error if `Docker.info` throws an error', function (done) {
       RabbitMQ.publishWeaveStart.returns();
       WorkerServer.listen.yieldsAsync();
-      Peers.getList.yieldsAsync('err');
+      Docker.info.yieldsAsync('err');
 
       Start.startup(function (err) {
         expect(err).to.exist();
@@ -72,12 +72,12 @@ describe('start.js unit test', function () {
     it('should throw an error if `RabbitMQ.publishWeaveStart` throws an error', function (done) {
       RabbitMQ.publishWeaveStart.throws();
       WorkerServer.listen.yieldsAsync();
-      Peers.getList.yieldsAsync(null, [1, 2, 3]);
+      Docker.info.yieldsAsync(null, [1, 2, 3]);
 
       Start.startup(function (err) {
         expect(err).to.exist();
         sinon.assert.calledOnce(WorkerServer.listen);
-        sinon.assert.calledOnce(Peers.getList);
+        sinon.assert.calledOnce(Docker.info);
         sinon.assert.calledOnce(RabbitMQ.publishWeaveStart);
         done();
       });

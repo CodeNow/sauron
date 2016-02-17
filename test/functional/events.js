@@ -15,6 +15,9 @@ var path = require('path');
 var fs = require('fs');
 var Hermes = require('runnable-hermes');
 var nock = require('nock');
+var Docker = require('dockerode');
+
+var swarmInfo = require('../fixtures/swarm-info-dynamic');
 
 var publishedEvents = [
   'container.life-cycle.died',
@@ -39,24 +42,24 @@ var subscribeQueues = [
 ];
 
 var testPublisher = new Hermes({
-    hostname: process.env.RABBITMQ_HOSTNAME,
-    password: process.env.RABBITMQ_PASSWORD,
-    port: process.env.RABBITMQ_PORT,
-    username: process.env.RABBITMQ_USERNAME,
-    publishedEvents: publishedEvents,
-    queues: publishQueues,
-    name: 'testPublisher'
-  });
+  hostname: process.env.RABBITMQ_HOSTNAME,
+  password: process.env.RABBITMQ_PASSWORD,
+  port: process.env.RABBITMQ_PORT,
+  username: process.env.RABBITMQ_USERNAME,
+  publishedEvents: publishedEvents,
+  queues: publishQueues,
+  name: 'testPublisher'
+});
 
 var testSubscriber = new Hermes({
-    hostname: process.env.RABBITMQ_HOSTNAME,
-    password: process.env.RABBITMQ_PASSWORD,
-    port: process.env.RABBITMQ_PORT,
-    username: process.env.RABBITMQ_USERNAME,
-    subscribedEvents: subscribedEvents,
-    queues: subscribeQueues,
-    name: 'testSubscriber'
-  });
+  hostname: process.env.RABBITMQ_HOSTNAME,
+  password: process.env.RABBITMQ_PASSWORD,
+  port: process.env.RABBITMQ_PORT,
+  username: process.env.RABBITMQ_USERNAME,
+  subscribedEvents: subscribedEvents,
+  queues: subscribeQueues,
+  name: 'testSubscriber'
+});
 
 var Start = require('../../lib/start.js');
 var WeaveWrapper = require('../../lib/models/weave-wrapper.js');
@@ -72,20 +75,18 @@ describe('events functional test', function () {
     // need to nock 3 times
     // once for initial setup
     // two for each weave start job
-    nock(process.env.MAVIS_URL)
-      .get('/docks')
-      .times(3)
-      .reply(200, [{
-        'numContainers': 1,
-        'numBuilds': 5,
-        'host': 'http://1.1.1.1:4242',
-        'tags': '1738,run,build'
+    var testInfo = swarmInfo([
+      {
+        ip: '1.1.1.1',
+        numContainers: 1,
+        org: '1738'
       }, {
-        'numContainers': 1,
-        'numBuilds': 1,
-        'host': 'http://2.2.2.2:4242',
-        'tags': '1660575,run,build'
-      }]);
+        ip: '2.2.2.2',
+        numContainers: 1,
+        org: '1660575'
+      }
+    ]);
+    sinon.stub(Docker.prototype, 'info').onCall(0).yieldsAsync(testInfo).onCall(1).yieldsAsync(testInfo).onCall(2).yieldsAsync(testInfo);
     Start.startup(done);
   });
 

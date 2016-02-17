@@ -177,49 +177,107 @@ describe('lib/models/docker unit test', function () {
     })
   })
 
-  describe('findLightestOrgDock', function () {
+  describe('findDocksByOrgId', function () {
     beforeEach(function (done) {
-      sinon.stub(Dockerode.prototype, 'info');
+      sinon.stub(Docker, 'info')
+      sinon.stub(Docker, '_findDocksByOrgId')
       done();
     });
 
     afterEach(function (done) {
-      Dockerode.prototype.info.restore();
+      Docker.info.restore();
+      Docker._findDocksByOrgId.restore();
       done();
     });
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee');
-      Dockerode.prototype.info.yieldsAsync(testError);
+      Docker.info.yieldsAsync(testError);
 
-      Docker.findLightestOrgDock('4643352', function (err) {
+      Docker.findDocksByOrgId('4643352', function (err) {
         expect(err).to.equal(testError);
-        sinon.assert.calledOnce(Dockerode.prototype.info)
-        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Docker.info)
+        sinon.assert.calledWith(Docker.info, sinon.match.func)
+        done();
+      });
+    });
+
+    it('should cb with nodes', function (done) {
+      var testDocks = [1, 2];
+      var testInfo = ['a', 'b'];
+      var testOrgId = '4643352';
+
+      Docker.info.yieldsAsync(null, testInfo);
+      Docker._findDocksByOrgId.returns(testDocks);
+
+      Docker.findDocksByOrgId(testOrgId, function (err, docks) {
+        if (err) { return done(err) }
+
+        expect(docks).to.deep.equal(testDocks)
+
+        sinon.assert.calledOnce(Docker.info)
+        sinon.assert.calledWith(Docker.info, sinon.match.func)
+
+        sinon.assert.calledOnce(Docker._findDocksByOrgId)
+        sinon.assert.calledWith(Docker._findDocksByOrgId, testInfo, testOrgId)
+        done();
+      });
+    });
+  });
+
+  describe('findLightestOrgDock', function () {
+    beforeEach(function (done) {
+      sinon.stub(Docker, 'findDocksByOrgId')
+      done();
+    });
+
+    afterEach(function (done) {
+      Docker.findDocksByOrgId.restore();
+      done();
+    });
+
+    it('should cb swarm error', function (done) {
+      var testError = new Error('bee');
+      var testOrgId = '4643352';
+
+      Docker.findDocksByOrgId.yieldsAsync(testError);
+
+      Docker.findLightestOrgDock(testOrgId, function (err) {
+        expect(err).to.equal(testError);
+        sinon.assert.calledOnce(Docker.findDocksByOrgId)
+        sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
         done();
       });
     });
 
     it('should with the lightest node', function (done) {
-      Dockerode.prototype.info.yieldsAsync(null, SwarmInfo);
+      var testOrgId = '4643352';
 
-      Docker.findLightestOrgDock('4643352', function (err, dock) {
-        expect(err).to.not.exist()
-        expect(dock.Containers).to.equal(2)
-        sinon.assert.calledOnce(Dockerode.prototype.info)
-        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+      Docker.findDocksByOrgId.yieldsAsync(null, [{
+        Containers: 5
+      }, {
+        Containers: 10
+      }]);
+
+      Docker.findLightestOrgDock(testOrgId, function (err, dock) {
+        if (err) { return done(err) }
+        expect(dock.Containers).to.equal(5)
+        sinon.assert.calledOnce(Docker.findDocksByOrgId)
+        sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
         done();
       });
     });
 
     it('should cb with null if no nodes found for an org', function (done) {
-      Dockerode.prototype.info.yieldsAsync(null, SwarmInfo);
+      var testOrgId = '111111';
 
-      Docker.findLightestOrgDock('111111', function (err, dock) {
-        expect(err).to.not.exist()
+      Docker.findDocksByOrgId.yieldsAsync(null, []);
+
+      Docker.findLightestOrgDock(testOrgId, function (err, dock) {
+        if (err) { return done(err) }
         expect(dock).to.not.exist()
-        sinon.assert.calledOnce(Dockerode.prototype.info)
-        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Docker.findDocksByOrgId)
+        sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
         done();
       });
     });
