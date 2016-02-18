@@ -33,15 +33,29 @@ describe('start.js unit test', function () {
     });
 
     it('should startup on add docks', function (done) {
-      var peers = ['a', 'b'];
+      var peers = [{
+        dockerHost: '10.0.0.1:4242',
+        Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'codenow' }]
+      }, {
+        dockerHost: '10.0.0.2:4242',
+        Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'other' }]
+      }];
       RabbitMQ.publishWeaveStart.returns();
       WorkerServer.listen.yieldsAsync();
       Docker.info.yieldsAsync(null, peers);
 
       Start.startup(function (err) {
-        expect(err).to.not.exist();
-        expect(RabbitMQ.publishWeaveStart.withArgs('a').calledOnce).to.be.true();
-        expect(RabbitMQ.publishWeaveStart.withArgs('b').calledOnce).to.be.true();
+        if (err) { return done(err) }
+
+        sinon.assert.calledTwice(RabbitMQ.publishWeaveStart)
+        sinon.assert.calledWith(RabbitMQ.publishWeaveStart, {
+          dockerUri: 'http://10.0.0.2:4242',
+          orgId: 'other'
+        })
+        sinon.assert.calledWith(RabbitMQ.publishWeaveStart, {
+          dockerUri: 'http://10.0.0.1:4242',
+          orgId: 'codenow'
+        })
         expect(WorkerServer.listen.calledOnce).to.be.true();
         done();
       });
@@ -70,9 +84,16 @@ describe('start.js unit test', function () {
     });
 
     it('should throw an error if `RabbitMQ.publishWeaveStart` throws an error', function (done) {
+      var peers = [{
+        dockerHost: '10.0.0.1:4242',
+        Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'codenow' }]
+      }, {
+        dockerHost: '10.0.0.2:4242',
+        Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'other' }]
+      }];
       RabbitMQ.publishWeaveStart.throws();
       WorkerServer.listen.yieldsAsync();
-      Docker.info.yieldsAsync(null, [1, 2, 3]);
+      Docker.info.yieldsAsync(null, peers);
 
       Start.startup(function (err) {
         expect(err).to.exist();
