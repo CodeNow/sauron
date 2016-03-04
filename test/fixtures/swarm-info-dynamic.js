@@ -11,19 +11,19 @@ module.exports = function (docks) {
     Driver: '',
     SystemStatus: [
       [
-        '\bRole',
+        'Role',
         'primary'
       ],
       [
-        '\bStrategy',
+        'Strategy',
         'spread'
       ],
       [
-        '\bFilters',
+        'Filters',
         'health, port, dependency, affinity, constraint'
       ],
       [
-        '\bNodes',
+        'Nodes',
         docks.length + ''
       ]
     ],
@@ -55,30 +55,14 @@ module.exports = function (docks) {
   }
 
   docks.forEach(function (dock) {
-    info.SystemStatus.push([
-      'ip-' + (dock.ip ? dock.ip.replace(/\./g,'-') : '10-8-192-11'),
-      (dock.ip || '10.8.192.11') + ':4242'
-    ])
-    info.SystemStatus.push([
-      ' └ Status',
-      dock.status || 'Healthy'
-    ])
-    info.SystemStatus.push([
-      ' └ Containers',
-      dock.numContainers ? (dock.numContainers + '') : '0'
-    ])
-    info.SystemStatus.push([
-      ' └ Reserved CPUs',
-      '0 / 2'
-    ])
-    info.SystemStatus.push([
-      ' └ Reserved Memory',
-      '5.245 GiB / 8.187 GiB'
-    ])
-    info.SystemStatus.push([
-      ' └ Labels',
-      'executiondriver=native-0.2, kernelversion=3.13.0-74-generic, operatingsystem=Ubuntu 14.04.3 LTS, org=' + dock.org || 'testOrg' + ', storagedriver=aufs'
-    ])
+    info.SystemStatus.push([' ip-' + (dock.ip ? dock.ip.replace(/\./g,'-') : '10-8-192-11'), (dock.ip || '10.8.192.11') + ':4242'])
+    info.SystemStatus.push(['  └ Status', dock.status || 'Healthy'])
+    info.SystemStatus.push(['  └ Containers', dock.numContainers ? (dock.numContainers + '') : '0'])
+    info.SystemStatus.push(['  └ Reserved CPUs', '0 / 2'])
+    info.SystemStatus.push(['  └ Reserved Memory', '5.245 GiB / 8.187 GiB'])
+    info.SystemStatus.push(['  └ Labels', 'executiondriver=native-0.2, kernelversion=3.13.0-74-generic, operatingsystem=Ubuntu 14.04.3 LTS, org=' + dock.org || 'testOrg' + ', storagedriver=aufs']),
+    info.SystemStatus.push(['  └ Error', '(none)']),
+    info.SystemStatus.push(['  └ UpdatedAt', '2016-03-04T01:56:02Z']),
   })
 
   return info
