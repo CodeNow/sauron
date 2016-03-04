@@ -9,7 +9,7 @@ module.exports = function (docks) {
     ID: '',
     Containers: numContainers,
     Driver: '',
-    DriverStatus: [
+    SystemStatus: [
       [
         '\bRole',
         'primary'
@@ -55,27 +55,27 @@ module.exports = function (docks) {
   }
 
   docks.forEach(function (dock) {
-    info.DriverStatus.push([
+    info.SystemStatus.push([
       'ip-' + (dock.ip ? dock.ip.replace(/\./g,'-') : '10-8-192-11'),
       (dock.ip || '10.8.192.11') + ':4242'
     ])
-    info.DriverStatus.push([
+    info.SystemStatus.push([
       ' └ Status',
       dock.status || 'Healthy'
     ])
-    info.DriverStatus.push([
+    info.SystemStatus.push([
       ' └ Containers',
       dock.numContainers ? (dock.numContainers + '') : '0'
     ])
-    info.DriverStatus.push([
+    info.SystemStatus.push([
       ' └ Reserved CPUs',
       '0 / 2'
     ])
-    info.DriverStatus.push([
+    info.SystemStatus.push([
       ' └ Reserved Memory',
       '5.245 GiB / 8.187 GiB'
     ])
-    info.DriverStatus.push([
+    info.SystemStatus.push([
       ' └ Labels',
       'executiondriver=native-0.2, kernelversion=3.13.0-74-generic, operatingsystem=Ubuntu 14.04.3 LTS, org=' + dock.org || 'testOrg' + ', storagedriver=aufs'
     ])

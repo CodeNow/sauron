@@ -61,7 +61,7 @@ describe('lib/models/docker unit test', function () {
 
     it('should cb true if dock in list', function (done) {
       Dockerode.prototype.info.yieldsAsync(null, {
-        DriverStatus: [
+        SystemStatus: [
           ['yellowjacket', 'mosquito'],
           ['flea', 'ladybug'],
           ['ip-10-1-1-1', '10.0.0.1:4242'],
@@ -79,7 +79,7 @@ describe('lib/models/docker unit test', function () {
 
     it('should cb with null if dock not in list', function (done) {
       Dockerode.prototype.info.yieldsAsync(null, {
-        DriverStatus: [
+        SystemStatus: [
           ['yellowjacket', 'mosquito'],
           ['flea', 'ladybug'],
           ['ip-10-1-1-1', '10.0.0.1:4242'],

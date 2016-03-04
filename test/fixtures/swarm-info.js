@@ -2,7 +2,7 @@ module.exports = {
   "ID": "",
   "Containers": 354,
   "Driver": "",
-  "DriverStatus": [
+  "SystemStatus": [
     [
       "\bRole",
       "primary"
