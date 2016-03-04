@@ -17,7 +17,6 @@ var TaskFatalError = require('ponos').TaskFatalError;
 
 var Docker = require('../../../lib/models/docker.js');
 var Events = require('../../../lib/models/events.js');
-var Peers = require('../../../lib/models/peers.js');
 var RabbitMQ = require('../../../lib/models/rabbitmq.js');
 var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
 
@@ -34,19 +33,19 @@ describe('events.js unit test', function () {
 
   describe('handleStart', function () {
     beforeEach(function (done) {
-      sinon.stub(Peers, 'getList');
+      sinon.stub(Docker, 'findDocksByOrgId');
       sinon.stub(WeaveWrapper, 'launch');
       done();
     });
 
     afterEach(function (done) {
-      Peers.getList.restore();
+      Docker.findDocksByOrgId.restore();
       WeaveWrapper.launch.restore();
       done();
     });
 
-    it('should cb err if getList err', function (done) {
-      Peers.getList.yieldsAsync('err');
+    it('should cb err if findDocksByOrgId err', function (done) {
+      Docker.findDocksByOrgId.yieldsAsync('err');
 
       Events.handleStart({}, function (err) {
         expect(err).to.exist();
@@ -55,8 +54,8 @@ describe('events.js unit test', function () {
     });
 
     it('should launch with no peers', function (done) {
-      Peers.getList.yieldsAsync(null, [{
-        dockerUri: 'http://10.0.0.1:4242'
+      Docker.findDocksByOrgId.yieldsAsync(null, [{
+        dockerHost: '10.0.0.1:4242'
       }]);
       WeaveWrapper.launch.yieldsAsync();
 
@@ -71,7 +70,7 @@ describe('events.js unit test', function () {
     });
 
     it('should cb TaskFatalError if target no in peers', function (done) {
-      Peers.getList.yieldsAsync(null, []);
+      Docker.findDocksByOrgId.yieldsAsync(null, []);
 
       Events.handleStart({
         dockerUri: 'http://10.0.0.1:4242'
@@ -82,12 +81,12 @@ describe('events.js unit test', function () {
     });
 
     it('should launch with peers but not self', function (done) {
-      Peers.getList.yieldsAsync(null, [{
-        dockerUri: 'http://10.0.0.1:4242'
+      Docker.findDocksByOrgId.yieldsAsync(null, [{
+        dockerHost: '10.0.0.1:4242'
       }, {
-        dockerUri: 'http://10.0.0.2:4242'
+        dockerHost: '10.0.0.2:4242'
       }, {
-        dockerUri: 'http://10.0.0.3:4242'
+        dockerHost: '10.0.0.3:4242'
       }]);
       WeaveWrapper.launch.yieldsAsync();
 
@@ -163,18 +162,18 @@ describe('events.js unit test', function () {
 
   describe('_forgetWeavePeer', function () {
     beforeEach(function (done) {
-      sinon.stub(Peers, 'getList').yieldsAsync(null, [{
-        dockerUri: 'http://10.0.0.1:4242'
+      sinon.stub(Docker, 'findDocksByOrgId').yieldsAsync(null, [{
+        dockerHost: '10.0.0.1:4242'
       }, {
-        dockerUri: 'http://10.0.0.2:4242'
+        dockerHost: '10.0.0.2:4242'
       }, {
-        dockerUri: 'http://10.0.0.3:4242'
+        dockerHost: '10.0.0.3:4242'
       }]);
       sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns();
       done()
     })
     afterEach(function (done) {
-      Peers.getList.restore()
+      Docker.findDocksByOrgId.restore()
       RabbitMQ.publishWeavePeerForget.restore()
       done()
     })
@@ -198,7 +197,7 @@ describe('events.js unit test', function () {
       })
     })
     it('should publish nothing if no peers were found', function (done) {
-      Peers.getList.yieldsAsync(null, [])
+      Docker.findDocksByOrgId.yieldsAsync(null, [])
       Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.not.exist()
         sinon.assert.notCalled(RabbitMQ.publishWeavePeerForget)
@@ -207,7 +206,7 @@ describe('events.js unit test', function () {
     })
     it('should cb with error if getting peers failed', function (done) {
       var mavisError = new Error('Mavis error')
-      Peers.getList.yieldsAsync(mavisError)
+      Docker.findDocksByOrgId.yieldsAsync(mavisError)
       Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
         expect(err).to.equal(mavisError)
@@ -318,7 +317,7 @@ describe('events.js unit test', function () {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
       sinon.stub(Events, '_isNetworkNeeded');
       sinon.stub(WeaveWrapper, 'attach');
-      sinon.stub(Peers, 'doesDockExist');
+      sinon.stub(Docker, 'doesDockExist');
       done();
     });
 
@@ -326,7 +325,7 @@ describe('events.js unit test', function () {
       RabbitMQ.publishContainerNetworkAttached.restore();
       Events._isNetworkNeeded.restore();
       WeaveWrapper.attach.restore();
-      Peers.doesDockExist.restore();
+      Docker.doesDockExist.restore();
       done();
     });
 
@@ -346,7 +345,7 @@ describe('events.js unit test', function () {
       var testId = '23984765893264';
 
       Events._isNetworkNeeded.returns(true);
-      Peers.doesDockExist.yieldsAsync(testErr);
+      Docker.doesDockExist.yieldsAsync(testErr);
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -372,7 +371,7 @@ describe('events.js unit test', function () {
       var testId = '23984765893264';
 
       Events._isNetworkNeeded.returns(true);
-      Peers.doesDockExist.yieldsAsync(null, false);
+      Docker.doesDockExist.yieldsAsync(null, false);
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -398,7 +397,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      Peers.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.yieldsAsync(null, true);
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -417,7 +416,7 @@ describe('events.js unit test', function () {
       });
     });
 
-    it('should fail if error 409', function (done) {
+    it('should TaskFatalError if error 409', function (done) {
       var testErr = ErrorCat.create(409, 'Dunlendings');
       var testHost = '172.123.12.3';
       var testId = '23984765893264';
@@ -425,7 +424,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      Peers.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
         host: testHost,
@@ -448,6 +447,36 @@ describe('events.js unit test', function () {
       });
     });
 
+    it('should TaskFatalError if error 400', function (done) {
+      var testErr = ErrorCat.create(400, 'Dunlendings');
+      var testHost = '172.123.12.3';
+      var testId = '23984765893264';
+      var orgId = '868976908769078';
+
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(testErr);
+      Docker.doesDockExist.yieldsAsync(null, true);
+      var jobData = {
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        },
+        tags: orgId + ',1q2qswedasdasdad,123'
+      };
+      Events.handleStarted(jobData, function (err) {
+        expect(err).to.be.an.instanceof(TaskFatalError);
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
+        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
+        done();
+      });
+    });
+
     it('should publish on attach non 500 and non 409 error', function (done) {
       var testErr = ErrorCat.create(403, 'Dunlendings');
       var testHost = '172.123.12.3';
@@ -456,7 +485,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      Peers.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
         host: testHost,
@@ -480,16 +509,18 @@ describe('events.js unit test', function () {
 
     it('should publish correct data', function (done) {
       var testIp = '10.0.0.0';
-      var testHost = 'http://172.123.12.3:4242';
+      var testHostname = '172.123.12.3';
+      var testHost = testHostname + ':4242'
+      var testUri = 'http://' + testHost;
       var testId = '23984765893264';
       var orgId = '868976908769078';
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
-      Peers.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
-        host: testHost,
+        host: testUri,
         inspectData: {
           Config: {
             Labels: {
@@ -507,28 +538,27 @@ describe('events.js unit test', function () {
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true();
         sinon.assert.calledOnce(WeaveWrapper.attach);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, '172.123.12.3:4242', orgId, sinon.match.func);
-        sinon.assert.calledWith(
-          Peers.doesDockExist,
-          testHost
-        );
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
+        sinon.assert.calledWith(Docker.doesDockExist, testHost);
         done();
       });
     });
 
     it('should cb error if publish threw', function (done) {
       var testIp = '10.0.0.0';
-      var testHost = 'http://172.123.12.3:4242';
+      var testHostname = '172.123.12.3';
+      var testHost = testHostname + ':4242'
+      var testUri = 'http://' + testHost;
       var testId = '23984765893264';
       var orgId = '868976908769078';
       var testErr = new Error('shadowflax');
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.throws(testErr);
-      Peers.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.yieldsAsync(null, true);
       var jobData = {
         id: testId,
-        host: testHost,
+        host: testUri,
         inspectData: {
           Config: {
             Labels: {
@@ -546,11 +576,8 @@ describe('events.js unit test', function () {
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true();
         sinon.assert.calledOnce(WeaveWrapper.attach);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, '172.123.12.3:4242', orgId, sinon.match.func);
-        sinon.assert.calledWith(
-          Peers.doesDockExist,
-          testHost
-        );
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
+        sinon.assert.calledWith(Docker.doesDockExist, testHost);
         done();
       });
     });
