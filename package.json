@@ -33,7 +33,6 @@
     "async": "^1.5.2",
     "bluebird": "^3.0.5",
     "bunyan": "^1.5.1",
-    "callsite": "^1.0.0",
     "dockerode": "^2.2.8",
     "error-cat": "^1.4.2",
     "ip": "^1.0.1",
