@@ -205,11 +205,11 @@ describe('events.js unit test', function () {
       })
     })
     it('should cb with error if getting peers failed', function (done) {
-      var mavisError = new Error('Mavis error')
-      Docker.findDocksByOrgId.yieldsAsync(mavisError)
+      var swarmError = new Error('Swarm error')
+      Docker.findDocksByOrgId.yieldsAsync(swarmError)
       Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
-        expect(err).to.equal(mavisError)
+        expect(err).to.equal(swarmError)
         sinon.assert.notCalled(RabbitMQ.publishWeavePeerForget)
         done()
       })
