@@ -6,7 +6,7 @@ Sauron is the greatest and most trusted servant of Runnable during Two Point O. 
 ## Responsibilities
 Sauron is in charge of adding an overlay network per org and giving each container a ip address. His primary Responsibilities include:
 
-* Launching `weave` with correct peers obtained from Mavis
+* Launching `weave` with correct peers obtained from Swarm
 * Launching `weave` and restarting it if it dies
 * Call `weave attach` on all started containers
 * Emitting `container.network.attached` or `container.network.attach-failed` events
@@ -20,7 +20,7 @@ If Sauron failed to attach for a fatal or some ignorable reason (container died,
 , it will emit `container.network.attach-failed`
 If Sauron failed to attach for a non-fatal reason, he retries
 
-Sauron uses mavis to get peer information.
+Sauron uses swarm to get peer information.
 
 ### Incoming events
 
