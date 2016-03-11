@@ -3,7 +3,7 @@
 var Start = require('./lib/start.js');
 var ErrorCat = require('error-cat');
 var error = new ErrorCat();
-var log = require('./lib/logger.js')();
+var log = require('./lib/logger.js')()
 
 Start.startup(function (err) {
   if (err) {
