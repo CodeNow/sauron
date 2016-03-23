@@ -586,15 +586,7 @@ describe('events.js unit test', function () {
   describe('_isWeaveContainer', function () {
     it('should return true if correct container', function (done) {
       var testData = {
-        from: process.env.WEAVE_IMAGE_NAME,
-        inspectData: {
-          Config: {
-            ExposedPorts: {
-              '6783/tcp': {},
-              '6783/udp': {}
-            }
-          }
-        }
+        from: process.env.WEAVE_IMAGE_NAME
       };
 
       expect(Events._isWeaveContainer(testData))
@@ -604,41 +596,9 @@ describe('events.js unit test', function () {
 
     it('should return false if wrong container', function (done) {
       var testData = {
-        from: process.env.WEAVE_IMAGE_NAME,
-        inspectData: {
-          Config: {
-            ExposedPorts: null
-          }
-        }
-      };
-
-      expect(Events._isWeaveContainer(testData))
-        .to.be.false();
-      done();
-    });
-
-    it('should return false if wrong container', function (done) {
-      var testData = {
-        from: process.env.WEAVE_IMAGE_NAME,
-        inspectData: {}
-      };
-
-      expect(Events._isWeaveContainer(testData))
-        .to.be.false();
-      done();
-    });
-
-    it('should return false if wrong container', function (done) {
-      var testData = {
         from: 'wrong',
       };
       expect(Events._isWeaveContainer(testData))
-        .to.be.false();
-      done();
-    });
-
-    it('should return false no from', function (done) {
-      expect(Events._isWeaveContainer({}))
         .to.be.false();
       done();
     });
