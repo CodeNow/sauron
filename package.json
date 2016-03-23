@@ -1,6 +1,6 @@
 {
   "name": "sauron",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "description": "Sauron is the greatest and most trusted servant of Runnable during Two Point O.  After the downfall of his master, he continuously strove to conquer container networking.  Deceiving the developers, whom under his guidance created subnets, he secretly forged one virtual network to connect them all.  Hence, Sauron is deemed 'The Lord of the Networks'",
   "main": "lib/app.js",
   "directories": {
