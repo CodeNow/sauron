@@ -507,6 +507,34 @@ describe('events.js unit test', function () {
       });
     });
 
+    it('should not publish if inspectData is undefined', function (done) {
+      var testIp = '10.0.0.0';
+      var testHostname = '172.123.12.3';
+      var testHost = testHostname + ':4242'
+      var testUri = 'http://' + testHost;
+      var testId = '23984765893264';
+      var orgId = '868976908769078';
+      Events._isNetworkNeeded.returns(true);
+      WeaveWrapper.attach.yields(null, testIp);
+      RabbitMQ.publishContainerNetworkAttached.returns();
+      Docker.doesDockExist.yieldsAsync(null, true);
+      var jobData = {
+        id: testId,
+        host: testUri,
+        tags: orgId + ',1q2qswedasdasdad,123'
+      };
+
+      Events.handleStarted(jobData, function (err) {
+        expect(err).to.not.exist();
+        jobData.containerIp = testIp;
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
+        sinon.assert.calledOnce(WeaveWrapper.attach);
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
+        sinon.assert.calledWith(Docker.doesDockExist, testHost);
+        done();
+      });
+    });
+
     it('should publish correct data', function (done) {
       var testIp = '10.0.0.0';
       var testHostname = '172.123.12.3';
