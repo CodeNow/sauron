@@ -19,12 +19,12 @@ var dockerEventsStreamDisconnected = require('../../../lib/workers/docker.events
 describe('docker.events-stream.disconnected.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleDockRemovedAsync').returns();
+      sinon.stub(Events, 'handleDockerEventStreamDisconnectedAsync').returns();
       done();
     });
 
     afterEach(function (done) {
-      Events.handleDockRemovedAsync.restore();
+      Events.handleDockerEventStreamDisconnectedAsync.restore();
       done();
     });
 
@@ -55,7 +55,7 @@ describe('docker.events-stream.disconnected.js unit test', function () {
     });
 
     it('should throw error if setup failed', function (done) {
-      Events.handleDockRemovedAsync.throws(new Error('test'));
+      Events.handleDockerEventStreamDisconnectedAsync.throws(new Error('test'));
       dockerEventsStreamDisconnected({
         host: 'http://10.0.0.1:4224',
         org: '12345'

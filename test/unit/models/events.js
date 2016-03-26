@@ -216,7 +216,7 @@ describe('events.js unit test', function () {
     })
   })
 
-  describe('handleDockRemoved', function () {
+  describe('handleDockerEventStreamDisconnected', function () {
     beforeEach(function (done) {
       sinon.stub(Events, '_removeWeavePeer').yieldsAsync()
       sinon.stub(Events, '_forgetWeavePeer').yieldsAsync()
@@ -228,9 +228,9 @@ describe('events.js unit test', function () {
       done()
     })
     it('should not fail if nothing failed', function (done) {
-      Events.handleDockRemoved({
+      Events.handleDockerEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
-        githubId: '11213123'
+        org: '11213123'
       }, function (err) {
         expect(err).to.not.exist()
         sinon.assert.calledOnce(Events._removeWeavePeer)
@@ -243,9 +243,9 @@ describe('events.js unit test', function () {
     it('should fail if remove peer failed', function (done) {
       var error = new Error('Weave error')
       Events._removeWeavePeer.yieldsAsync(error)
-      Events.handleDockRemoved({
+      Events.handleDockerEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
-        githubId: '11213123'
+        org: '11213123'
       }, function (err) {
         expect(err).to.exist()
         expect(err).to.equal(error)
@@ -259,9 +259,9 @@ describe('events.js unit test', function () {
     it('should fail if forget peer failed', function (done) {
       var error = new Error('Weave error')
       Events._forgetWeavePeer.yieldsAsync(error)
-      Events.handleDockRemoved({
+      Events.handleDockerEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
-        githubId: '11213123'
+        org: '11213123'
       }, function (err) {
         expect(err).to.exist()
         expect(err).to.equal(error)
