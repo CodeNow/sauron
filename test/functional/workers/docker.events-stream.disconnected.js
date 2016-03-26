@@ -6,7 +6,7 @@ var Docker = require('dockerode')
 var Lab = require('lab')
 var sinon = require('sinon')
 
-var dockRemoved = require('../../../lib/workers/dock.removed.js')
+var dockerEventStreamDisconnected = require('../../../lib/workers/docker.events-stream.disconnected.js')
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic');
 
@@ -17,7 +17,7 @@ var describe = lab.describe
 var expect = Code.expect
 var it = lab.it
 
-describe('dock.removed functional test', function () {
+describe('docker.events-stream.disconnected functional test', function () {
   beforeEach(function (done) {
     RabbitMQ._publisher = {
       publish: sinon.stub()
@@ -59,9 +59,9 @@ describe('dock.removed functional test', function () {
       var testUri = 'http://' + testHost + ':4242'
       var testJob = {
         host: testUri,
-        githubId: testGithibId,
+        org: testGithibId,
       }
-      dockRemoved(testJob).asCallback(function (err) {
+      dockerEventStreamDisconnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
         sinon.assert.called(Docker.prototype.info)
@@ -89,9 +89,9 @@ describe('dock.removed functional test', function () {
       var testUri = 'http://' + testHost + ':4242'
       var testJob = {
         host: testUri,
-        githubId: testGithibId,
+        org: testGithibId,
       }
-      dockRemoved(testJob).asCallback(function (err) {
+      dockerEventStreamDisconnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
         sinon.assert.called(Docker.prototype.info)
@@ -114,4 +114,4 @@ describe('dock.removed functional test', function () {
       })
     })
   }) // weave container death
-}) // end dock.removed functional test
+}) // end docker.events-stream.disconnected functional test
