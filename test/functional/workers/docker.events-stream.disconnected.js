@@ -31,7 +31,7 @@ describe('docker.events-stream.disconnected functional test', function () {
     done()
   })
 
-  describe('normal dock removed', function () {
+  describe('docker stream disconnected', function () {
     var lightestDock = '10.1.1.1'
     var secondDock = '10.1.1.2'
     var randomDock = '10.1.1.3'
