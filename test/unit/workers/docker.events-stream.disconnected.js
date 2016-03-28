@@ -14,30 +14,30 @@ var sinon = require('sinon');
 var TaskFatalError = require('ponos').TaskFatalError;
 
 var Events = require('../../../lib/models/events.js');
-var dockRemoved = require('../../../lib/workers/dock.removed.js');
+var dockerEventsStreamDisconnected = require('../../../lib/workers/docker.events-stream.disconnected.js');
 
-describe('dock.removed.js unit test', function () {
+describe('docker.events-stream.disconnected.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleDockRemovedAsync').returns();
+      sinon.stub(Events, 'handleDockerEventStreamDisconnectedAsync').returns();
       done();
     });
 
     afterEach(function (done) {
-      Events.handleDockRemovedAsync.restore();
+      Events.handleDockerEventStreamDisconnectedAsync.restore();
       done();
     });
 
     it('should throw missing host', function (done) {
-      dockRemoved({})
+      dockerEventsStreamDisconnected({})
       .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError);
         done();
       })
     });
 
-    it('should throw missing githubId', function (done) {
-      dockRemoved({
+    it('should throw missing org', function (done) {
+      dockerEventsStreamDisconnected({
         host: 'http://10.0.0.1:4224',
       })
       .asCallback(function (err) {
@@ -47,18 +47,18 @@ describe('dock.removed.js unit test', function () {
     });
 
     it('should be fine if no errors', function (done) {
-      dockRemoved({
+      dockerEventsStreamDisconnected({
         host: 'http://10.0.0.1:4224',
-        githubId: '12345'
+        org: '12345'
       })
       .asCallback(done);
     });
 
     it('should throw error if setup failed', function (done) {
-      Events.handleDockRemovedAsync.throws(new Error('test'));
-      dockRemoved({
+      Events.handleDockerEventStreamDisconnectedAsync.throws(new Error('test'));
+      dockerEventsStreamDisconnected({
         host: 'http://10.0.0.1:4224',
-        githubId: '12345'
+        org: '12345'
       })
       .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error)
@@ -66,4 +66,4 @@ describe('dock.removed.js unit test', function () {
       })
     });
   }); // end run
-}); // end dock.removed
+}); // end docker.events-stream.disconnected

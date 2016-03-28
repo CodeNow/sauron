@@ -57,7 +57,8 @@ describe('weave.peer.remove functional test', function () {
       var testDockerHost = testDockIp + ':4242'
       var testJob = {
         dockerHost: testDockerHost,
-        hostname: testRmDock
+        hostname: testRmDock,
+        orgId: '1235123'
       }
 
       weavePeerRemove(testJob).asCallback(function (err) {
@@ -68,8 +69,8 @@ describe('weave.peer.remove functional test', function () {
 
         var weaveArgs = fs.readFileSync('./weaveMockArgs');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');
-
-        expect(weaveArgs.toString()).to.equal('rmpeer ip-' + testRmDock.replace(/\./g, '-') + '\n');
+        var ipNickname = 'ip-' + testRmDock.replace(/\./g, '-') + '.' + testJob.orgId
+        expect(weaveArgs.toString()).to.equal('rmpeer ' + ipNickname + '\n');
         expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
         expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
         expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242');
