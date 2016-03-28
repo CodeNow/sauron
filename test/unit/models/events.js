@@ -121,7 +121,8 @@ describe('events.js unit test', function () {
         sinon.assert.calledOnce(RabbitMQ.publishWeavePeerRemove)
         sinon.assert.calledWith(RabbitMQ.publishWeavePeerRemove, {
           dockerHost: '10.0.0.1:4242',
-          hostname: '10.0.0.4'
+          hostname: '10.0.0.4',
+          orgId: '12981'
         })
         done()
       })

@@ -49,6 +49,16 @@ describe('weave.peer.remove.js unit test', function () {
         done();
       });
     });
+    it('should throw missing orgId', function (done) {
+      weavePeerRemove({
+        dockerHost: '10.0.0.1:4224',
+        hostname: '10.0.0.2'
+      })
+      .asCallback(function (err) {
+        expect(err).to.be.instanceOf(TaskFatalError);
+        done();
+      });
+    });
     it('should throw error if dock check failed', function (done) {
       var rejectError = new Error('test')
       var rejectionPromise = Promise.reject(rejectError)
@@ -56,7 +66,8 @@ describe('weave.peer.remove.js unit test', function () {
       Docker.doesDockExistAsync.returns(rejectionPromise)
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
-        hostname: '10.0.0.99'
+        hostname: '10.0.0.99',
+        orgId: '123567'
       })
       .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error)
@@ -71,7 +82,8 @@ describe('weave.peer.remove.js unit test', function () {
       Docker.doesDockExistAsync.returns(false)
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
-        hostname: '10.0.0.99'
+        hostname: '10.0.0.99',
+        orgId: '123567'
       })
       .asCallback(function (err) {
         expect(err).to.be.instanceOf(TaskFatalError)
@@ -85,14 +97,15 @@ describe('weave.peer.remove.js unit test', function () {
     it('should work if nothing failed', function (done) {
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
-        hostname: '10.4.145.68'
+        hostname: '10.4.145.68',
+        orgId: '123567'
       })
       .asCallback(function (err) {
         expect(err).to.not.exist()
         sinon.assert.calledOnce(Docker.doesDockExistAsync)
         sinon.assert.calledWith(Docker.doesDockExistAsync, '10.0.0.1:4224')
         sinon.assert.calledOnce(WeaveWrapper.rmpeerAsync)
-        sinon.assert.calledWith(WeaveWrapper.rmpeerAsync, '10.0.0.1:4224', 'ip-10-4-145-68')
+        sinon.assert.calledWith(WeaveWrapper.rmpeerAsync, '10.0.0.1:4224', 'ip-10-4-145-68.123567')
         done()
       })
     });
