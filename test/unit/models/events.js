@@ -219,11 +219,13 @@ describe('events.js unit test', function () {
 
   describe('handleDockerEventStreamDisconnected', function () {
     beforeEach(function (done) {
+      sinon.stub(Docker, 'doesDockExist').yieldsAsync(false)
       sinon.stub(Events, '_removeWeavePeer').yieldsAsync()
       sinon.stub(Events, '_forgetWeavePeer').yieldsAsync()
       done()
     })
     afterEach(function (done) {
+      Docker.doesDockExist.restore()
       Events._removeWeavePeer.restore()
       Events._forgetWeavePeer.restore()
       done()
@@ -234,6 +236,8 @@ describe('events.js unit test', function () {
         org: '11213123'
       }, function (err) {
         expect(err).to.not.exist()
+        sinon.assert.calledOnce(Docker.doesDockExist)
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1')
         sinon.assert.calledOnce(Events._removeWeavePeer)
         sinon.assert.calledWith(Events._removeWeavePeer, '10.0.0.1', '11213123')
         sinon.assert.calledOnce(Events._forgetWeavePeer)
