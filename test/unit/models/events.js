@@ -219,7 +219,7 @@ describe('events.js unit test', function () {
 
   describe('handleDockerEventStreamDisconnected', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'doesDockExist').yieldsAsync(false)
+      sinon.stub(Docker, 'doesDockExist').yieldsAsync(null, false)
       sinon.stub(Events, '_removeWeavePeer').yieldsAsync()
       sinon.stub(Events, '_forgetWeavePeer').yieldsAsync()
       done()
@@ -237,11 +237,40 @@ describe('events.js unit test', function () {
       }, function (err) {
         expect(err).to.not.exist()
         sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1')
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
         sinon.assert.calledOnce(Events._removeWeavePeer)
         sinon.assert.calledWith(Events._removeWeavePeer, '10.0.0.1', '11213123')
         sinon.assert.calledOnce(Events._forgetWeavePeer)
         sinon.assert.calledWith(Events._forgetWeavePeer, '10.0.0.1', '11213123')
+        done()
+      })
+    })
+    it('shoulddo nothing if dock exist', function (done) {
+      Docker.doesDockExist.yieldsAsync(null, true)
+      Events.handleDockerEventStreamDisconnected({
+        host: 'http://10.0.0.1:4242',
+        org: '11213123'
+      }, function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(Docker.doesDockExist)
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
+        sinon.assert.notCalled(Events._removeWeavePeer)
+        sinon.assert.notCalled(Events._forgetWeavePeer)
+        done()
+      })
+    })
+    it('should fail if dock check failed', function (done) {
+      var error = new Error('Swarm error')
+      Docker.doesDockExist.yieldsAsync(error)
+      Events.handleDockerEventStreamDisconnected({
+        host: 'http://10.0.0.1:4242',
+        org: '11213123'
+      }, function (err) {
+        expect(err).to.be.an.instanceof(TaskError)
+        sinon.assert.calledOnce(Docker.doesDockExist)
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
+        sinon.assert.notCalled(Events._removeWeavePeer)
+        sinon.assert.notCalled(Events._forgetWeavePeer)
         done()
       })
     })
