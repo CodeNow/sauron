@@ -318,4 +318,86 @@ describe('lib/models/docker unit test', function () {
       });
     });
   });
+
+  describe('getLogs', function () {
+    var containerStub
+    beforeEach(function (done) {
+      containerStub = {
+        getLogs: function () {}
+      }
+      sinon.stub(containerStub, 'getLogs').yieldsAsync()
+      sinon.stub(Dockerode.prototype, 'getContainer').returns(containerStub)
+      done()
+    })
+    afterEach(function (done) {
+      Dockerode.prototype.getContainer.restore()
+      done()
+    })
+    it('should call getLogs with correct options', function (done) {
+      Docker.getLogs('container-id', function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
+        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
+        sinon.assert.calledOnce(containerStub.getLogs)
+        sinon.assert.calledWith(containerStub.getLogs, {
+          follow: false,
+          stdout: true,
+          stderr: true
+        })
+        done()
+      })
+    })
+    it('should fail if logs call failed', function (done) {
+      var dockerError = new Error('Docker error')
+      containerStub.getLogs.yieldsAsync(dockerError)
+      Docker.getLogs('container-id', function (err) {
+        expect(err).to.equal(dockerError)
+        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
+        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
+        sinon.assert.calledOnce(containerStub.getLogs)
+        sinon.assert.calledWith(containerStub.getLogs, {
+          follow: false,
+          stdout: true,
+          stderr: true
+        })
+        done()
+      })
+    })
+  })
+
+  describe('killContainer', function () {
+    var containerStub
+    beforeEach(function (done) {
+      containerStub = {
+        kill: function () {}
+      }
+      sinon.stub(containerStub, 'kill').yieldsAsync()
+      sinon.stub(Dockerode.prototype, 'getContainer').returns(containerStub)
+      done()
+    })
+    afterEach(function (done) {
+      Dockerode.prototype.getContainer.restore()
+      done()
+    })
+    it('should call kill with correct options', function (done) {
+      Docker.killContainer('container-id', function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
+        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
+        sinon.assert.calledOnce(containerStub.kill)
+        done()
+      })
+    })
+    it('should fail if logs call failed', function (done) {
+      var dockerError = new Error('Docker error')
+      containerStub.kill.yieldsAsync(dockerError)
+      Docker.killContainer('container-id', function (err) {
+        expect(err).to.equal(dockerError)
+        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
+        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
+        sinon.assert.calledOnce(containerStub.kill)
+        done()
+      })
+    })
+  })
 });
