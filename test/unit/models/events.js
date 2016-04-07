@@ -349,7 +349,9 @@ describe('events.js unit test', function () {
   describe('handleStarted', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
+      sinon.stub(RabbitMQ, 'publishWeaveHealthCheck');
       sinon.stub(Events, '_isNetworkNeeded');
+      sinon.stub(Events, '_isWeaveContainer');
       sinon.stub(WeaveWrapper, 'attach');
       sinon.stub(Docker, 'doesDockExist');
       done();
@@ -357,10 +359,25 @@ describe('events.js unit test', function () {
 
     afterEach(function (done) {
       RabbitMQ.publishContainerNetworkAttached.restore();
+      RabbitMQ.publishWeaveHealthCheck.restore();
       Events._isNetworkNeeded.restore();
+      Events._isWeaveContainer.restore();
       WeaveWrapper.attach.restore();
       Docker.doesDockExist.restore();
       done();
+    });
+
+    it('should publish weave health check if weave started', function (done) {
+      Events._isWeaveContainer.returns(true);
+
+      Events.handleStarted({ id: 'container-id'}, function (err) {
+        expect(err).to.not.exist();
+        sinon.assert.calledOnce(RabbitMQ.publishWeaveHealthCheck)
+        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
+          containerId: 'container-id'
+        })
+        done();
+      });
     });
 
     it('should not attach if network not needed', function (done) {
