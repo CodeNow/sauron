@@ -681,6 +681,15 @@ describe('events.js unit test', function () {
         .to.be.false();
       done();
     });
+
+    it('should return false if from is null', function (done) {
+      var testData = {
+        from: null
+      };
+      expect(Events._isWeaveContainer(testData))
+        .to.be.false();
+      done();
+    });
   }); // end _isWeaveContainer
 
   describe('_isNetworkNeeded', function () {
