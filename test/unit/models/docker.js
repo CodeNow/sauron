@@ -323,9 +323,9 @@ describe('lib/models/docker unit test', function () {
     var containerStub
     beforeEach(function (done) {
       containerStub = {
-        getLogs: function () {}
+        logs: function () {}
       }
-      sinon.stub(containerStub, 'getLogs').yieldsAsync()
+      sinon.stub(containerStub, 'logs').yieldsAsync()
       sinon.stub(Dockerode.prototype, 'getContainer').returns(containerStub)
       done()
     })
@@ -338,8 +338,8 @@ describe('lib/models/docker unit test', function () {
         expect(err).to.not.exist()
         sinon.assert.calledOnce(Dockerode.prototype.getContainer)
         sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
-        sinon.assert.calledOnce(containerStub.getLogs)
-        sinon.assert.calledWith(containerStub.getLogs, {
+        sinon.assert.calledOnce(containerStub.logs)
+        sinon.assert.calledWith(containerStub.logs, {
           follow: false,
           stdout: true,
           stderr: true
@@ -349,13 +349,13 @@ describe('lib/models/docker unit test', function () {
     })
     it('should fail if logs call failed', function (done) {
       var dockerError = new Error('Docker error')
-      containerStub.getLogs.yieldsAsync(dockerError)
+      containerStub.logs.yieldsAsync(dockerError)
       Docker.getLogs('container-id', function (err) {
         expect(err).to.equal(dockerError)
         sinon.assert.calledOnce(Dockerode.prototype.getContainer)
         sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
-        sinon.assert.calledOnce(containerStub.getLogs)
-        sinon.assert.calledWith(containerStub.getLogs, {
+        sinon.assert.calledOnce(containerStub.logs)
+        sinon.assert.calledWith(containerStub.logs, {
           follow: false,
           stdout: true,
           stderr: true
