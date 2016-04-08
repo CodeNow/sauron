@@ -372,9 +372,22 @@ describe('events.js unit test', function () {
 
       Events.handleStarted({ id: 'container-id'}, function (err) {
         expect(err).to.not.exist();
-        sinon.assert.calledOnce(RabbitMQ.publishWeaveHealthCheck)
+        sinon.assert.callCount(RabbitMQ.publishWeaveHealthCheck, 4)
         sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
-          containerId: 'container-id'
+          containerId: 'container-id',
+          delay: 5000
+        })
+        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
+          containerId: 'container-id',
+          delay: 60000
+        })
+        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
+          containerId: 'container-id',
+          delay: 120000
+        })
+        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
+          containerId: 'container-id',
+          delay: 300000
         })
         done();
       });
