@@ -228,8 +228,9 @@ describe('rabbitmq.js unit test', function () {
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publish.returns();
       var testArgs = {
-        containerId: 'id-1'
-      };
+        containerId: 'id-1',
+        delay: 5000
+      }
       RabbitMQ.publishWeaveHealthCheck(testArgs);
 
       expect(RabbitMQ._publisher.publish
