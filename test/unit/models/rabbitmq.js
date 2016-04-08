@@ -170,6 +170,74 @@ describe('rabbitmq.js unit test', function () {
     });
   }); // end publishWeaveStart
 
+  describe('publishWeaveKill', function () {
+    beforeEach(function (done) {
+      RabbitMQ._publisher = {
+        publish: sinon.stub()
+      };
+      done();
+    });
+
+    afterEach(function (done) {
+      RabbitMQ._publisher = null;
+      done();
+    });
+
+    it('should throw if missing data', function (done) {
+      expect(function () {
+        RabbitMQ.publishWeaveKill({});
+      }).to.throw();
+
+      done();
+    });
+
+    it('should publish _publisher', function (done) {
+      RabbitMQ._publisher.publish.returns();
+      var testArgs = {
+        containerId: 'id-1'
+      };
+      RabbitMQ.publishWeaveKill(testArgs);
+
+      expect(RabbitMQ._publisher.publish
+        .withArgs('weave.kill', testArgs).called).to.be.true();
+      done();
+    });
+  }); // end publishWeaveKill
+
+  describe('publishWeaveHealthCheck', function () {
+    beforeEach(function (done) {
+      RabbitMQ._publisher = {
+        publish: sinon.stub()
+      };
+      done();
+    });
+
+    afterEach(function (done) {
+      RabbitMQ._publisher = null;
+      done();
+    });
+
+    it('should throw if missing data', function (done) {
+      expect(function () {
+        RabbitMQ.publishWeaveHealthCheck({});
+      }).to.throw();
+
+      done();
+    });
+
+    it('should publish _publisher', function (done) {
+      RabbitMQ._publisher.publish.returns();
+      var testArgs = {
+        containerId: 'id-1'
+      };
+      RabbitMQ.publishWeaveHealthCheck(testArgs);
+
+      expect(RabbitMQ._publisher.publish
+        .withArgs('weave.health.check', testArgs).called).to.be.true();
+      done();
+    });
+  }); // end publishWeaveHealthCheck
+
   describe('publishWeavePeerForget', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
