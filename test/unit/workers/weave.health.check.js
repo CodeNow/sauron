@@ -40,9 +40,18 @@ describe('weave.health.check.js unit test', function () {
     })
   })
 
+  it('should throw missing delay', function (done) {
+    weaveHealthCheck({ containerId: 'cont-1' })
+    .asCallback(function (err) {
+      expect(err).to.be.instanceOf(TaskFatalError)
+      done()
+    })
+  })
+
   it('should be fine if no errors', function (done) {
     weaveHealthCheck({
-      containerId: 'container-id-1'
+      containerId: 'container-id-1',
+      delay: 10
     })
     .asCallback(function (err) {
       expect(err).to.not.exist()
@@ -55,7 +64,8 @@ describe('weave.health.check.js unit test', function () {
   it('should publish weave kill', function (done) {
     Docker.getLogsAsync.returns('Error: netlink error response: no such device')
     weaveHealthCheck({
-      containerId: 'container-id-1'
+      containerId: 'container-id-1',
+      delay: 10
     })
     .asCallback(function (err) {
       expect(err).to.not.exist()
@@ -72,7 +82,8 @@ describe('weave.health.check.js unit test', function () {
     var dockerError = new Error('Docker error')
     Docker.getLogsAsync.rejects(dockerError)
     weaveHealthCheck({
-      containerId: 'container-id-1'
+      containerId: 'container-id-1',
+      delay: 10
     })
     .asCallback(function (err) {
       expect(err).to.be.instanceOf(Error)
@@ -87,7 +98,8 @@ describe('weave.health.check.js unit test', function () {
     dockerError.statusCode = 404
     Docker.getLogsAsync.rejects(dockerError)
     weaveHealthCheck({
-      containerId: 'container-id-1'
+      containerId: 'container-id-1',
+      delay: 10
     })
     .asCallback(function (err) {
       expect(err).to.be.instanceOf(TaskFatalError)
