@@ -55,7 +55,7 @@ describe('events.js unit test', function () {
 
     it('should launch with no peers', function (done) {
       Docker.findDocksByOrgId.yieldsAsync(null, [{
-        dockerHost: '10.0.0.1:4242'
+        Host: '10.0.0.1:4242'
       }]);
       WeaveWrapper.launch.yieldsAsync();
 
@@ -82,11 +82,11 @@ describe('events.js unit test', function () {
 
     it('should launch with peers but not self', function (done) {
       Docker.findDocksByOrgId.yieldsAsync(null, [{
-        dockerHost: '10.0.0.1:4242'
+        Host: '10.0.0.1:4242'
       }, {
-        dockerHost: '10.0.0.2:4242'
+        Host: '10.0.0.2:4242'
       }, {
-        dockerHost: '10.0.0.3:4242'
+        Host: '10.0.0.3:4242'
       }]);
       WeaveWrapper.launch.yieldsAsync();
 
@@ -105,7 +105,7 @@ describe('events.js unit test', function () {
   describe('_removeWeavePeer', function () {
     beforeEach(function (done) {
       sinon.stub(Docker, 'findLightestOrgDock').yieldsAsync(null, {
-        dockerHost: '10.0.0.1:4242'
+        Host: '10.0.0.1:4242'
       })
       sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns();
       done()
@@ -139,7 +139,7 @@ describe('events.js unit test', function () {
     })
     it('should cb with fatal error if dockHost was not found', function (done) {
       Docker.findLightestOrgDock.yieldsAsync(null, {
-        dockerHost: null
+        Host: null
       })
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
@@ -164,11 +164,11 @@ describe('events.js unit test', function () {
   describe('_forgetWeavePeer', function () {
     beforeEach(function (done) {
       sinon.stub(Docker, 'findDocksByOrgId').yieldsAsync(null, [{
-        dockerHost: '10.0.0.1:4242'
+        Host: '10.0.0.1:4242'
       }, {
-        dockerHost: '10.0.0.2:4242'
+        Host: '10.0.0.2:4242'
       }, {
-        dockerHost: '10.0.0.3:4242'
+        Host: '10.0.0.3:4242'
       }]);
       sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns();
       done()
