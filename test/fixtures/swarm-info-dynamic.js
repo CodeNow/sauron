@@ -63,6 +63,7 @@ module.exports = function (docks) {
     info.SystemStatus.push(['  └ Labels', 'executiondriver=native-0.2, kernelversion=3.13.0-74-generic, operatingsystem=Ubuntu 14.04.3 LTS, org=' + dock.org || 'testOrg' + ', storagedriver=aufs']),
     info.SystemStatus.push(['  └ Error', '(none)'])
     info.SystemStatus.push(['  └ UpdatedAt', '2016-03-04T01:56:02Z'])
+    info.SystemStatus.push(['  └ ServerVersion', '1.10.2'])
   })
 
   return info

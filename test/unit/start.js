@@ -34,11 +34,17 @@ describe('start.js unit test', function () {
 
     it('should startup on add docks', function (done) {
       var peers = [{
-        dockerHost: '10.0.0.1:4242',
-        Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'codenow' }]
+        Host: '10.0.0.1:4242',
+        Labels: {
+          size: 'large',
+          org: 'codenow'
+        }
       }, {
-        dockerHost: '10.0.0.2:4242',
-        Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'other' }]
+        Host: '10.0.0.2:4242',
+        Labels: {
+          size: 'large',
+          org: 'other'
+        }
       }];
       RabbitMQ.publishWeaveStart.returns();
       WorkerServer.listen.yieldsAsync();

@@ -39,6 +39,7 @@ describe('weave-start functional test', function () {
   describe('normal job', function () {
     var testDockIp = '10.0.0.2'
     var testDockIp2 = '10.0.0.3'
+    var testDockIp3 = '10.0.0.4'
     beforeEach(function (done) {
       Docker.prototype.info.yieldsAsync(null, swarmInfo([{
         ip: testDockIp,
@@ -47,7 +48,7 @@ describe('weave-start functional test', function () {
         ip: testDockIp2,
         org: '12345125'
       }, {
-        ip: testDockIp,
+        ip: testDockIp3,
         org: 'fake'
       }]))
       done()

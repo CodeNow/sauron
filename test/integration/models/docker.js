@@ -42,7 +42,7 @@ describe('docker integration test', function () {
     it('should get nodes', function (done) {
       Docker.info(function (err, infoData) {
         if (err) { return done(err) }
-        var hosts = infoData.map(pluck('dockerHost'))
+        var hosts = infoData.map(pluck('Host'))
         expect(hosts).to.include(dockerIp1 + ':4242')
         expect(hosts).to.include(dockerIp2 + ':4242')
         done()
