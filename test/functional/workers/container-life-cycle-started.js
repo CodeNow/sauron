@@ -2,7 +2,6 @@
 require('loadenv')()
 
 var Code = require('code')
-var Docker = require('dockerode')
 var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
@@ -12,6 +11,7 @@ var TaskFatalError = require('ponos').TaskFatalError;
 var containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js')
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic');
+var Docker = require('../../../lib/models/docker')
 
 var lab = exports.lab = Lab.script()
 var afterEach = lab.afterEach
@@ -26,7 +26,7 @@ describe('container-life-cycle-started functional test', function () {
     RabbitMQ._publisher = {
       publish: sinon.stub()
     }
-    sinon.stub(Docker.prototype, 'info')
+    sinon.stub(Docker, 'doesDockExist')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done();
@@ -35,7 +35,7 @@ describe('container-life-cycle-started functional test', function () {
   })
 
   afterEach(function (done) {
-    Docker.prototype.info.restore()
+    Docker.doesDockExist.restore()
     delete process.env.WEAVE_PATH
     done()
   })
@@ -59,7 +59,7 @@ describe('container-life-cycle-started functional test', function () {
         if (err) { return done(err) }
 
         sinon.assert.notCalled(RabbitMQ._publisher.publish)
-        sinon.assert.notCalled(Docker.prototype.info)
+        sinon.assert.notCalled(Docker.doesDockExist)
 
         try {
           fs.readFileSync('./weaveMockArgs');
@@ -75,9 +75,7 @@ describe('container-life-cycle-started functional test', function () {
   describe('non-blacklisted container start', function () {
     describe('non-existing dock', function () {
       beforeEach(function (done) {
-        Docker.prototype.info.yieldsAsync(null, swarmInfo([{
-          ip: '10.1.1.1'
-        }]))
+        Docker.doesDockExist.yieldsAsync(null, false)
         done()
       })
 
@@ -96,8 +94,8 @@ describe('container-life-cycle-started functional test', function () {
         }
         containerLifeCycleStarted(testJob).asCallback(function (err) {
 
-          sinon.assert.calledOnce(Docker.prototype.info)
-          sinon.assert.calledWith(Docker.prototype.info, sinon.match.func)
+          sinon.assert.calledOnce(Docker.doesDockExist)
+          sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.2:4242', sinon.match.func)
           sinon.assert.notCalled(RabbitMQ._publisher.publish)
 
           try {
@@ -113,9 +111,7 @@ describe('container-life-cycle-started functional test', function () {
     describe('existing dock', function () {
       var testDockIp = '10.1.1.1'
       beforeEach(function (done) {
-        Docker.prototype.info.yieldsAsync(null, swarmInfo([{
-          ip: testDockIp
-        }]))
+        Docker.doesDockExist.yieldsAsync(null, true)
         done()
       })
 
