@@ -111,7 +111,7 @@ describe('container-life-cycle-started functional test', function () {
     describe('existing dock', function () {
       var testDockIp = '10.1.1.1'
       beforeEach(function (done) {
-        Docker.doesDockExist(null, true)
+        Docker.doesDockExist.yieldsAsync(null, true)
         done()
       })
 
