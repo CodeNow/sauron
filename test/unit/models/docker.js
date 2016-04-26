@@ -14,10 +14,11 @@ var miss = require('mississippi')
 var expect = Code.expect;
 
 var Dockerode = require('dockerode')
-var Swarmerode = require('swarmerode')._Swarmerode
+var Swarmerode = require('swarmerode')
+Dockerode = Swarmerode(Dockerode)
 var sinon = require('sinon')
 
-var Docker = require('../../../lib/models/docker.js')
+var Docker = require('../../../lib/models/docker')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
 describe('lib/models/docker unit test', function () {
@@ -39,47 +40,47 @@ describe('lib/models/docker unit test', function () {
 
   describe('doesDockExist', function () {
     beforeEach(function (done) {
-      sinon.stub(Swarmerode.prototype, 'swarmHostExists')
+      sinon.stub(Dockerode.prototype, 'swarmHostExists')
       done();
     });
 
     afterEach(function (done) {
-      Swarmerode.prototype.swarmHostExists.restore()
+      Dockerode.prototype.swarmHostExists.restore()
       done();
     });
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee');
-      Swarmerode.prototype.swarmHostExists.yieldsAsync(testError);
+      Dockerode.prototype.swarmHostExists.yieldsAsync(testError);
 
       Docker.doesDockExist('8.8.8.8:4242', function (err) {
         expect(err).to.equal(testError);
-        sinon.assert.calledOnce(Swarmerode.prototype.swarmHostExists)
-        sinon.assert.calledWith(Swarmerode.prototype.swarmHostExists, '8.8.8.8:4242', sinon.match.func)
+        sinon.assert.calledOnce(Dockerode.prototype.swarmHostExists)
+        sinon.assert.calledWith(Dockerode.prototype.swarmHostExists, '8.8.8.8:4242', sinon.match.func)
         done();
       });
     });
 
     it('should cb true if dock in list', function (done) {
-      Swarmerode.prototype.swarmHostExists.yieldsAsync(null, true);
+      Dockerode.prototype.swarmHostExists.yieldsAsync(null, true);
 
       Docker.doesDockExist('10.0.0.1:4242', function (err, exists) {
         expect(err).to.not.exist()
         expect(exists).to.be.true()
-        sinon.assert.calledOnce(Swarmerode.prototype.swarmHostExists)
-        sinon.assert.calledWith(Swarmerode.prototype.swarmHostExists, '10.0.0.1:4242', sinon.match.func)
+        sinon.assert.calledOnce(Dockerode.prototype.swarmHostExists)
+        sinon.assert.calledWith(Dockerode.prototype.swarmHostExists, '10.0.0.1:4242', sinon.match.func)
         done();
       });
     });
 
     it('should cb with null if dock not in list', function (done) {
-      Swarmerode.prototype.swarmHostExists.yieldsAsync(null, false);
+      Dockerode.prototype.swarmHostExists.yieldsAsync(null, false);
 
       Docker.doesDockExist('10.0.0.2:4242', function (err, exists) {
         if (err) { return done(err); }
         expect(exists).to.be.false()
-        sinon.assert.calledOnce(Swarmerode.prototype.swarmHostExists)
-        sinon.assert.calledWith(Swarmerode.prototype.swarmHostExists, '10.0.0.2:4242', sinon.match.func)
+        sinon.assert.calledOnce(Dockerode.prototype.swarmHostExists)
+        sinon.assert.calledWith(Dockerode.prototype.swarmHostExists, '10.0.0.2:4242', sinon.match.func)
         done();
       });
     });
