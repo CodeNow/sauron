@@ -38,61 +38,47 @@ describe('lib/models/docker unit test', function () {
 
   describe('doesDockExist', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'info');
+      sinon.stub(Docker.prototype, 'swarmHostExists');
       done();
     });
 
     afterEach(function (done) {
-      Docker.info.restore();
+      Docker.prototype.swarmHostExists.restore();
       done();
     });
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee');
-      Docker.info.yieldsAsync(testError);
+      Docker.prototype.swarmHostExists.yieldsAsync(testError);
 
       Docker.doesDockExist('8.8.8.8:4242', function (err) {
         expect(err).to.equal(testError);
-        sinon.assert.calledOnce(Docker.info)
-        sinon.assert.calledWith(Docker.info, sinon.match.func)
+        sinon.assert.calledOnce(Docker.prototype.swarmHostExists)
+        sinon.assert.calledWith(Docker.prototype.swarmHostExists, '8.8.8.8:4242', sinon.match.func)
         done();
       });
     });
 
     it('should cb true if dock in list', function (done) {
-      Docker.info.yieldsAsync(null, [
-        {
-          Host: '10.0.0.1:4242'
-        },
-        {
-          Host: '10.0.0.0:4242'
-        }
-      ]);
+      Docker.prototype.swarmHostExists.yieldsAsync(null, true);
 
       Docker.doesDockExist('10.0.0.1:4242', function (err, exists) {
         expect(err).to.not.exist()
         expect(exists).to.be.true()
-        sinon.assert.calledOnce(Docker.info)
-        sinon.assert.calledWith(Docker.info, sinon.match.func)
+        sinon.assert.calledOnce(Docker.prototype.swarmHostExists)
+        sinon.assert.calledWith(Docker.prototype.swarmHostExists, '10.0.0.1:4242', sinon.match.func)
         done();
       });
     });
 
     it('should cb with null if dock not in list', function (done) {
-      Docker.info.yieldsAsync(null, [
-        {
-          Host: '10.0.0.1:4242'
-        },
-        {
-          Host: '10.0.0.0:4242'
-        }
-      ]);
+      Docker.prototype.swarmHostExists.yieldsAsync(null, false);
 
       Docker.doesDockExist('10.0.0.2:4242', function (err, exists) {
         if (err) { return done(err); }
         expect(exists).to.be.false()
-        sinon.assert.calledOnce(Docker.info)
-        sinon.assert.calledWith(Docker.info, sinon.match.func)
+        sinon.assert.calledOnce(Docker.prototype.swarmHostExists)
+        sinon.assert.calledWith(Docker.prototype.swarmHostExists, '10.0.0.2:4242', sinon.match.func)
         done();
       });
     });
