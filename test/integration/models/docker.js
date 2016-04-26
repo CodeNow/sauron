@@ -49,35 +49,4 @@ describe('docker integration test', function () {
       })
     })
   }) // end info
-
-  describe('doesDockExist', function () {
-    var dockerIp1 = '10.1.1.1'
-    var dockerIp2 = '10.1.1.2'
-    beforeEach(function (done) {
-      nock('https://' + process.env.SWARM_HOSTNAME + ':' + process.env.SWARM_PORT, {"encodedQueryParams":true})
-        .get('/info')
-        .reply(200, swarmInfo([{
-          ip: dockerIp1
-        }, {
-          ip: dockerIp2
-        }]))
-      done()
-    })
-
-    it('should return true', function (done) {
-      Docker.doesDockExist(dockerIp1 + ':4242', function (err, exist) {
-        if (err) { return done(err) }
-        expect(exist).to.be.true()
-        done()
-      })
-    })
-
-    it('should return false', function (done) {
-      Docker.doesDockExist( 'fake:4242', function (err, exist) {
-        if (err) { return done(err) }
-        expect(exist).to.be.false()
-        done()
-      })
-    })
-  }) // end doesDockExist
 }) // end docker integration test
