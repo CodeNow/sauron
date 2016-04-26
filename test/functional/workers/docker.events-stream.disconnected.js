@@ -2,13 +2,12 @@
 require('loadenv')()
 
 var Code = require('code')
-var Docker = require('dockerode')
 var Lab = require('lab')
 var sinon = require('sinon')
 
 var dockerEventStreamDisconnected = require('../../../lib/workers/docker.events-stream.disconnected.js')
-var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var swarmInfo = require('../../fixtures/swarm-info-dynamic');
+var Docker = require('../../../lib/models/docker')
+var RabbitMQ = require('../../../lib/models/rabbitmq')
 
 var lab = exports.lab = Lab.script()
 var afterEach = lab.afterEach
@@ -22,12 +21,12 @@ describe('docker.events-stream.disconnected functional test', function () {
     RabbitMQ._publisher = {
       publish: sinon.stub()
     }
-    sinon.stub(Docker.prototype, 'info')
+    sinon.stub(Docker, 'doesDockExist')
     done()
   })
 
   afterEach(function (done) {
-    Docker.prototype.info.restore()
+    Docker.doesDockExist.restore()
     done()
   })
 
@@ -38,25 +37,14 @@ describe('docker.events-stream.disconnected functional test', function () {
     var testGithibId = '12312312'
 
     beforeEach(function (done) {
-      Docker.prototype.info.yieldsAsync(null, swarmInfo([{
-        ip: secondDock,
-        numContainers: 9,
-        org: testGithibId
-      }, {
-        ip: lightestDock,
-        numContainers: 2,
-        org: testGithibId
-      }, {
-        ip: randomDock,
-        numContainers: 1,
-        org: 'badOrg'
-      }]))
+      Docker.doesDockExist.yieldsAsync(null, false)
       done()
     })
 
     it('should publish weave peer remove on lightest dock', function (done) {
       var testHost = '10.0.0.2'
-      var testUri = 'http://' + testHost + ':4242'
+      var dockerHost = testHost + ':4242'
+      var testUri = 'http://' + dockerHost
       var testJob = {
         host: testUri,
         org: testGithibId,
@@ -64,8 +52,8 @@ describe('docker.events-stream.disconnected functional test', function () {
       dockerEventStreamDisconnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.called(Docker.prototype.info)
-        sinon.assert.calledWith(Docker.prototype.info, sinon.match.func)
+        sinon.assert.called(Docker.doesDockExist)
+        sinon.assert.calledWith(Docker.doesDockExist, dockerHost, sinon.match.func)
 
         sinon.assert.called(RabbitMQ._publisher.publish)
         sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.peer.remove', {
@@ -87,7 +75,8 @@ describe('docker.events-stream.disconnected functional test', function () {
 
    it('should publish weave peer forget on all orgs docks', function (done) {
       var testHost = '10.0.0.2'
-      var testUri = 'http://' + testHost + ':4242'
+      var dockerHost = testHost + ':4242'
+      var testUri = 'http://' + dockerHost
       var testJob = {
         host: testUri,
         org: testGithibId,
@@ -95,8 +84,8 @@ describe('docker.events-stream.disconnected functional test', function () {
       dockerEventStreamDisconnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.called(Docker.prototype.info)
-        sinon.assert.calledWith(Docker.prototype.info, sinon.match.func)
+        sinon.assert.called(Docker.doesDockExist)
+        sinon.assert.calledWith(Docker.doesDockExist, dockerHost, sinon.match.func)
 
         sinon.assert.called(RabbitMQ._publisher.publish)
         sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.peer.forget', {

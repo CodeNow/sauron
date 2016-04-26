@@ -2,14 +2,13 @@
 require('loadenv')()
 
 var Code = require('code')
-var Docker = require('dockerode')
 var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
 var sinon = require('sinon')
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var swarmInfo = require('../../fixtures/swarm-info-dynamic');
+var Docker = require('../../../lib/models/docker')
 var weavePeerRemove = require('../../../lib/workers/weave.peer.remove.js')
 
 var lab = exports.lab = Lab.script()
@@ -22,7 +21,7 @@ var it = lab.it
 describe('weave.peer.remove functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
-    sinon.stub(Docker.prototype, 'info')
+    sinon.stub(Docker, 'doesDockExist')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done();
@@ -31,7 +30,7 @@ describe('weave.peer.remove functional test', function () {
   })
 
   afterEach(function (done) {
-    Docker.prototype.info.restore()
+    Docker.doesDockExist.restore()
     delete process.env.WEAVE_PATH
     done()
   })
@@ -40,16 +39,7 @@ describe('weave.peer.remove functional test', function () {
     var testDockIp = '10.0.0.2'
     var testRmDock = '10.0.0.3'
     beforeEach(function (done) {
-      Docker.prototype.info.yieldsAsync(null, swarmInfo([{
-        ip: testDockIp,
-        org: '12345125'
-      }, {
-        ip: testRmDock,
-        org: '12345125'
-      }, {
-        ip: testDockIp,
-        org: 'fake'
-      }]))
+      Docker.doesDockExist.yieldsAsync(null, true)
       done()
     })
 
@@ -64,8 +54,8 @@ describe('weave.peer.remove functional test', function () {
       weavePeerRemove(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(Docker.prototype.info)
-        sinon.assert.calledWith(Docker.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Docker.doesDockExist)
+        sinon.assert.calledWith(Docker.doesDockExist, testDockerHost, sinon.match.func)
 
         var weaveArgs = fs.readFileSync('./weaveMockArgs');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');
