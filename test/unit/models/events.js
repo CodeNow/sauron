@@ -371,8 +371,8 @@ describe('events.js unit test', function () {
       Events._isWeaveContainer.returns(true);
 
       Events.handleStarted({ id: 'container-id'}, function (err) {
-        expect(err).to.not.exist();
-        sinon.assert.callCount(RabbitMQ.publishWeaveHealthCheck, 4)
+        expect(err).to.not.exist()
+        sinon.assert.callCount(RabbitMQ.publishWeaveHealthCheck, 6)
         sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
           containerId: 'container-id',
           delay: 5000
@@ -388,6 +388,14 @@ describe('events.js unit test', function () {
         sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
           containerId: 'container-id',
           delay: 300000
+        })
+        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
+          containerId: 'container-id',
+          delay: 900000
+        })
+        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
+          containerId: 'container-id',
+          delay: 1800000
         })
         done();
       });
