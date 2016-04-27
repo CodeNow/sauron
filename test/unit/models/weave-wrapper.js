@@ -98,7 +98,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.launch(peers, testDockerHost, testDockerOrgId, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave launch-router --no-dns ' +
+          .withArgs('WEAVE_DOCKER_ARGS=\'--log-driver=syslog\' /usr/bin/weave launch-router --no-dns ' +
             '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8 ' +
             '10.0.0.1 10.0.0.2', testDockerHost)
           .called).to.be.true();
@@ -114,7 +114,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.launch(peers, testDockerHost, testDockerOrgId, function (err) {
         expect(err).to.not.exist();
         expect(WeaveWrapper._runCmd
-          .withArgs('/usr/bin/weave launch-router --no-dns ' +
+          .withArgs('WEAVE_DOCKER_ARGS=\'--log-driver=syslog\' /usr/bin/weave launch-router --no-dns ' +
             '--ipalloc-range 10.0.0.0/8 --ipalloc-default-subnet 10.0.0.0/8', testDockerHost)
           .called).to.be.true();
         done();
