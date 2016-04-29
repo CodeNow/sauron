@@ -22,21 +22,6 @@ var Docker = require('../../../lib/models/docker')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
 describe('lib/models/docker unit test', function () {
-  describe('loadCerts', function () {
-    it('should throw if missing certs', function (done) {
-      process.env.DOCKER_CERT_PATH = 'fake/path';
-
-      expect(Docker.loadCerts).to.throw();
-      done();
-    });
-
-    it('should load certs', function (done) {
-      process.env.DOCKER_CERT_PATH = './test/fixtures/certs';
-
-      expect(Docker.loadCerts).to.not.throw();
-      done();
-    });
-  }); // end loadCerts
 
   describe('doesDockExist', function () {
     beforeEach(function (done) {
