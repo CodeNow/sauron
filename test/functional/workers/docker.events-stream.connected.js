@@ -2,7 +2,6 @@
 require('loadenv')()
 
 var Code = require('code')
-var Docker = require('dockerode')
 var Lab = require('lab')
 var sinon = require('sinon')
 

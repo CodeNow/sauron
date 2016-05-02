@@ -50,10 +50,8 @@
   },
   "devDependencies": {
     "code": "^2.1.1",
-    "dockerode": "^2.2.10",
     "lab": "^7.3.0",
     "nock": "^3.3.0",
-    "sinon": "^1.17.3",
-    "swarmerode": "^2.1.0"
+    "sinon": "^1.17.3"
   }
 }

@@ -2,7 +2,7 @@
 require('loadenv')()
 
 var Code = require('code')
-var Docker = require('dockerode')
+var Swarm = require('loki').Swarm
 var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
@@ -22,7 +22,7 @@ var it = lab.it
 describe('weave-start functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
-    sinon.stub(Docker.prototype, 'info')
+    sinon.stub(Swarm.prototype, 'info')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done();
@@ -41,7 +41,7 @@ describe('weave-start functional test', function () {
     var testDockIp2 = '10.0.0.3'
     var testDockIp3 = '10.0.0.4'
     beforeEach(function (done) {
-      Docker.prototype.info.yieldsAsync(null, swarmInfo([{
+      Swarm.prototype.info.yieldsAsync(null, swarmInfo([{
         ip: testDockIp,
         org: '12345125'
       }, {
