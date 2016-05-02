@@ -31,7 +31,7 @@ describe('weave-start functional test', function () {
   })
 
   afterEach(function (done) {
-    Docker.prototype.info.restore()
+    Swarm.prototype.info.restore()
     delete process.env.WEAVE_PATH
     done()
   })
@@ -64,8 +64,8 @@ describe('weave-start functional test', function () {
       weaveStart(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(Docker.prototype.info)
-        sinon.assert.calledWith(Docker.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.info)
+        sinon.assert.calledWith(Swarm.prototype.info, sinon.match.func)
 
         var weaveArgs = fs.readFileSync('./weaveMockArgs');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');
