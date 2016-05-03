@@ -13,6 +13,7 @@ var Code = require('code');
 var miss = require('mississippi')
 var expect = Code.expect;
 
+const Swarmerode = require('swarmerode')._Swarmerode
 const BaseDockerClient = require('loki')._BaseClient
 const Swarm = require('loki').Swarm
 var sinon = require('sinon')
@@ -235,29 +236,29 @@ describe('lib/models/docker unit test', function () {
 
   describe('info', function () {
     beforeEach(function (done) {
-      sinon.stub(Swarm.prototype, 'info');
+      sinon.stub(Swarm.prototype, 'swarmInfo');
       done();
     });
 
     afterEach(function (done) {
-      Swarm.prototype.info.restore();
+      Swarm.prototype.swarmInfo.restore();
       done();
     });
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee');
-      Swarm.prototype.info.yieldsAsync(testError);
+      Swarm.prototype.swarmInfo.yieldsAsync(testError);
 
       Docker.info(function (err) {
         expect(err).to.equal(testError);
-        sinon.assert.calledOnce(Swarm.prototype.info)
-        sinon.assert.calledWith(Swarm.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmInfo)
+        sinon.assert.calledWith(Swarm.prototype.swarmInfo, sinon.match.func)
         done();
       });
     });
 
     it('should cb with the list of all docks', function (done) {
-      Swarm.prototype.info.yieldsAsync(null, swarmInfo([{
+      const swarmInfoData = swarmInfo([{
         ip: '10.0.0.1',
         org: '12345125'
       }, {
@@ -266,13 +267,15 @@ describe('lib/models/docker unit test', function () {
       }, {
         ip: '10.0.0.3',
         org: 'fake'
-      }]));
+      }])
+      swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
+      Swarm.prototype.swarmInfo.yieldsAsync(null, swarmInfoData)
 
       Docker.info(function (err, docks) {
         expect(err).to.not.exist()
         expect(docks.length).to.equal(3)
-        sinon.assert.calledOnce(Swarm.prototype.info)
-        sinon.assert.calledWith(Swarm.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmInfo)
+        sinon.assert.calledWith(Swarm.prototype.swarmInfo, sinon.match.func)
         done();
       });
     });

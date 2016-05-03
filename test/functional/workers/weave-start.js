@@ -7,6 +7,7 @@ var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
 var sinon = require('sinon')
+const Swarmerode = require('swarmerode')._Swarmerode
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic');
@@ -41,7 +42,7 @@ describe('weave-start functional test', function () {
     var testDockIp2 = '10.0.0.3'
     var testDockIp3 = '10.0.0.4'
     beforeEach(function (done) {
-      Swarm.prototype.swarmInfo.yieldsAsync(null, swarmInfo([{
+      const swarmInfoData = swarmInfo([{
         ip: testDockIp,
         org: '12345125'
       }, {
@@ -50,7 +51,9 @@ describe('weave-start functional test', function () {
       }, {
         ip: testDockIp3,
         org: 'fake'
-      }]))
+      }])
+      swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
+      Swarm.prototype.swarmInfo.yieldsAsync(null, swarmInfoData)
       done()
     })
 
