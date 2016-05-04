@@ -353,34 +353,4 @@ describe('lib/models/docker unit test', function () {
       })
     })
   })
-
-  describe('killContainer', function () {
-    var containerStub
-    beforeEach(function (done) {
-      sinon.stub(BaseDockerClient.prototype, 'killContainerAsync').resolves()
-      done()
-    })
-    afterEach(function (done) {
-      BaseDockerClient.prototype.killContainerAsync.restore()
-      done()
-    })
-    it('should call kill with correct options', function (done) {
-      Docker.killContainer('container-id', function (err) {
-        expect(err).to.not.exist()
-        sinon.assert.calledOnce(BaseDockerClient.prototype.killContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.killContainerAsync, 'container-id')
-        done()
-      })
-    })
-    it('should fail if logs call failed', function (done) {
-      var dockerError = new Error('Docker error')
-      BaseDockerClient.prototype.killContainerAsync.rejects(dockerError)
-      Docker.killContainer('container-id', function (err) {
-        expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(BaseDockerClient.prototype.killContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.killContainerAsync, 'container-id')
-        done()
-      })
-    })
-  })
 });
