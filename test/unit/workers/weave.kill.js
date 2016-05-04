@@ -66,7 +66,7 @@ describe('weave.kill.js unit test', function () {
   it('should throw fatal error if 404', function (done) {
     var dockerError = new Error('Docker error')
     dockerError.statusCode = 404
-    Docker.killContainerAsync.rejects(dockerError)
+    BaseDockerClient.killContainerAsync.rejects(dockerError)
     weaveKill({
       containerId: 'container-id-1'
     })
