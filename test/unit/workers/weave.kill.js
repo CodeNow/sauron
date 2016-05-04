@@ -26,7 +26,7 @@ describe('weave.kill.js unit test', function () {
   })
 
   afterEach(function (done) {
-    BaseDockerClient.prototype,.killContainerAsync.restore()
+    BaseDockerClient.prototype.killContainerAsync.restore()
     done()
   })
 
