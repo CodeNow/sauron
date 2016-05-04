@@ -2,7 +2,7 @@
 require('loadenv')()
 
 var Code = require('code')
-var Swarm = require('loki').Swarm
+var Swarm = require('@runnable/loki').Swarm
 var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')

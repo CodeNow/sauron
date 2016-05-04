@@ -14,8 +14,8 @@ var miss = require('mississippi')
 var expect = Code.expect;
 
 const Swarmerode = require('swarmerode')._Swarmerode
-const BaseDockerClient = require('loki')._BaseClient
-const Swarm = require('loki').Swarm
+const BaseDockerClient = require('@runnable/loki')._BaseClient
+const Swarm = require('@runnable/loki').Swarm
 var sinon = require('sinon')
 
 var Docker = require('../../../lib/models/docker')
