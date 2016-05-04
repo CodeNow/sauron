@@ -44,22 +44,22 @@ describe('weave.kill.js unit test', function () {
     })
     .asCallback(function (err) {
       expect(err).to.not.exist()
-      sinon.assert.calledOnce(BaseDockerClient.prototype,.killContainerAsync)
-      sinon.assert.calledWith(BaseDockerClient.prototype,.killContainerAsync, 'container-id-1')
+      sinon.assert.calledOnce(BaseDockerClient.prototype.killContainerAsync)
+      sinon.assert.calledWith(BaseDockerClient.prototype.killContainerAsync, 'container-id-1')
       done()
     })
   })
   it('should throw error kill failed', function (done) {
     var dockerError = new Error('Docker error')
-    BaseDockerClient.prototype,.killContainerAsync.rejects(dockerError)
+    BaseDockerClient.prototype.killContainerAsync.rejects(dockerError)
     weaveKill({
       containerId: 'container-id-1'
     })
     .asCallback(function (err) {
       expect(err).to.be.instanceOf(Error)
       expect(err.message).to.equal(dockerError.message)
-      sinon.assert.calledOnce(BaseDockerClient.prototype,.killContainerAsync)
-      sinon.assert.calledWith(BaseDockerClient.prototype,.killContainerAsync, 'container-id-1')
+      sinon.assert.calledOnce(BaseDockerClient.prototype.killContainerAsync)
+      sinon.assert.calledWith(BaseDockerClient.prototype.killContainerAsync, 'container-id-1')
       done()
     })
   })
@@ -73,8 +73,8 @@ describe('weave.kill.js unit test', function () {
     .asCallback(function (err) {
       expect(err).to.be.instanceOf(TaskFatalError)
       expect(err.message).to.equal('weave.kill: Container was not found')
-      sinon.assert.calledOnce(BaseDockerClient.prototype,.killContainerAsync)
-      sinon.assert.calledWith(BaseDockerClient.prototype,.killContainerAsync, 'container-id-1')
+      sinon.assert.calledOnce(BaseDockerClient.prototype.killContainerAsync)
+      sinon.assert.calledWith(BaseDockerClient.prototype.killContainerAsync, 'container-id-1')
       done()
     })
   })
