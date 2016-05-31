@@ -247,7 +247,7 @@ describe('events.js unit test', function () {
         done()
       })
     })
-    it('shouldd o nothing if dock exist', function (done) {
+    it('should do nothing if dock exist', function (done) {
       Docker.doesDockExist.resolves(true)
       Events.handleDockerEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
