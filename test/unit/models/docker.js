@@ -13,74 +13,61 @@ var Code = require('code');
 var miss = require('mississippi')
 var expect = Code.expect;
 
-var Dockerode = require('dockerode')
-var Swarmerode = require('swarmerode')
-Dockerode = Swarmerode(Dockerode)
+const Swarmerode = require('swarmerode')._Swarmerode
+const BaseDockerClient = require('@runnable/loki')._BaseClient
+const Swarm = require('@runnable/loki').Swarm
 var sinon = require('sinon')
+var Promise = require('bluebird')
+require('sinon-as-promised')(Promise)
 
 var Docker = require('../../../lib/models/docker')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
 describe('lib/models/docker unit test', function () {
-  describe('loadCerts', function () {
-    it('should throw if missing certs', function (done) {
-      process.env.DOCKER_CERT_PATH = 'fake/path';
-
-      expect(Docker.loadCerts).to.throw();
-      done();
-    });
-
-    it('should load certs', function (done) {
-      process.env.DOCKER_CERT_PATH = './test/fixtures/certs';
-
-      expect(Docker.loadCerts).to.not.throw();
-      done();
-    });
-  }); // end loadCerts
 
   describe('doesDockExist', function () {
     beforeEach(function (done) {
-      sinon.stub(Dockerode.prototype, 'swarmHostExists')
+      sinon.stub(Swarm.prototype, 'swarmHostExistsAsync')
       done();
     });
 
     afterEach(function (done) {
-      Dockerode.prototype.swarmHostExists.restore()
+      Swarm.prototype.swarmHostExistsAsync.restore()
       done();
     });
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee');
-      Dockerode.prototype.swarmHostExists.yieldsAsync(testError);
+      Swarm.prototype.swarmHostExistsAsync.rejects(testError);
 
-      Docker.doesDockExist('8.8.8.8:4242', function (err) {
+      Docker.doesDockExist('8.8.8.8:4242').asCallback(function (err) {
         expect(err).to.equal(testError);
-        sinon.assert.calledOnce(Dockerode.prototype.swarmHostExists)
-        sinon.assert.calledWith(Dockerode.prototype.swarmHostExists, '8.8.8.8:4242', sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
+        sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '8.8.8.8:4242')
         done();
       });
     });
 
     it('should cb true if dock in list', function (done) {
-      Dockerode.prototype.swarmHostExists.yieldsAsync(null, true);
+      Swarm.prototype.swarmHostExistsAsync.resolves(true);
 
-      Docker.doesDockExist('10.0.0.1:4242', function (err, exists) {
+      Docker.doesDockExist('10.0.0.1:4242').asCallback(function (err, exists) {
         expect(err).to.not.exist()
         expect(exists).to.be.true()
-        sinon.assert.calledOnce(Dockerode.prototype.swarmHostExists)
-        sinon.assert.calledWith(Dockerode.prototype.swarmHostExists, '10.0.0.1:4242', sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
+        sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '10.0.0.1:4242')
         done();
       });
     });
 
     it('should cb with null if dock not in list', function (done) {
-      Dockerode.prototype.swarmHostExists.yieldsAsync(null, false);
+      Swarm.prototype.swarmHostExistsAsync.resolves(false);
 
-      Docker.doesDockExist('10.0.0.2:4242', function (err, exists) {
+      Docker.doesDockExist('10.0.0.2:4242').asCallback(function (err, exists) {
         if (err) { return done(err); }
         expect(exists).to.be.false()
-        sinon.assert.calledOnce(Dockerode.prototype.swarmHostExists)
-        sinon.assert.calledWith(Dockerode.prototype.swarmHostExists, '10.0.0.2:4242', sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
+        sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '10.0.0.2:4242')
         done();
       });
     });
@@ -251,29 +238,28 @@ describe('lib/models/docker unit test', function () {
 
   describe('info', function () {
     beforeEach(function (done) {
-      sinon.stub(Dockerode.prototype, 'info');
+      sinon.stub(Swarm.prototype, 'swarmInfoAsync')
       done();
     });
 
     afterEach(function (done) {
-      Dockerode.prototype.info.restore();
+      Swarm.prototype.swarmInfoAsync.restore()
       done();
     });
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee');
-      Dockerode.prototype.info.yieldsAsync(testError);
+      Swarm.prototype.swarmInfoAsync.rejects(testError)
 
       Docker.info(function (err) {
         expect(err).to.equal(testError);
-        sinon.assert.calledOnce(Dockerode.prototype.info)
-        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
         done();
       });
     });
 
     it('should cb with the list of all docks', function (done) {
-      Dockerode.prototype.info.yieldsAsync(null, swarmInfo([{
+      const swarmInfoData = swarmInfo([{
         ip: '10.0.0.1',
         org: '12345125'
       }, {
@@ -282,20 +268,20 @@ describe('lib/models/docker unit test', function () {
       }, {
         ip: '10.0.0.3',
         org: 'fake'
-      }]));
+      }])
+      swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
+      Swarm.prototype.swarmInfoAsync.resolves(swarmInfoData)
 
       Docker.info(function (err, docks) {
         expect(err).to.not.exist()
         expect(docks.length).to.equal(3)
-        sinon.assert.calledOnce(Dockerode.prototype.info)
-        sinon.assert.calledWith(Dockerode.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
         done();
       });
     });
   });
 
   describe('getLogs', function () {
-    var containerStub
     beforeEach(function (done) {
       var logsStream = function (string) {
         return miss.from(function(size, next) {
@@ -312,45 +298,41 @@ describe('lib/models/docker unit test', function () {
           next(null, chunk)
         })
       }
-      containerStub = {
-        logs: function () {}
-      }
-      sinon.stub(containerStub, 'logs').yieldsAsync(null, logsStream('some weave logs'))
-      sinon.stub(Dockerode.prototype, 'getContainer').returns(containerStub)
+      sinon.stub(BaseDockerClient.prototype, 'logContainerAsync').resolves(logsStream('some weave logs'))
       done()
     })
     afterEach(function (done) {
-      Dockerode.prototype.getContainer.restore()
+      BaseDockerClient.prototype.logContainerAsync.restore()
       done()
     })
     it('should call getLogs with correct options', function (done) {
       Docker.getLogs('container-id', function (err) {
         expect(err).to.not.exist()
-        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
-        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
-        sinon.assert.calledOnce(containerStub.logs)
-        sinon.assert.calledWith(containerStub.logs, {
-          stdout: true,
-          stderr: true
-        })
+        sinon.assert.calledOnce(BaseDockerClient.prototype.logContainerAsync)
+        sinon.assert.calledWith(BaseDockerClient.prototype.logContainerAsync,
+          'container-id', {
+            stdout: true,
+            stderr: true
+          })
         done()
       })
     })
+
     it('should fail if logs call failed', function (done) {
       var dockerError = new Error('Docker error')
-      containerStub.logs.yieldsAsync(dockerError)
+      BaseDockerClient.prototype.logContainerAsync.rejects(dockerError)
       Docker.getLogs('container-id', function (err) {
         expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
-        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
-        sinon.assert.calledOnce(containerStub.logs)
-        sinon.assert.calledWith(containerStub.logs, {
-          stdout: true,
-          stderr: true
-        })
+        sinon.assert.calledOnce(BaseDockerClient.prototype.logContainerAsync)
+        sinon.assert.calledWith(BaseDockerClient.prototype.logContainerAsync,
+          'container-id',{
+            stdout: true,
+            stderr: true
+          })
         done()
       })
     })
+
     it('should fail if logs stream failed', function (done) {
       var dockerError = new Error('Docker error')
       var logsStream = function (string) {
@@ -358,52 +340,15 @@ describe('lib/models/docker unit test', function () {
           next(dockerError)
         })
       }
-      containerStub.logs.yieldsAsync(null, logsStream('some weave logs'))
+      BaseDockerClient.prototype.logContainerAsync.resolves(logsStream('some weave logs'))
       Docker.getLogs('container-id', function (err) {
         expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
-        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
-        sinon.assert.calledOnce(containerStub.logs)
-        sinon.assert.calledWith(containerStub.logs, {
-          stdout: true,
-          stderr: true
-        })
-        done()
-      })
-    })
-  })
-
-  describe('killContainer', function () {
-    var containerStub
-    beforeEach(function (done) {
-      containerStub = {
-        kill: function () {}
-      }
-      sinon.stub(containerStub, 'kill').yieldsAsync()
-      sinon.stub(Dockerode.prototype, 'getContainer').returns(containerStub)
-      done()
-    })
-    afterEach(function (done) {
-      Dockerode.prototype.getContainer.restore()
-      done()
-    })
-    it('should call kill with correct options', function (done) {
-      Docker.killContainer('container-id', function (err) {
-        expect(err).to.not.exist()
-        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
-        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
-        sinon.assert.calledOnce(containerStub.kill)
-        done()
-      })
-    })
-    it('should fail if logs call failed', function (done) {
-      var dockerError = new Error('Docker error')
-      containerStub.kill.yieldsAsync(dockerError)
-      Docker.killContainer('container-id', function (err) {
-        expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(Dockerode.prototype.getContainer)
-        sinon.assert.calledWith(Dockerode.prototype.getContainer, 'container-id')
-        sinon.assert.calledOnce(containerStub.kill)
+        sinon.assert.calledOnce(BaseDockerClient.prototype.logContainerAsync)
+        sinon.assert.calledWith(BaseDockerClient.prototype.logContainerAsync,
+          'container-id',  {
+            stdout: true,
+            stderr: true
+          })
         done()
       })
     })

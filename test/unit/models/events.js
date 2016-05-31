@@ -10,7 +10,9 @@ var beforeEach = lab.beforeEach;
 var Code = require('code');
 var expect = Code.expect;
 
-var sinon = require('sinon');
+var sinon = require('sinon')
+var Promise = require('bluebird')
+require('sinon-as-promised')(Promise)
 var ErrorCat = require('error-cat');
 var TaskError = require('ponos').TaskError;
 var TaskFatalError = require('ponos').TaskFatalError;
@@ -219,7 +221,7 @@ describe('events.js unit test', function () {
 
   describe('handleDockerEventStreamDisconnected', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'doesDockExist').yieldsAsync(null, false)
+      sinon.stub(Docker, 'doesDockExist').resolves(false)
       sinon.stub(Events, '_removeWeavePeer').yieldsAsync()
       sinon.stub(Events, '_forgetWeavePeer').yieldsAsync()
       done()
@@ -245,8 +247,8 @@ describe('events.js unit test', function () {
         done()
       })
     })
-    it('shoulddo nothing if dock exist', function (done) {
-      Docker.doesDockExist.yieldsAsync(null, true)
+    it('should do nothing if dock exist', function (done) {
+      Docker.doesDockExist.resolves(true)
       Events.handleDockerEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
         org: '11213123'
@@ -261,7 +263,7 @@ describe('events.js unit test', function () {
     })
     it('should fail if dock check failed', function (done) {
       var error = new Error('Swarm error')
-      Docker.doesDockExist.yieldsAsync(error)
+      Docker.doesDockExist.rejects(error)
       Events.handleDockerEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
         org: '11213123'
@@ -417,7 +419,7 @@ describe('events.js unit test', function () {
       var testId = '23984765893264';
 
       Events._isNetworkNeeded.returns(true);
-      Docker.doesDockExist.yieldsAsync(testErr);
+      Docker.doesDockExist.rejects(testErr);
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -443,7 +445,7 @@ describe('events.js unit test', function () {
       var testId = '23984765893264';
 
       Events._isNetworkNeeded.returns(true);
-      Docker.doesDockExist.yieldsAsync(null, false);
+      Docker.doesDockExist.resolves(false);
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -469,7 +471,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.resolves(true);
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -496,7 +498,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.resolves(true);
       var jobData = {
         id: testId,
         host: testHost,
@@ -527,7 +529,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.resolves(true);
       var jobData = {
         id: testId,
         host: testHost,
@@ -557,7 +559,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.resolves(true);
       var jobData = {
         id: testId,
         host: testHost,
@@ -589,7 +591,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
-      Docker.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.resolves(true);
       var jobData = {
         id: testId,
         host: testUri,
@@ -617,7 +619,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.returns();
-      Docker.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.resolves(true);
       var jobData = {
         id: testId,
         host: testUri,
@@ -655,7 +657,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true);
       WeaveWrapper.attach.yields(null, testIp);
       RabbitMQ.publishContainerNetworkAttached.throws(testErr);
-      Docker.doesDockExist.yieldsAsync(null, true);
+      Docker.doesDockExist.resolves(true);
       var jobData = {
         id: testId,
         host: testUri,

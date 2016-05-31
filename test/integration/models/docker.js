@@ -18,14 +18,7 @@ var beforeEach = lab.beforeEach
 var expect = Code.expect
 
 describe('docker integration test', function () {
-  beforeEach(function (done) {
-    try {
-      Docker.loadCerts()
-    } catch (e) {
 
-    }
-    done()
-  })
   describe('info', function () {
     var dockerIp1 = '10.1.1.1'
     var dockerIp2 = '10.1.1.2'

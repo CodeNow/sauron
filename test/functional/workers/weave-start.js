@@ -2,11 +2,14 @@
 require('loadenv')()
 
 var Code = require('code')
-var Docker = require('dockerode')
+var Swarm = require('@runnable/loki').Swarm
 var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
 var sinon = require('sinon')
+var Promise = require('bluebird')
+require('sinon-as-promised')(Promise)
+const Swarmerode = require('swarmerode')._Swarmerode
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic');
@@ -22,7 +25,7 @@ var it = lab.it
 describe('weave-start functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
-    sinon.stub(Docker.prototype, 'info')
+    sinon.stub(Swarm.prototype, 'swarmInfoAsync')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done();
@@ -31,7 +34,7 @@ describe('weave-start functional test', function () {
   })
 
   afterEach(function (done) {
-    Docker.prototype.info.restore()
+    Swarm.prototype.swarmInfoAsync.restore()
     delete process.env.WEAVE_PATH
     done()
   })
@@ -41,7 +44,7 @@ describe('weave-start functional test', function () {
     var testDockIp2 = '10.0.0.3'
     var testDockIp3 = '10.0.0.4'
     beforeEach(function (done) {
-      Docker.prototype.info.yieldsAsync(null, swarmInfo([{
+      const swarmInfoData = swarmInfo([{
         ip: testDockIp,
         org: '12345125'
       }, {
@@ -50,9 +53,12 @@ describe('weave-start functional test', function () {
       }, {
         ip: testDockIp3,
         org: 'fake'
-      }]))
+      }])
+      swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
+      Swarm.prototype.swarmInfoAsync.resolves(swarmInfoData)
       done()
     })
+
     it('should launch weave', function (done) {
       var testDockerUri = 'http://' + testDockIp + ':4242'
       var testOrg = '12345125'
@@ -64,8 +70,7 @@ describe('weave-start functional test', function () {
       weaveStart(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(Docker.prototype.info)
-        sinon.assert.calledWith(Docker.prototype.info, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
 
         var weaveArgs = fs.readFileSync('./weaveMockArgs');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');
