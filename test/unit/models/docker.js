@@ -298,18 +298,18 @@ describe('lib/models/docker unit test', function () {
           next(null, chunk)
         })
       }
-      sinon.stub(BaseDockerClient.prototype, 'logContainerAsync').resolves(logsStream('some weave logs'))
+      sinon.stub(BaseDockerClient.prototype, 'logsContainerAsync').resolves(logsStream('some weave logs'))
       done()
     })
     afterEach(function (done) {
-      BaseDockerClient.prototype.logContainerAsync.restore()
+      BaseDockerClient.prototype.logsContainerAsync.restore()
       done()
     })
     it('should call getLogs with correct options', function (done) {
       Docker.getLogs('container-id', function (err) {
         expect(err).to.not.exist()
-        sinon.assert.calledOnce(BaseDockerClient.prototype.logContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.logContainerAsync,
+        sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
+        sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
           'container-id', {
             stdout: true,
             stderr: true
@@ -320,11 +320,11 @@ describe('lib/models/docker unit test', function () {
 
     it('should fail if logs call failed', function (done) {
       var dockerError = new Error('Docker error')
-      BaseDockerClient.prototype.logContainerAsync.rejects(dockerError)
+      BaseDockerClient.prototype.logsContainerAsync.rejects(dockerError)
       Docker.getLogs('container-id', function (err) {
         expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(BaseDockerClient.prototype.logContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.logContainerAsync,
+        sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
+        sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
           'container-id',{
             stdout: true,
             stderr: true
@@ -340,11 +340,11 @@ describe('lib/models/docker unit test', function () {
           next(dockerError)
         })
       }
-      BaseDockerClient.prototype.logContainerAsync.resolves(logsStream('some weave logs'))
+      BaseDockerClient.prototype.logsContainerAsync.resolves(logsStream('some weave logs'))
       Docker.getLogs('container-id', function (err) {
         expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(BaseDockerClient.prototype.logContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.logContainerAsync,
+        sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
+        sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
           'container-id',  {
             stdout: true,
             stderr: true
