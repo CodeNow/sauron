@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node index.js",
-    "test": "NODE_ENV=test lab -v -c -t 100 test/unit"
+    "test": "NODE_ENV=test lab -v -c -t 100"
   },
   "repository": {
     "type": "git",

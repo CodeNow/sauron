@@ -6,6 +6,8 @@ var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
 var sinon = require('sinon')
+var Promise = require('bluebird')
+require('sinon-as-promised')(Promise)
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 var Docker = require('../../../lib/models/docker')
@@ -39,7 +41,7 @@ describe('weave.peer.forget functional test', function () {
     var testDockIp = '10.0.0.2'
     var testRmDock = '10.0.0.3'
     beforeEach(function (done) {
-      Docker.doesDockExist.yieldsAsync(null, true)
+      Docker.doesDockExist.resolves(true)
       done()
     })
 
@@ -54,7 +56,7 @@ describe('weave.peer.forget functional test', function () {
         if (err) { return done(err) }
 
         sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, testDockerHost, sinon.match.func)
+        sinon.assert.calledWith(Docker.doesDockExist, testDockerHost)
 
         var weaveArgs = fs.readFileSync('./weaveMockArgs');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');

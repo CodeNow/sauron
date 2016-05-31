@@ -51,7 +51,7 @@ describe('lib/models/docker unit test', function () {
     it('should cb true if dock in list', function (done) {
       Swarm.prototype.swarmHostExistsAsync.resolves(true);
 
-      Docker.doesDockExist('10.0.0.1:4242'.asCallbackfunction (err, exists) {
+      Docker.doesDockExist('10.0.0.1:4242').asCallback(function (err, exists) {
         expect(err).to.not.exist()
         expect(exists).to.be.true()
         sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
@@ -63,7 +63,7 @@ describe('lib/models/docker unit test', function () {
     it('should cb with null if dock not in list', function (done) {
       Swarm.prototype.swarmHostExistsAsync.resolves(false);
 
-      Docker.doesDockExist('10.0.0.2:4242'.asCallback(function (err, exists) {
+      Docker.doesDockExist('10.0.0.2:4242').asCallback(function (err, exists) {
         if (err) { return done(err); }
         expect(exists).to.be.false()
         sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)

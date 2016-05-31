@@ -7,6 +7,8 @@ var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
 var sinon = require('sinon')
+var Promise = require('bluebird')
+require('sinon-as-promised')(Promise)
 const Swarmerode = require('swarmerode')._Swarmerode
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
@@ -23,7 +25,7 @@ var it = lab.it
 describe('weave-start functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
-    sinon.stub(Swarm.prototype, 'swarmInfo')
+    sinon.stub(Swarm.prototype, 'swarmInfoAsync')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done();
@@ -32,7 +34,7 @@ describe('weave-start functional test', function () {
   })
 
   afterEach(function (done) {
-    Swarm.prototype.swarmInfo.restore()
+    Swarm.prototype.swarmInfoAsync.restore()
     delete process.env.WEAVE_PATH
     done()
   })
@@ -53,7 +55,7 @@ describe('weave-start functional test', function () {
         org: 'fake'
       }])
       swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
-      Swarm.prototype.swarmInfo.yieldsAsync(null, swarmInfoData)
+      Swarm.prototype.swarmInfoAsync.resolves(swarmInfoData)
       done()
     })
 
@@ -68,8 +70,7 @@ describe('weave-start functional test', function () {
       weaveStart(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(Swarm.prototype.swarmInfo)
-        sinon.assert.calledWith(Swarm.prototype.swarmInfo, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
 
         var weaveArgs = fs.readFileSync('./weaveMockArgs');
         var weaveEnvs = fs.readFileSync('./weaveEnvs');

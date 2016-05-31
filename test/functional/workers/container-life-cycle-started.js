@@ -6,7 +6,9 @@ var fs = require('fs')
 var Lab = require('lab')
 var path = require('path')
 var sinon = require('sinon')
-var TaskFatalError = require('ponos').TaskFatalError;
+var Promise = require('bluebird')
+require('sinon-as-promised')(Promise)
+var TaskFatalError = require('ponos').TaskFatalError
 
 var containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js')
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
@@ -75,7 +77,7 @@ describe('container-life-cycle-started functional test', function () {
   describe('non-blacklisted container start', function () {
     describe('non-existing dock', function () {
       beforeEach(function (done) {
-        Docker.doesDockExist.yieldsAsync(null, false)
+        Docker.doesDockExist.resolves(false)
         done()
       })
 
@@ -95,7 +97,7 @@ describe('container-life-cycle-started functional test', function () {
         containerLifeCycleStarted(testJob).asCallback(function (err) {
 
           sinon.assert.calledOnce(Docker.doesDockExist)
-          sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.2:4242', sinon.match.func)
+          sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.2:4242')
           sinon.assert.notCalled(RabbitMQ._publisher.publish)
 
           try {
@@ -111,7 +113,7 @@ describe('container-life-cycle-started functional test', function () {
     describe('existing dock', function () {
       var testDockIp = '10.1.1.1'
       beforeEach(function (done) {
-        Docker.doesDockExist.yieldsAsync(null, true)
+        Docker.doesDockExist.resolves(true)
         done()
       })
 
