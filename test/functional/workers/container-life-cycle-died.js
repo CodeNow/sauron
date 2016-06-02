@@ -1,7 +1,6 @@
 'use strict'
 require('loadenv')()
 
-var Code = require('code')
 var Lab = require('lab')
 var sinon = require('sinon')
 
@@ -9,10 +8,8 @@ var containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
 var lab = exports.lab = Lab.script()
-var afterEach = lab.afterEach
 var beforeEach = lab.beforeEach
 var describe = lab.describe
-var expect = Code.expect
 var it = lab.it
 
 describe('container-life-cycle-died functional test', function () {

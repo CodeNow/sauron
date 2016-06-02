@@ -1,86 +1,86 @@
-'use strict';
-require('loadenv')();
+'use strict'
+require('loadenv')()
 
-var Lab = require('lab');
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var afterEach = lab.afterEach;
-var beforeEach = lab.beforeEach;
-var Code = require('code');
-var expect = Code.expect;
+var Lab = require('lab')
+var lab = exports.lab = Lab.script()
+var describe = lab.describe
+var it = lab.it
+var afterEach = lab.afterEach
+var beforeEach = lab.beforeEach
+var Code = require('code')
+var expect = Code.expect
 
 var sinon = require('sinon')
 var Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
-var ErrorCat = require('error-cat');
-var TaskError = require('ponos').TaskError;
-var TaskFatalError = require('ponos').TaskFatalError;
+var ErrorCat = require('error-cat')
+var TaskError = require('ponos').TaskError
+var TaskFatalError = require('ponos').TaskFatalError
 
-var Docker = require('../../../lib/models/docker.js');
-var Events = require('../../../lib/models/events.js');
-var RabbitMQ = require('../../../lib/models/rabbitmq.js');
-var WeaveWrapper = require('../../../lib/models/weave-wrapper.js');
+var Docker = require('../../../lib/models/docker.js')
+var Events = require('../../../lib/models/events.js')
+var RabbitMQ = require('../../../lib/models/rabbitmq.js')
+var WeaveWrapper = require('../../../lib/models/weave-wrapper.js')
 
 describe('events.js unit test', function () {
   beforeEach(function (done) {
-    process.env.WEAVE_IMAGE_NAME = 'weaveworks/weave';
-    done();
-  });
+    process.env.WEAVE_IMAGE_NAME = 'weaveworks/weave'
+    done()
+  })
 
   afterEach(function (done) {
-    delete process.env.WEAVE_IMAGE_NAME;
-    done();
-  });
+    delete process.env.WEAVE_IMAGE_NAME
+    done()
+  })
 
   describe('handleStart', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'findDocksByOrgId');
-      sinon.stub(WeaveWrapper, 'launch');
-      done();
-    });
+      sinon.stub(Docker, 'findDocksByOrgId')
+      sinon.stub(WeaveWrapper, 'launch')
+      done()
+    })
 
     afterEach(function (done) {
-      Docker.findDocksByOrgId.restore();
-      WeaveWrapper.launch.restore();
-      done();
-    });
+      Docker.findDocksByOrgId.restore()
+      WeaveWrapper.launch.restore()
+      done()
+    })
 
     it('should cb err if findDocksByOrgId err', function (done) {
-      Docker.findDocksByOrgId.yieldsAsync('err');
+      Docker.findDocksByOrgId.yieldsAsync('err')
 
       Events.handleStart({}, function (err) {
-        expect(err).to.exist();
-        done();
-      });
-    });
+        expect(err).to.exist()
+        done()
+      })
+    })
 
     it('should launch with no peers', function (done) {
       Docker.findDocksByOrgId.yieldsAsync(null, [{
         Host: '10.0.0.1:4242'
-      }]);
-      WeaveWrapper.launch.yieldsAsync();
+      }])
+      WeaveWrapper.launch.yieldsAsync()
 
       Events.handleStart({
         dockerUri: 'http://10.0.0.1:4242'
       }, function (err) {
-        expect(err).to.not.exist();
+        expect(err).to.not.exist()
         expect(WeaveWrapper.launch.withArgs([], '10.0.0.1:4242').called)
-          .to.be.true();
-        done();
-      });
-    });
+          .to.be.true()
+        done()
+      })
+    })
 
     it('should cb TaskFatalError if target no in peers', function (done) {
-      Docker.findDocksByOrgId.yieldsAsync(null, []);
+      Docker.findDocksByOrgId.yieldsAsync(null, [])
 
       Events.handleStart({
         dockerUri: 'http://10.0.0.1:4242'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskFatalError);
-        done();
-      });
-    });
+        expect(err).to.be.an.instanceof(TaskFatalError)
+        done()
+      })
+    })
 
     it('should launch with peers but not self', function (done) {
       Docker.findDocksByOrgId.yieldsAsync(null, [{
@@ -89,27 +89,26 @@ describe('events.js unit test', function () {
         Host: '10.0.0.2:4242'
       }, {
         Host: '10.0.0.3:4242'
-      }]);
-      WeaveWrapper.launch.yieldsAsync();
+      }])
+      WeaveWrapper.launch.yieldsAsync()
 
       Events.handleStart({
         dockerUri: 'http://10.0.0.1:4242'
       }, function (err) {
-        expect(err).to.not.exist();
+        expect(err).to.not.exist()
         expect(WeaveWrapper.launch.withArgs(['10.0.0.2', '10.0.0.3'], '10.0.0.1:4242').called)
-          .to.be.true();
-        done();
-      });
-    });
-
-  }); // end handleStart
+          .to.be.true()
+        done()
+      })
+    })
+  })
 
   describe('_removeWeavePeer', function () {
     beforeEach(function (done) {
       sinon.stub(Docker, 'findLightestOrgDock').yieldsAsync(null, {
         Host: '10.0.0.1:4242'
       })
-      sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns();
+      sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns()
       done()
     })
     afterEach(function (done) {
@@ -171,8 +170,8 @@ describe('events.js unit test', function () {
         Host: '10.0.0.2:4242'
       }, {
         Host: '10.0.0.3:4242'
-      }]);
-      sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns();
+      }])
+      sinon.stub(RabbitMQ, 'publishWeavePeerForget').returns()
       done()
     })
     afterEach(function (done) {
@@ -183,19 +182,19 @@ describe('events.js unit test', function () {
     it('should publish new job to forget weave peer', function (done) {
       Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.not.exist()
-        expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3);
+        expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3)
         expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.deep.equal({
           dockerHost: '10.0.0.1:4242',
           hostname: '10.0.0.4'
-        });
+        })
         expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.deep.equal({
           dockerHost: '10.0.0.2:4242',
           hostname: '10.0.0.4'
-        });
+        })
         expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.deep.equal({
           dockerHost: '10.0.0.3:4242',
           hostname: '10.0.0.4'
-        });
+        })
         done()
       })
     })
@@ -312,67 +311,67 @@ describe('events.js unit test', function () {
 
   describe('handleDied', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, '_isWeaveContainer');
-      sinon.stub(RabbitMQ, 'publishWeaveStart');
-      done();
-    });
+      sinon.stub(Events, '_isWeaveContainer')
+      sinon.stub(RabbitMQ, 'publishWeaveStart')
+      done()
+    })
 
     afterEach(function (done) {
-      Events._isWeaveContainer.restore();
-      RabbitMQ.publishWeaveStart.restore();
-      done();
-    });
+      Events._isWeaveContainer.restore()
+      RabbitMQ.publishWeaveStart.restore()
+      done()
+    })
 
     it('should publish start if weave container', function (done) {
-      Events._isWeaveContainer.returns(true);
-      RabbitMQ.publishWeaveStart.returns();
+      Events._isWeaveContainer.returns(true)
+      RabbitMQ.publishWeaveStart.returns()
 
       Events.handleDied({
         host: 'ras',
         tags: 'tag,me'
-      });
+      })
 
       expect(RabbitMQ.publishWeaveStart.calledOnce)
-        .to.be.true();
-      done();
-    });
+        .to.be.true()
+      done()
+    })
 
     it('should not publish start', function (done) {
-      Events._isWeaveContainer.returns(false);
+      Events._isWeaveContainer.returns(false)
 
-      Events.handleDied();
+      Events.handleDied()
 
       expect(RabbitMQ.publishWeaveStart.calledOnce)
-        .to.be.false();
-      done();
-    });
-  }); // end handleDied
+        .to.be.false()
+      done()
+    })
+  }) // end handleDied
 
   describe('handleStarted', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, 'publishContainerNetworkAttached');
-      sinon.stub(RabbitMQ, 'publishWeaveHealthCheck');
-      sinon.stub(Events, '_isNetworkNeeded');
-      sinon.stub(Events, '_isWeaveContainer');
-      sinon.stub(WeaveWrapper, 'attach');
-      sinon.stub(Docker, 'doesDockExist');
-      done();
-    });
+      sinon.stub(RabbitMQ, 'publishContainerNetworkAttached')
+      sinon.stub(RabbitMQ, 'publishWeaveHealthCheck')
+      sinon.stub(Events, '_isNetworkNeeded')
+      sinon.stub(Events, '_isWeaveContainer')
+      sinon.stub(WeaveWrapper, 'attach')
+      sinon.stub(Docker, 'doesDockExist')
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ.publishContainerNetworkAttached.restore();
-      RabbitMQ.publishWeaveHealthCheck.restore();
-      Events._isNetworkNeeded.restore();
-      Events._isWeaveContainer.restore();
-      WeaveWrapper.attach.restore();
-      Docker.doesDockExist.restore();
-      done();
-    });
+      RabbitMQ.publishContainerNetworkAttached.restore()
+      RabbitMQ.publishWeaveHealthCheck.restore()
+      Events._isNetworkNeeded.restore()
+      Events._isWeaveContainer.restore()
+      WeaveWrapper.attach.restore()
+      Docker.doesDockExist.restore()
+      done()
+    })
 
     it('should publish weave health check if weave started', function (done) {
-      Events._isWeaveContainer.returns(true);
+      Events._isWeaveContainer.returns(true)
 
-      Events.handleStarted({ id: 'container-id'}, function (err) {
+      Events.handleStarted({ id: 'container-id' }, function (err) {
         expect(err).to.not.exist()
         sinon.assert.callCount(RabbitMQ.publishWeaveHealthCheck, 6)
         sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
@@ -399,27 +398,27 @@ describe('events.js unit test', function () {
           containerId: 'container-id',
           delay: 1800000
         })
-        done();
-      });
-    });
+        done()
+      })
+    })
 
     it('should not attach if network not needed', function (done) {
-      Events._isNetworkNeeded.returns(false);
+      Events._isNetworkNeeded.returns(false)
 
       Events.handleStarted({}, function (err) {
-        expect(err).to.not.exist();
-        expect(WeaveWrapper.attach.called).to.be.false();
-        done();
-      });
-    });
+        expect(err).to.not.exist()
+        expect(WeaveWrapper.attach.called).to.be.false()
+        done()
+      })
+    })
 
     it('should cb TaskError if doesDockExist failed', function (done) {
-      var testErr = ErrorCat.create(500, 'Dunlendings');
-      var testHost = '172.123.12.3';
-      var testId = '23984765893264';
+      var testErr = ErrorCat.create(500, 'Dunlendings')
+      var testHost = '172.123.12.3'
+      var testId = '23984765893264'
 
-      Events._isNetworkNeeded.returns(true);
-      Docker.doesDockExist.rejects(testErr);
+      Events._isNetworkNeeded.returns(true)
+      Docker.doesDockExist.rejects(testErr)
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -433,19 +432,19 @@ describe('events.js unit test', function () {
         },
         tags: '1q2qswedasdasdad,123'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskError);
-        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached);
-        sinon.assert.notCalled(WeaveWrapper.attach);
-        done();
-      });
-    });
+        expect(err).to.be.an.instanceof(TaskError)
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
+        sinon.assert.notCalled(WeaveWrapper.attach)
+        done()
+      })
+    })
 
     it('should cb TaskFatalError if dock does not exist', function (done) {
-      var testHost = '172.123.12.3';
-      var testId = '23984765893264';
+      var testHost = '172.123.12.3'
+      var testId = '23984765893264'
 
-      Events._isNetworkNeeded.returns(true);
-      Docker.doesDockExist.resolves(false);
+      Events._isNetworkNeeded.returns(true)
+      Docker.doesDockExist.resolves(false)
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -459,19 +458,19 @@ describe('events.js unit test', function () {
         },
         tags: '1q2qswedasdasdad,123'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskError);
-        done();
-      });
-    });
+        expect(err).to.be.an.instanceof(TaskError)
+        done()
+      })
+    })
 
     it('should cb TaskError if attach 500', function (done) {
-      var testErr = ErrorCat.create(500, 'Dunlendings');
-      var testHost = '172.123.12.3';
-      var testId = '23984765893264';
+      var testErr = ErrorCat.create(500, 'Dunlendings')
+      var testHost = '172.123.12.3'
+      var testId = '23984765893264'
 
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.resolves(true);
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(testErr)
+      Docker.doesDockExist.resolves(true)
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -485,20 +484,20 @@ describe('events.js unit test', function () {
         },
         tags: '1q2qswedasdasdad,123'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskError);
-        done();
-      });
-    });
+        expect(err).to.be.an.instanceof(TaskError)
+        done()
+      })
+    })
 
     it('should TaskFatalError if error 409', function (done) {
-      var testErr = ErrorCat.create(409, 'Dunlendings');
-      var testHost = '172.123.12.3';
-      var testId = '23984765893264';
-      var orgId = '868976908769078';
+      var testErr = ErrorCat.create(409, 'Dunlendings')
+      var testHost = '172.123.12.3'
+      var testId = '23984765893264'
+      var orgId = '868976908769078'
 
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.resolves(true);
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(testErr)
+      Docker.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testHost,
@@ -511,25 +510,25 @@ describe('events.js unit test', function () {
           }
         },
         tags: orgId + ',1q2qswedasdasdad,123'
-      };
+      }
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.be.an.instanceof(TaskFatalError);
+        expect(err).to.be.an.instanceof(TaskFatalError)
         expect(err.report).to.be.false()
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-        done();
-      });
-    });
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
+        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        done()
+      })
+    })
 
     it('should TaskFatalError if error 400', function (done) {
-      var testErr = ErrorCat.create(400, 'Dunlendings');
-      var testHost = '172.123.12.3';
-      var testId = '23984765893264';
-      var orgId = '868976908769078';
+      var testErr = ErrorCat.create(400, 'Dunlendings')
+      var testHost = '172.123.12.3'
+      var testId = '23984765893264'
+      var orgId = '868976908769078'
 
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.resolves(true);
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(testErr)
+      Docker.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testHost,
@@ -542,24 +541,24 @@ describe('events.js unit test', function () {
           }
         },
         tags: orgId + ',1q2qswedasdasdad,123'
-      };
+      }
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.be.an.instanceof(TaskFatalError);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-        done();
-      });
-    });
+        expect(err).to.be.an.instanceof(TaskFatalError)
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
+        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        done()
+      })
+    })
 
     it('should publish on attach non 500 and non 409 error', function (done) {
-      var testErr = ErrorCat.create(403, 'Dunlendings');
-      var testHost = '172.123.12.3';
-      var testId = '23984765893264';
-      var orgId = '868976908769078';
+      var testErr = ErrorCat.create(403, 'Dunlendings')
+      var testHost = '172.123.12.3'
+      var testId = '23984765893264'
+      var orgId = '868976908769078'
 
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(testErr);
-      Docker.doesDockExist.resolves(true);
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(testErr)
+      Docker.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testHost,
@@ -572,54 +571,54 @@ describe('events.js unit test', function () {
           }
         },
         tags: orgId + ',1q2qswedasdasdad,123'
-      };
+      }
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.not.exist();
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func);
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false();
-        done();
-      });
-    });
+        expect(err).to.not.exist()
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
+        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        done()
+      })
+    })
 
     it('should not publish if inspectData is undefined', function (done) {
-      var testIp = '10.0.0.0';
-      var testHostname = '172.123.12.3';
+      var testIp = '10.0.0.0'
+      var testHostname = '172.123.12.3'
       var testHost = testHostname + ':4242'
-      var testUri = 'http://' + testHost;
-      var testId = '23984765893264';
-      var orgId = '868976908769078';
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(null, testIp);
-      RabbitMQ.publishContainerNetworkAttached.returns();
-      Docker.doesDockExist.resolves(true);
+      var testUri = 'http://' + testHost
+      var testId = '23984765893264'
+      var orgId = '868976908769078'
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(null, testIp)
+      RabbitMQ.publishContainerNetworkAttached.returns()
+      Docker.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testUri,
         tags: orgId + ',1q2qswedasdasdad,123'
-      };
+      }
 
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.not.exist();
-        jobData.containerIp = testIp;
+        expect(err).to.not.exist()
+        jobData.containerIp = testIp
         sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
-        sinon.assert.calledOnce(WeaveWrapper.attach);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
-        sinon.assert.calledWith(Docker.doesDockExist, testHost);
-        done();
-      });
-    });
+        sinon.assert.calledOnce(WeaveWrapper.attach)
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
+        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        done()
+      })
+    })
 
     it('should publish correct data', function (done) {
-      var testIp = '10.0.0.0';
-      var testHostname = '172.123.12.3';
+      var testIp = '10.0.0.0'
+      var testHostname = '172.123.12.3'
       var testHost = testHostname + ':4242'
-      var testUri = 'http://' + testHost;
-      var testId = '23984765893264';
-      var orgId = '868976908769078';
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(null, testIp);
-      RabbitMQ.publishContainerNetworkAttached.returns();
-      Docker.doesDockExist.resolves(true);
+      var testUri = 'http://' + testHost
+      var testId = '23984765893264'
+      var orgId = '868976908769078'
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(null, testIp)
+      RabbitMQ.publishContainerNetworkAttached.returns()
+      Docker.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testUri,
@@ -632,32 +631,32 @@ describe('events.js unit test', function () {
           }
         },
         tags: orgId + ',1q2qswedasdasdad,123'
-      };
+      }
 
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.not.exist();
-        jobData.containerIp = testIp;
+        expect(err).to.not.exist()
+        jobData.containerIp = testIp
         expect(RabbitMQ.publishContainerNetworkAttached
-          .withArgs(jobData).called).to.be.true();
-        sinon.assert.calledOnce(WeaveWrapper.attach);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
-        sinon.assert.calledWith(Docker.doesDockExist, testHost);
-        done();
-      });
-    });
+          .withArgs(jobData).called).to.be.true()
+        sinon.assert.calledOnce(WeaveWrapper.attach)
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
+        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        done()
+      })
+    })
 
     it('should cb error if publish threw', function (done) {
-      var testIp = '10.0.0.0';
-      var testHostname = '172.123.12.3';
+      var testIp = '10.0.0.0'
+      var testHostname = '172.123.12.3'
       var testHost = testHostname + ':4242'
-      var testUri = 'http://' + testHost;
-      var testId = '23984765893264';
-      var orgId = '868976908769078';
-      var testErr = new Error('shadowflax');
-      Events._isNetworkNeeded.returns(true);
-      WeaveWrapper.attach.yields(null, testIp);
-      RabbitMQ.publishContainerNetworkAttached.throws(testErr);
-      Docker.doesDockExist.resolves(true);
+      var testUri = 'http://' + testHost
+      var testId = '23984765893264'
+      var orgId = '868976908769078'
+      var testErr = new Error('shadowflax')
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(null, testIp)
+      RabbitMQ.publishContainerNetworkAttached.throws(testErr)
+      Docker.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testUri,
@@ -670,121 +669,121 @@ describe('events.js unit test', function () {
           }
         },
         tags: orgId + ',1q2qswedasdasdad,123'
-      };
+      }
 
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.deep.equals(testErr);
-        jobData.containerIp = testIp;
+        expect(err).to.deep.equals(testErr)
+        jobData.containerIp = testIp
         expect(RabbitMQ.publishContainerNetworkAttached
-          .withArgs(jobData).called).to.be.true();
-        sinon.assert.calledOnce(WeaveWrapper.attach);
-        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func);
-        sinon.assert.calledWith(Docker.doesDockExist, testHost);
-        done();
-      });
-    });
-  }); // end handleStarted
+          .withArgs(jobData).called).to.be.true()
+        sinon.assert.calledOnce(WeaveWrapper.attach)
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
+        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        done()
+      })
+    })
+  }) // end handleStarted
 
   describe('_isWeaveContainer', function () {
     it('should return true if correct container', function (done) {
       var testData = {
         from: process.env.WEAVE_IMAGE_NAME
-      };
+      }
 
       expect(Events._isWeaveContainer(testData))
-        .to.be.true();
-      done();
-    });
+        .to.be.true()
+      done()
+    })
 
     it('should return false if wrong container', function (done) {
       var testData = {
-        from: 'wrong',
-      };
+        from: 'wrong'
+      }
       expect(Events._isWeaveContainer(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return false if from is null', function (done) {
       var testData = {
         from: null
-      };
+      }
       expect(Events._isWeaveContainer(testData))
-        .to.be.false();
-      done();
-    });
-  }); // end _isWeaveContainer
+        .to.be.false()
+      done()
+    })
+  }) // end _isWeaveContainer
 
   describe('_isNetworkNeeded', function () {
     beforeEach(function (done) {
-      process.env.NETWORK_BLACKLIST = 'weave,swarm';
-      done();
-    });
+      process.env.NETWORK_BLACKLIST = 'weave,swarm'
+      done()
+    })
 
     afterEach(function (done) {
-      delete process.env.NETWORK_BLACKLIST;
-      done();
-    });
+      delete process.env.NETWORK_BLACKLIST
+      done()
+    })
 
     it('should return false if on blacklist', function (done) {
       ['weave', 'zetto/weave', 'weaveworks/exec', 'aswarm', 'swarm:1.2.2']
       .forEach(function (item) {
         var testData = {
-          from: item,
-        };
+          from: item
+        }
         expect(Events._isNetworkNeeded(testData))
-          .to.be.false();
-      });
-      done();
-    });
+          .to.be.false()
+      })
+      done()
+    })
 
     it('should return true', function (done) {
       var testData = {
-        from: 'good',
-      };
+        from: 'good'
+      }
       expect(Events._isNetworkNeeded(testData))
-        .to.be.true();
-      done();
-    });
-  }); // end _isNetworkNeeded
+        .to.be.true()
+      done()
+    })
+  }) // end _isNetworkNeeded
 
   describe('validateContainerJob', function () {
     it('should return false if no id', function (done) {
-      var testData = {};
+      var testData = {}
       expect(Events.validateContainerJob(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return false if missing host', function (done) {
       var testData = {
-        id: '12352524',
-      };
+        id: '12352524'
+      }
       expect(Events.validateContainerJob(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return false if no from', function (done) {
       var testData = {
         id: '12352524',
-        host: 'http://localhost:4242',
-      };
+        host: 'http://localhost:4242'
+      }
       expect(Events.validateContainerJob(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return false if no tag', function (done) {
       var testData = {
         id: '12352524',
         host: 'http://localhost:4242',
-        from: 'something',
-      };
+        from: 'something'
+      }
       expect(Events.validateContainerJob(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return true', function (done) {
       var testData = {
@@ -792,47 +791,47 @@ describe('events.js unit test', function () {
         host: 'http://localhost:4242',
         from: 'something',
         tags: 'me,you,myDogBlue'
-      };
+      }
       expect(Events.validateContainerJob(testData))
-        .to.be.true();
-      done();
-    });
-  }); // end validateContainerJob
+        .to.be.true()
+      done()
+    })
+  }) // end validateContainerJob
 
   describe('validateDockerJob', function () {
     it('should return false if no tag or host', function (done) {
-      var testData = {};
+      var testData = {}
       expect(Events.validateDockerJob(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return false if missing tag', function (done) {
       var testData = {
-        host: 'http://localhost:4242',
-      };
+        host: 'http://localhost:4242'
+      }
       expect(Events.validateDockerJob(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return false if missing host', function (done) {
       var testData = {
         tags: 'me,you,myDogBlue'
-      };
+      }
       expect(Events.validateDockerJob(testData))
-        .to.be.false();
-      done();
-    });
+        .to.be.false()
+      done()
+    })
 
     it('should return true', function (done) {
       var testData = {
         host: 'http://localhost:4242',
         tags: 'me,you,myDogBlue'
-      };
+      }
       expect(Events.validateDockerJob(testData))
-        .to.be.true();
-      done();
-    });
-  }); // end validateDockerJob
-}); // end events.js unit test
+        .to.be.true()
+      done()
+    })
+  }) // end validateDockerJob
+}) // end events.js unit test

@@ -5,7 +5,6 @@ var Code = require('code')
 var Lab = require('lab')
 var nock = require('nock')
 var pluck = require('101/pluck')
-var sinon = require('sinon')
 
 var Docker = require('../../../lib/models/docker.js')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic')
@@ -13,17 +12,16 @@ var swarmInfo = require('../../fixtures/swarm-info-dynamic')
 var lab = exports.lab = Lab.script()
 var describe = lab.describe
 var it = lab.it
-var afterEach = lab.afterEach
 var beforeEach = lab.beforeEach
 var expect = Code.expect
 
 describe('docker integration test', function () {
-
   describe('info', function () {
     var dockerIp1 = '10.1.1.1'
     var dockerIp2 = '10.1.1.2'
     beforeEach(function (done) {
-      nock('https://' + process.env.SWARM_HOSTNAME + ':' + process.env.SWARM_PORT, {"encodedQueryParams":true})
+      nock('https://' + process.env.SWARM_HOSTNAME + ':' + process.env.SWARM_PORT,
+      { 'encodedQueryParams': true })
         .get('/info')
         .reply(200, swarmInfo([{
           ip: dockerIp1

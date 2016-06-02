@@ -16,7 +16,6 @@ const sinon = require('sinon')
 require('sinon-as-promised')(Promise)
 const TaskFatalError = require('ponos').TaskFatalError
 
-const Docker = require('../../../lib/models/docker')
 const weaveKill = require('../../../lib/workers/weave.kill')
 
 describe('weave.kill.js unit test', function () {

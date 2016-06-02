@@ -11,8 +11,7 @@ var Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 const Swarmerode = require('swarmerode')._Swarmerode
 
-var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var swarmInfo = require('../../fixtures/swarm-info-dynamic');
+var swarmInfo = require('../../fixtures/swarm-info-dynamic')
 var weaveStart = require('../../../lib/workers/weave-start.js')
 
 var lab = exports.lab = Lab.script()
@@ -24,13 +23,13 @@ var it = lab.it
 
 describe('weave-start functional test', function () {
   beforeEach(function (done) {
-    process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
+    process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
     sinon.stub(Swarm.prototype, 'swarmInfoAsync')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
-        done();
-      });
-    });
+        done()
+      })
+    })
   })
 
   afterEach(function (done) {
@@ -72,13 +71,13 @@ describe('weave-start functional test', function () {
 
         sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
 
-        var weaveArgs = fs.readFileSync('./weaveMockArgs');
-        var weaveEnvs = fs.readFileSync('./weaveEnvs');
+        var weaveArgs = fs.readFileSync('./weaveMockArgs')
+        var weaveEnvs = fs.readFileSync('./weaveEnvs')
 
-        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 ' + testDockIp2 + '\n');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242');
+        expect(weaveArgs.toString()).to.equal('launch-router --no-dns --ipalloc-range 10.21.0.0/16 --ipalloc-default-subnet 10.21.0.0/16 ' + testDockIp2 + '\n')
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1')
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH)
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242')
         done()
       })
     })

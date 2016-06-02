@@ -4,7 +4,6 @@ require('loadenv')()
 var Code = require('code')
 var Hermes = require('runnable-hermes')
 var Lab = require('lab')
-var sinon = require('sinon')
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 

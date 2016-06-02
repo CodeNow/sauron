@@ -9,7 +9,6 @@ var sinon = require('sinon')
 var Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 
-var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 var Docker = require('../../../lib/models/docker')
 var weavePeerRemove = require('../../../lib/workers/weave.peer.remove.js')
 
@@ -22,13 +21,13 @@ var it = lab.it
 
 describe('weave.peer.remove functional test', function () {
   beforeEach(function (done) {
-    process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
+    process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
     sinon.stub(Docker, 'doesDockExist')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
-        done();
-      });
-    });
+        done()
+      })
+    })
   })
 
   afterEach(function (done) {
@@ -59,13 +58,13 @@ describe('weave.peer.remove functional test', function () {
         sinon.assert.calledOnce(Docker.doesDockExist)
         sinon.assert.calledWith(Docker.doesDockExist, testDockerHost)
 
-        var weaveArgs = fs.readFileSync('./weaveMockArgs');
-        var weaveEnvs = fs.readFileSync('./weaveEnvs');
+        var weaveArgs = fs.readFileSync('./weaveMockArgs')
+        var weaveEnvs = fs.readFileSync('./weaveEnvs')
         var ipNickname = 'ip-' + testRmDock.replace(/\./g, '-') + '.' + testJob.orgId
-        expect(weaveArgs.toString()).to.equal('rmpeer ' + ipNickname + '\n');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
-        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242');
+        expect(weaveArgs.toString()).to.equal('rmpeer ' + ipNickname + '\n')
+        expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1')
+        expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH)
+        expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242')
         done()
       })
     }) // end should call rmpeer
