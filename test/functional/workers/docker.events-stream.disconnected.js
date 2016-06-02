@@ -1,7 +1,6 @@
 'use strict'
 require('loadenv')()
 
-var Code = require('code')
 var Lab = require('lab')
 var sinon = require('sinon')
 var Promise = require('bluebird')
@@ -14,7 +13,6 @@ var lab = exports.lab = Lab.script()
 var afterEach = lab.afterEach
 var beforeEach = lab.beforeEach
 var describe = lab.describe
-var expect = Code.expect
 var it = lab.it
 
 describe('docker.events-stream.disconnected functional test', function () {
@@ -57,7 +55,7 @@ describe('docker.events-stream.disconnected functional test', function () {
       var testUri = 'http://' + dockerHost
       var testJob = {
         host: testUri,
-        org: testGithibId,
+        org: testGithibId
       }
       dockerEventStreamDisconnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }
@@ -83,13 +81,13 @@ describe('docker.events-stream.disconnected functional test', function () {
       })
     })
 
-   it('should publish weave peer forget on all orgs docks', function (done) {
+    it('should publish weave peer forget on all orgs docks', function (done) {
       var testHost = '10.0.0.2'
       var dockerHost = testHost + ':4242'
       var testUri = 'http://' + dockerHost
       var testJob = {
         host: testUri,
-        org: testGithibId,
+        org: testGithibId
       }
       dockerEventStreamDisconnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }

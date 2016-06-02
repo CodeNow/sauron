@@ -1,19 +1,15 @@
 'use strict'
 require('loadenv')()
 
-var Code = require('code')
 var Lab = require('lab')
 var sinon = require('sinon')
 
 var dockerEventsStreamConnected = require('../../../lib/workers/docker.events-stream.connected.js')
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var swarmInfo = require('../../fixtures/swarm-info-dynamic');
 
 var lab = exports.lab = Lab.script()
-var afterEach = lab.afterEach
 var beforeEach = lab.beforeEach
 var describe = lab.describe
-var expect = Code.expect
 var it = lab.it
 
 describe('docker.events-stream.connected functional test', function () {

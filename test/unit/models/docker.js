@@ -1,17 +1,17 @@
 
-'use strict';
+'use strict'
 
-require('loadenv')();
+require('loadenv')()
 
-var Lab = require('lab');
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var afterEach = lab.afterEach;
-var beforeEach = lab.beforeEach;
-var Code = require('code');
+var Lab = require('lab')
+var lab = exports.lab = Lab.script()
+var describe = lab.describe
+var it = lab.it
+var afterEach = lab.afterEach
+var beforeEach = lab.beforeEach
+var Code = require('code')
 var miss = require('mississippi')
-var expect = Code.expect;
+var expect = Code.expect
 
 const Swarmerode = require('swarmerode')._Swarmerode
 const BaseDockerClient = require('@runnable/loki')._BaseClient
@@ -24,54 +24,53 @@ var Docker = require('../../../lib/models/docker')
 var swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
 describe('lib/models/docker unit test', function () {
-
   describe('doesDockExist', function () {
     beforeEach(function (done) {
       sinon.stub(Swarm.prototype, 'swarmHostExistsAsync')
-      done();
-    });
+      done()
+    })
 
     afterEach(function (done) {
       Swarm.prototype.swarmHostExistsAsync.restore()
-      done();
-    });
+      done()
+    })
 
     it('should cb swarm error', function (done) {
-      var testError = new Error('bee');
-      Swarm.prototype.swarmHostExistsAsync.rejects(testError);
+      var testError = new Error('bee')
+      Swarm.prototype.swarmHostExistsAsync.rejects(testError)
 
       Docker.doesDockExist('8.8.8.8:4242').asCallback(function (err) {
-        expect(err).to.equal(testError);
+        expect(err).to.equal(testError)
         sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
         sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '8.8.8.8:4242')
-        done();
-      });
-    });
+        done()
+      })
+    })
 
     it('should cb true if dock in list', function (done) {
-      Swarm.prototype.swarmHostExistsAsync.resolves(true);
+      Swarm.prototype.swarmHostExistsAsync.resolves(true)
 
       Docker.doesDockExist('10.0.0.1:4242').asCallback(function (err, exists) {
         expect(err).to.not.exist()
         expect(exists).to.be.true()
         sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
         sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '10.0.0.1:4242')
-        done();
-      });
-    });
+        done()
+      })
+    })
 
     it('should cb with null if dock not in list', function (done) {
-      Swarm.prototype.swarmHostExistsAsync.resolves(false);
+      Swarm.prototype.swarmHostExistsAsync.resolves(false)
 
       Docker.doesDockExist('10.0.0.2:4242').asCallback(function (err, exists) {
-        if (err) { return done(err); }
+        if (err) { return done(err) }
         expect(exists).to.be.false()
         sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
         sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '10.0.0.2:4242')
-        done();
-      });
-    });
-  }); // end doesDockExist
+        done()
+      })
+    })
+  }) // end doesDockExist
 
   describe('_findDocksByOrgId', function () {
     var nodes
@@ -134,34 +133,34 @@ describe('lib/models/docker unit test', function () {
     beforeEach(function (done) {
       sinon.stub(Docker, 'info')
       sinon.stub(Docker, '_findDocksByOrgId')
-      done();
-    });
+      done()
+    })
 
     afterEach(function (done) {
-      Docker.info.restore();
-      Docker._findDocksByOrgId.restore();
-      done();
-    });
+      Docker.info.restore()
+      Docker._findDocksByOrgId.restore()
+      done()
+    })
 
     it('should cb swarm error', function (done) {
-      var testError = new Error('bee');
-      Docker.info.yieldsAsync(testError);
+      var testError = new Error('bee')
+      Docker.info.yieldsAsync(testError)
 
       Docker.findDocksByOrgId('4643352', function (err) {
-        expect(err).to.equal(testError);
+        expect(err).to.equal(testError)
         sinon.assert.calledOnce(Docker.info)
         sinon.assert.calledWith(Docker.info, sinon.match.func)
-        done();
-      });
-    });
+        done()
+      })
+    })
 
     it('should cb with nodes', function (done) {
-      var testDocks = [1, 2];
-      var testInfo = ['a', 'b'];
-      var testOrgId = '4643352';
+      var testDocks = [1, 2]
+      var testInfo = ['a', 'b']
+      var testOrgId = '4643352'
 
-      Docker.info.yieldsAsync(null, testInfo);
-      Docker._findDocksByOrgId.returns(testDocks);
+      Docker.info.yieldsAsync(null, testInfo)
+      Docker._findDocksByOrgId.returns(testDocks)
 
       Docker.findDocksByOrgId(testOrgId, function (err, docks) {
         if (err) { return done(err) }
@@ -173,90 +172,90 @@ describe('lib/models/docker unit test', function () {
 
         sinon.assert.calledOnce(Docker._findDocksByOrgId)
         sinon.assert.calledWith(Docker._findDocksByOrgId, testInfo, testOrgId)
-        done();
-      });
-    });
-  });
+        done()
+      })
+    })
+  })
 
   describe('findLightestOrgDock', function () {
     beforeEach(function (done) {
       sinon.stub(Docker, 'findDocksByOrgId')
-      done();
-    });
+      done()
+    })
 
     afterEach(function (done) {
-      Docker.findDocksByOrgId.restore();
-      done();
-    });
+      Docker.findDocksByOrgId.restore()
+      done()
+    })
 
     it('should cb swarm error', function (done) {
-      var testError = new Error('bee');
-      var testOrgId = '4643352';
+      var testError = new Error('bee')
+      var testOrgId = '4643352'
 
-      Docker.findDocksByOrgId.yieldsAsync(testError);
+      Docker.findDocksByOrgId.yieldsAsync(testError)
 
       Docker.findLightestOrgDock(testOrgId, function (err) {
-        expect(err).to.equal(testError);
+        expect(err).to.equal(testError)
         sinon.assert.calledOnce(Docker.findDocksByOrgId)
         sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
-        done();
-      });
-    });
+        done()
+      })
+    })
 
     it('should with the lightest node', function (done) {
-      var testOrgId = '4643352';
+      var testOrgId = '4643352'
 
       Docker.findDocksByOrgId.yieldsAsync(null, [{
         Containers: 5
       }, {
         Containers: 10
-      }]);
+      }])
 
       Docker.findLightestOrgDock(testOrgId, function (err, dock) {
         if (err) { return done(err) }
         expect(dock.Containers).to.equal(5)
         sinon.assert.calledOnce(Docker.findDocksByOrgId)
         sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
-        done();
-      });
-    });
+        done()
+      })
+    })
 
     it('should cb with null if no nodes found for an org', function (done) {
-      var testOrgId = '111111';
+      var testOrgId = '111111'
 
-      Docker.findDocksByOrgId.yieldsAsync(null, []);
+      Docker.findDocksByOrgId.yieldsAsync(null, [])
 
       Docker.findLightestOrgDock(testOrgId, function (err, dock) {
         if (err) { return done(err) }
         expect(dock).to.not.exist()
         sinon.assert.calledOnce(Docker.findDocksByOrgId)
         sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
-        done();
-      });
-    });
-  });
+        done()
+      })
+    })
+  })
 
   describe('info', function () {
     beforeEach(function (done) {
       sinon.stub(Swarm.prototype, 'swarmInfoAsync')
-      done();
-    });
+      done()
+    })
 
     afterEach(function (done) {
       Swarm.prototype.swarmInfoAsync.restore()
-      done();
-    });
+      done()
+    })
 
     it('should cb swarm error', function (done) {
-      var testError = new Error('bee');
+      var testError = new Error('bee')
       Swarm.prototype.swarmInfoAsync.rejects(testError)
 
       Docker.info(function (err) {
-        expect(err).to.equal(testError);
+        expect(err).to.equal(testError)
         sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
-        done();
-      });
-    });
+        done()
+      })
+    })
 
     it('should cb with the list of all docks', function (done) {
       const swarmInfoData = swarmInfo([{
@@ -276,15 +275,15 @@ describe('lib/models/docker unit test', function () {
         expect(err).to.not.exist()
         expect(docks.length).to.equal(3)
         sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
-        done();
-      });
-    });
-  });
+        done()
+      })
+    })
+  })
 
   describe('getLogs', function () {
     beforeEach(function (done) {
       var logsStream = function (string) {
-        return miss.from(function(size, next) {
+        return miss.from(function (size, next) {
           // if there's no more content
           // left in the string, close the stream.
           if (string.length <= 0) return next(null, null)
@@ -325,7 +324,7 @@ describe('lib/models/docker unit test', function () {
         expect(err).to.equal(dockerError)
         sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
         sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
-          'container-id',{
+          'container-id', {
             stdout: true,
             stderr: true
           })
@@ -336,7 +335,7 @@ describe('lib/models/docker unit test', function () {
     it('should fail if logs stream failed', function (done) {
       var dockerError = new Error('Docker error')
       var logsStream = function (string) {
-        return miss.from(function(size, next) {
+        return miss.from(function (size, next) {
           next(dockerError)
         })
       }
@@ -345,7 +344,7 @@ describe('lib/models/docker unit test', function () {
         expect(err).to.equal(dockerError)
         sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
         sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
-          'container-id',  {
+          'container-id', {
             stdout: true,
             stderr: true
           })
@@ -353,4 +352,4 @@ describe('lib/models/docker unit test', function () {
       })
     })
   })
-});
+})

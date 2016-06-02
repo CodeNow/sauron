@@ -1,116 +1,116 @@
-'use strict';
-require('loadenv')();
+'use strict'
+require('loadenv')()
 
-var Lab = require('lab');
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var afterEach = lab.afterEach;
-var beforeEach = lab.beforeEach;
-var Code = require('code');
-var expect = Code.expect;
+var Lab = require('lab')
+var lab = exports.lab = Lab.script()
+var describe = lab.describe
+var it = lab.it
+var afterEach = lab.afterEach
+var beforeEach = lab.beforeEach
+var Code = require('code')
+var expect = Code.expect
 
-var sinon = require('sinon');
-var Hermes = require('runnable-hermes');
+var sinon = require('sinon')
+var Hermes = require('runnable-hermes')
 
-var RabbitMQ = require('../../../lib/models/rabbitmq.js');
+var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
 describe('rabbitmq.js unit test', function () {
   beforeEach(function (done) {
-    process.env.RABBITMQ_HOSTNAME = 'Goblins';
-    process.env.RABBITMQ_PASSWORD = 'Orcs';
-    process.env.RABBITMQ_PORT = '1738';
-    process.env.RABBITMQ_USERNAME = 'Azog';
-    done();
-  });
+    process.env.RABBITMQ_HOSTNAME = 'Goblins'
+    process.env.RABBITMQ_PASSWORD = 'Orcs'
+    process.env.RABBITMQ_PORT = '1738'
+    process.env.RABBITMQ_USERNAME = 'Azog'
+    done()
+  })
 
   afterEach(function (done) {
-    delete process.env.RABBITMQ_HOSTNAME;
-    delete process.env.RABBITMQ_PASSWORD;
-    delete process.env.RABBITMQ_PORT;
-    delete process.env.RABBITMQ_USERNAME;
-    done();
-  });
+    delete process.env.RABBITMQ_HOSTNAME
+    delete process.env.RABBITMQ_PASSWORD
+    delete process.env.RABBITMQ_PORT
+    delete process.env.RABBITMQ_USERNAME
+    done()
+  })
 
   describe('create', function () {
     beforeEach(function (done) {
-      sinon.stub(Hermes.prototype, 'connect');
-      done();
-    });
+      sinon.stub(Hermes.prototype, 'connect')
+      done()
+    })
 
     afterEach(function (done) {
-      Hermes.prototype.connect.restore();
-      done();
-    });
+      Hermes.prototype.connect.restore()
+      done()
+    })
 
     it('should set both client', function (done) {
-      var testClient = 'Bolg';
+      var testClient = 'Bolg'
       Hermes.prototype.connect.returns({
         on: sinon.stub().returns(testClient)
-      });
+      })
 
-      RabbitMQ.create();
+      RabbitMQ.create()
 
-      expect(RabbitMQ._publisher).to.exist();
-      expect(RabbitMQ._subscriber).to.exist();
-      done();
-    });
-  }); // end create
+      expect(RabbitMQ._publisher).to.exist()
+      expect(RabbitMQ._subscriber).to.exist()
+      done()
+    })
+  }) // end create
 
   describe('getSubscriber', function () {
     it('should return subscriber clietn', function (done) {
-      RabbitMQ._subscriber = 'test';
-      expect(RabbitMQ.getSubscriber()).to.equal('test');
-      done();
-    });
-  }); // end getSubscriber
+      RabbitMQ._subscriber = 'test'
+      expect(RabbitMQ.getSubscriber()).to.equal('test')
+      done()
+    })
+  }) // end getSubscriber
 
   describe('disconnectPublisher', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         close: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null;
-      done();
-    });
+      RabbitMQ._publisher = null
+      done()
+    })
 
     it('should close _publisher', function (done) {
-      RabbitMQ._publisher.close.yieldsAsync();
+      RabbitMQ._publisher.close.yieldsAsync()
 
       RabbitMQ.disconnectPublisher(function () {
-        expect(RabbitMQ._publisher.close.called).to.be.true();
-        done();
-      });
-    });
-  }); // end disconnectPublisher
+        expect(RabbitMQ._publisher.close.called).to.be.true()
+        done()
+      })
+    })
+  }) // end disconnectPublisher
 
   describe('publishContainerNetworkAttached', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null;
-      done();
-    });
+      RabbitMQ._publisher = null
+      done()
+    })
 
     it('should throw if missing data', function (done) {
       expect(function () {
-        RabbitMQ.publishContainerNetworkAttached();
-      }).to.throw();
+        RabbitMQ.publishContainerNetworkAttached()
+      }).to.throw()
 
-      done();
-    });
+      done()
+    })
 
     it('should call publish with correct key and data', function (done) {
-      RabbitMQ._publisher.publish.returns();
+      RabbitMQ._publisher.publish.returns()
 
       var data = {
         containerIp: '10.0.0.2',
@@ -125,274 +125,274 @@ describe('rabbitmq.js unit test', function () {
             }
           }
         }
-      };
-      RabbitMQ.publishContainerNetworkAttached(data);
+      }
+      RabbitMQ.publishContainerNetworkAttached(data)
       expect(RabbitMQ._publisher.publish.withArgs('container.network.attached')
-        .calledOnce).to.be.true();
+        .calledOnce).to.be.true()
       expect(Object.keys(RabbitMQ._publisher.publish.args[0][1]))
-        .to.contain(['id', 'inspectData', 'containerIp']);
-      done();
-    });
-  }); // end publishContainerNetworkAttached
+        .to.contain(['id', 'inspectData', 'containerIp'])
+      done()
+    })
+  }) // end publishContainerNetworkAttached
 
   describe('publishWeaveStart', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null;
-      done();
-    });
+      RabbitMQ._publisher = null
+      done()
+    })
 
     it('should throw if missing data', function (done) {
       expect(function () {
-        RabbitMQ.publishWeaveStart({});
-      }).to.throw();
+        RabbitMQ.publishWeaveStart({})
+      }).to.throw()
 
-      done();
-    });
+      done()
+    })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns();
+      RabbitMQ._publisher.publish.returns()
       var testArgs = {
         dockerUri: 'http://10.0.0.1:4242',
         orgId: 'runnable'
-      };
-      RabbitMQ.publishWeaveStart(testArgs);
+      }
+      RabbitMQ.publishWeaveStart(testArgs)
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.start', testArgs).called).to.be.true();
-      done();
-    });
-  }); // end publishWeaveStart
+        .withArgs('weave.start', testArgs).called).to.be.true()
+      done()
+    })
+  }) // end publishWeaveStart
 
   describe('publishWeaveKill', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null;
-      done();
-    });
+      RabbitMQ._publisher = null
+      done()
+    })
 
     it('should throw if missing data', function (done) {
       expect(function () {
-        RabbitMQ.publishWeaveKill({});
-      }).to.throw();
+        RabbitMQ.publishWeaveKill({})
+      }).to.throw()
 
-      done();
-    });
+      done()
+    })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns();
+      RabbitMQ._publisher.publish.returns()
       var testArgs = {
         containerId: 'id-1'
-      };
-      RabbitMQ.publishWeaveKill(testArgs);
+      }
+      RabbitMQ.publishWeaveKill(testArgs)
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.kill', testArgs).called).to.be.true();
-      done();
-    });
-  }); // end publishWeaveKill
+        .withArgs('weave.kill', testArgs).called).to.be.true()
+      done()
+    })
+  }) // end publishWeaveKill
 
   describe('publishWeaveHealthCheck', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null;
-      done();
-    });
+      RabbitMQ._publisher = null
+      done()
+    })
 
     it('should throw if missing data', function (done) {
       expect(function () {
-        RabbitMQ.publishWeaveHealthCheck({});
-      }).to.throw();
+        RabbitMQ.publishWeaveHealthCheck({})
+      }).to.throw()
 
-      done();
-    });
+      done()
+    })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns();
+      RabbitMQ._publisher.publish.returns()
       var testArgs = {
         containerId: 'id-1',
         delay: 5000
       }
-      RabbitMQ.publishWeaveHealthCheck(testArgs);
+      RabbitMQ.publishWeaveHealthCheck(testArgs)
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.health.check', testArgs).called).to.be.true();
-      done();
-    });
-  }); // end publishWeaveHealthCheck
+        .withArgs('weave.health.check', testArgs).called).to.be.true()
+      done()
+    })
+  }) // end publishWeaveHealthCheck
 
   describe('publishWeavePeerForget', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null;
-      done();
-    });
+      RabbitMQ._publisher = null
+      done()
+    })
 
     it('should throw if missing data', function (done) {
       expect(function () {
-        RabbitMQ.publishWeavePeerForget();
-      }).to.throw();
+        RabbitMQ.publishWeavePeerForget()
+      }).to.throw()
 
-      done();
-    });
+      done()
+    })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns();
+      RabbitMQ._publisher.publish.returns()
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
         hostname: '10.0.0.99'
-      };
-      RabbitMQ.publishWeavePeerForget(testArgs);
+      }
+      RabbitMQ.publishWeavePeerForget(testArgs)
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.peer.forget', testArgs).called).to.be.true();
-      done();
-    });
-  }); // end publishWeavePeerForget
+        .withArgs('weave.peer.forget', testArgs).called).to.be.true()
+      done()
+    })
+  }) // end publishWeavePeerForget
 
   describe('publishWeavePeerRemove', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null;
-      done();
-    });
+      RabbitMQ._publisher = null
+      done()
+    })
 
     it('should throw if missing data', function (done) {
       expect(function () {
-        RabbitMQ.publishWeavePeerRemove();
-      }).to.throw();
+        RabbitMQ.publishWeavePeerRemove()
+      }).to.throw()
 
-      done();
-    });
+      done()
+    })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns();
+      RabbitMQ._publisher.publish.returns()
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
         hostname: '10.0.0.99',
         orgId: '201512'
-      };
-      RabbitMQ.publishWeavePeerRemove(testArgs);
+      }
+      RabbitMQ.publishWeavePeerRemove(testArgs)
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('weave.peer.remove', testArgs).called).to.be.true();
-      done();
-    });
-  }); // end publishWeavePeerRemove
+        .withArgs('weave.peer.remove', testArgs).called).to.be.true()
+      done()
+    })
+  }) // end publishWeavePeerRemove
 
   describe('_dataCheck', function () {
     it('should throw if missing keys', function (done) {
       var testData = {
-        Goblins: 'Azog',
-      };
+        Goblins: 'Azog'
+      }
 
       expect(function () {
-        RabbitMQ._dataCheck(testData, ['Goblins', 'Hobgoblins']);
-      }).to.throw();
+        RabbitMQ._dataCheck(testData, ['Goblins', 'Hobgoblins'])
+      }).to.throw()
 
-      done();
-    });
+      done()
+    })
 
     it('should return if keys present', function (done) {
       var testData = {
-        Goblins: 'Azog',
-      };
+        Goblins: 'Azog'
+      }
 
-      RabbitMQ._dataCheck(testData, ['Goblins']);
+      RabbitMQ._dataCheck(testData, ['Goblins'])
 
-      done();
-    });
-  }); // end _dataCheck
+      done()
+    })
+  }) // end _dataCheck
 
   describe('_dataCheck', function () {
     it('should throw if missing keys', function (done) {
       expect(function () {
-        RabbitMQ._handleFatalError(new Error('Gothmog'));
-      }).to.throw();
+        RabbitMQ._handleFatalError(new Error('Gothmog'))
+      }).to.throw()
 
-      done();
-    });
-  }); // end _dataCheck
+      done()
+    })
+  }) // end _dataCheck
 
   describe('publishOnDockUnhealthy', function () {
     beforeEach(function (done) {
       RabbitMQ._publisher = {
         publish: sinon.stub()
-      };
-      done();
-    });
+      }
+      done()
+    })
 
     it('should publish on-dock-unhealthy', function (done) {
       var testData = {
         host: 'testHost',
         githubId: 1253543
-      };
-      RabbitMQ._publisher.publish.returns();
+      }
+      RabbitMQ._publisher.publish.returns()
 
-      RabbitMQ.publishOnDockUnhealthy(testData);
+      RabbitMQ.publishOnDockUnhealthy(testData)
 
       expect(RabbitMQ._publisher.publish
-        .withArgs('on-dock-unhealthy').called).to.be.true();
+        .withArgs('on-dock-unhealthy').called).to.be.true()
       expect(RabbitMQ._publisher.publish
-        .args[0][1].timestamp).to.exist();
+        .args[0][1].timestamp).to.exist()
       expect(RabbitMQ._publisher.publish
-        .args[0][1].dockerHealthCheckId).to.exist();
+        .args[0][1].dockerHealthCheckId).to.exist()
       expect(RabbitMQ._publisher.publish
-        .args[0][1].host).to.equal(testData.host);
+        .args[0][1].host).to.equal(testData.host)
       expect(RabbitMQ._publisher.publish
-        .args[0][1].githubId).to.equal(testData.githubId);
+        .args[0][1].githubId).to.equal(testData.githubId)
 
-      done();
-    });
+      done()
+    })
 
     it('should throw if missing keys', function (done) {
       var testData = {
         host: 'testHost',
         githubId: 1253543
-      };
+      }
 
       Object.keys(testData).forEach(function (key) {
         var test = {
           host: 'testHost',
           githubId: 1253543
-        };
-        delete test[key];
+        }
+        delete test[key]
         expect(function () {
-          RabbitMQ.publishOnDockUnhealthy(test);
-        }).to.throw();
-      });
+          RabbitMQ.publishOnDockUnhealthy(test)
+        }).to.throw()
+      })
 
-      done();
-    });
-  }); // end publishOnDockUnhealthy
-}); // end rabbitmq.js unit test
+      done()
+    })
+  }) // end publishOnDockUnhealthy
+}) // end rabbitmq.js unit test

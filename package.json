@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node index.js",
-    "test": "NODE_ENV=test lab -v -c -t 100"
+    "lint": "standard --verbose",
+    "test": "npm run lint && NODE_ENV=test lab -v -c -t 100"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,16 @@
   "engines": {
     "node": ">=4.2.2 <5",
     "npm": ">=2.14.7"
+  },
+  "standard": {
+    "globals": [
+      "describe",
+      "it",
+      "before",
+      "after",
+      "beforeEach",
+      "afterEach"
+    ]
   },
   "homepage": "https://github.com/codenow/sauron",
   "dependencies": {
@@ -53,6 +64,7 @@
     "nock": "^3.3.0",
     "sinon": "^1.17.3",
     "sinon-as-promised": "^4.0.0",
+    "standard": "^7.1.1",
     "swarmerode": "^2.1.0"
   }
 }

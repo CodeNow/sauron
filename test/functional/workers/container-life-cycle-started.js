@@ -8,11 +8,9 @@ var path = require('path')
 var sinon = require('sinon')
 var Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
-var TaskFatalError = require('ponos').TaskFatalError
 
 var containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js')
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var swarmInfo = require('../../fixtures/swarm-info-dynamic');
 var Docker = require('../../../lib/models/docker')
 
 var lab = exports.lab = Lab.script()
@@ -24,16 +22,16 @@ var it = lab.it
 
 describe('container-life-cycle-started functional test', function () {
   beforeEach(function (done) {
-    process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock');
+    process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
     RabbitMQ._publisher = {
       publish: sinon.stub()
     }
     sinon.stub(Docker, 'doesDockExist')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
-        done();
-      });
-    });
+        done()
+      })
+    })
   })
 
   afterEach(function (done) {
@@ -64,7 +62,7 @@ describe('container-life-cycle-started functional test', function () {
         sinon.assert.notCalled(Docker.doesDockExist)
 
         try {
-          fs.readFileSync('./weaveMockArgs');
+          fs.readFileSync('./weaveMockArgs')
         } catch (err) {
           return done()
         }
@@ -95,13 +93,15 @@ describe('container-life-cycle-started functional test', function () {
           }
         }
         containerLifeCycleStarted(testJob).asCallback(function (err) {
-
+          if (err) {
+            return done(err)
+          }
           sinon.assert.calledOnce(Docker.doesDockExist)
           sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.2:4242')
           sinon.assert.notCalled(RabbitMQ._publisher.publish)
 
           try {
-            fs.readFileSync('./weaveMockArgs');
+            fs.readFileSync('./weaveMockArgs')
           } catch (err) {
             return done()
           }
@@ -158,13 +158,13 @@ describe('container-life-cycle-started functional test', function () {
         containerLifeCycleStarted(testJob).asCallback(function (err) {
           if (err) { return done(err) }
 
-          var weaveArgs = fs.readFileSync('./weaveMockArgs');
-          var weaveEnvs = fs.readFileSync('./weaveEnvs');
+          var weaveArgs = fs.readFileSync('./weaveMockArgs')
+          var weaveEnvs = fs.readFileSync('./weaveEnvs')
 
-          expect(weaveArgs.toString()).to.equal('attach ' + testContainerId + '\n');
-          expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1');
-          expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH);
-          expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242');
+          expect(weaveArgs.toString()).to.equal('attach ' + testContainerId + '\n')
+          expect(weaveEnvs.toString()).to.contain('DOCKER_TLS_VERIFY=1')
+          expect(weaveEnvs.toString()).to.contain('DOCKER_CERT_PATH=' + process.env.DOCKER_CERT_PATH)
+          expect(weaveEnvs.toString()).to.contain('DOCKER_HOST=' + testDockIp + ':4242')
           done()
         })
       })
