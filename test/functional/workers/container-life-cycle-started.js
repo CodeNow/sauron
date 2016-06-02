@@ -92,10 +92,7 @@ describe('container-life-cycle-started functional test', function () {
             }
           }
         }
-        containerLifeCycleStarted(testJob).asCallback(function (err) {
-          if (err) {
-            return done(err)
-          }
+        containerLifeCycleStarted(testJob).asCallback(function () {
           sinon.assert.calledOnce(Docker.doesDockExist)
           sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.2:4242')
           sinon.assert.notCalled(RabbitMQ._publisher.publish)
