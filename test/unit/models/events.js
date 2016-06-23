@@ -1,26 +1,27 @@
 'use strict'
 require('loadenv')()
 
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var Code = require('code')
-var expect = Code.expect
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const Code = require('code')
+const expect = Code.expect
 
-var sinon = require('sinon')
-var Promise = require('bluebird')
+const BaseError = require('error-cat/errors/base-error')
+const Promise = require('bluebird')
+const sinon = require('sinon')
+const TaskError = require('ponos').TaskError
+const TaskFatalError = require('ponos').TaskFatalError
+
+const Docker = require('../../../lib/models/docker.js')
+const Events = require('../../../lib/models/events.js')
+const RabbitMQ = require('../../../lib/models/rabbitmq.js')
+const WeaveWrapper = require('../../../lib/models/weave-wrapper.js')
+
 require('sinon-as-promised')(Promise)
-var ErrorCat = require('error-cat')
-var TaskError = require('ponos').TaskError
-var TaskFatalError = require('ponos').TaskFatalError
-
-var Docker = require('../../../lib/models/docker.js')
-var Events = require('../../../lib/models/events.js')
-var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var WeaveWrapper = require('../../../lib/models/weave-wrapper.js')
 
 describe('events.js unit test', function () {
   beforeEach(function (done) {
@@ -413,7 +414,7 @@ describe('events.js unit test', function () {
     })
 
     it('should cb TaskError if doesDockExist failed', function (done) {
-      var testErr = ErrorCat.create(500, 'Dunlendings')
+      var testErr = new BaseError('Dunlendings', 500)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
 
@@ -464,7 +465,7 @@ describe('events.js unit test', function () {
     })
 
     it('should cb TaskError if attach 500', function (done) {
-      var testErr = ErrorCat.create(500, 'Dunlendings')
+      var testErr = new BaseError('Dunlendings', 500)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
 
@@ -490,7 +491,7 @@ describe('events.js unit test', function () {
     })
 
     it('should TaskFatalError if error 409', function (done) {
-      var testErr = ErrorCat.create(409, 'Dunlendings')
+      var testErr = new BaseError('Dunlendings', 409)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
       var orgId = '868976908769078'
@@ -521,7 +522,7 @@ describe('events.js unit test', function () {
     })
 
     it('should TaskFatalError if error 400', function (done) {
-      var testErr = ErrorCat.create(400, 'Dunlendings')
+      var testErr = new BaseError('Dunlendings', 400)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
       var orgId = '868976908769078'
@@ -551,7 +552,7 @@ describe('events.js unit test', function () {
     })
 
     it('should publish on attach non 500 and non 409 error', function (done) {
-      var testErr = ErrorCat.create(403, 'Dunlendings')
+      var testErr = new BaseError('Dunlendings', 403)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
       var orgId = '868976908769078'
