@@ -11,7 +11,7 @@ var Code = require('code')
 var expect = Code.expect
 
 var sinon = require('sinon')
-var TaskFatalError = require('ponos').TaskFatalError
+const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
 var Events = require('../../../lib/models/events.js')
 var dockerEventsStreamDisconnected = require('../../../lib/workers/docker.events-stream.disconnected.js')
@@ -31,7 +31,7 @@ describe('docker.events-stream.disconnected.js unit test', function () {
     it('should throw missing host', function (done) {
       dockerEventsStreamDisconnected({})
       .asCallback(function (err) {
-        expect(err).to.be.instanceOf(TaskFatalError)
+        expect(err).to.be.instanceOf(WorkerStopError)
         done()
       })
     })
@@ -41,7 +41,7 @@ describe('docker.events-stream.disconnected.js unit test', function () {
         host: 'http://10.0.0.1:4224'
       })
       .asCallback(function (err) {
-        expect(err).to.be.instanceOf(TaskFatalError)
+        expect(err).to.be.instanceOf(WorkerStopError)
         done()
       })
     })
