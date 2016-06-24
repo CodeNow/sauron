@@ -13,12 +13,15 @@ const expect = Code.expect
 const BaseError = require('error-cat/errors/base-error')
 const Promise = require('bluebird')
 const sinon = require('sinon')
-const TaskError = require('ponos').TaskError
-const TaskFatalError = require('ponos').TaskFatalError
+const WorkerStopError = require('error-cat/errors/worker-stop-error')
+const WorkerError = require('error-cat/errors/worker-error')
 
 const Docker = require('../../../lib/models/docker.js')
 const Events = require('../../../lib/models/events.js')
+const FailedAttach = require('../../../lib/errors/failed-attach.js')
+const InvalidArgument = require('../../../lib/errors/invalid-argument.js')
 const RabbitMQ = require('../../../lib/models/rabbitmq.js')
+const WeaveError = require('../../../lib/errors/weave-error.js')
 const WeaveWrapper = require('../../../lib/models/weave-wrapper.js')
 
 require('sinon-as-promised')(Promise)
@@ -72,13 +75,13 @@ describe('events.js unit test', function () {
       })
     })
 
-    it('should cb TaskFatalError if target no in peers', function (done) {
+    it('should cb WorkerStopError if target no in peers', function (done) {
       Docker.findDocksByOrgId.yieldsAsync(null, [])
 
       Events.handleStart({
         dockerUri: 'http://10.0.0.1:4242'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskFatalError)
+        expect(err).to.be.an.instanceof(WorkerStopError)
         done()
       })
     })
@@ -112,11 +115,13 @@ describe('events.js unit test', function () {
       sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns()
       done()
     })
+
     afterEach(function (done) {
       Docker.findLightestOrgDock.restore()
       RabbitMQ.publishWeavePeerRemove.restore()
       done()
     })
+
     it('should publish new job to remove weave peer', function (done) {
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.not.exist()
@@ -129,28 +134,31 @@ describe('events.js unit test', function () {
         done()
       })
     })
+
     it('should cb with fatal error if no dock was found', function (done) {
       Docker.findLightestOrgDock.yieldsAsync(null, null)
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
-        expect(err).to.be.an.instanceof(TaskFatalError)
-        expect(err.message).to.equal('dock-removed: No docks left for an org')
+        expect(err).to.be.an.instanceof(WorkerStopError)
+        expect(err.message).to.equal('No docks left for an org')
         sinon.assert.notCalled(RabbitMQ.publishWeavePeerRemove)
         done()
       })
     })
+
     it('should cb with fatal error if dockHost was not found', function (done) {
       Docker.findLightestOrgDock.yieldsAsync(null, {
         Host: null
       })
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
-        expect(err).to.be.an.instanceof(TaskFatalError)
-        expect(err.message).to.equal('dock-removed: Dock has not host data')
+        expect(err).to.be.an.instanceof(WorkerStopError)
+        expect(err.message).to.equal('Dock has not host data')
         sinon.assert.notCalled(RabbitMQ.publishWeavePeerRemove)
         done()
       })
     })
+
     it('should cb with error if finding dock failed', function (done) {
       var swarmError = new Error('Swarm error')
       Docker.findLightestOrgDock.yieldsAsync(swarmError)
@@ -268,7 +276,7 @@ describe('events.js unit test', function () {
         host: 'http://10.0.0.1:4242',
         org: '11213123'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskError)
+        expect(err).to.be.an.instanceof(WorkerError)
         sinon.assert.calledOnce(Docker.doesDockExist)
         sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
         sinon.assert.notCalled(Events._removeWeavePeer)
@@ -413,7 +421,7 @@ describe('events.js unit test', function () {
       })
     })
 
-    it('should cb TaskError if doesDockExist failed', function (done) {
+    it('should cb WorkerError if doesDockExist failed', function (done) {
       var testErr = new BaseError('Dunlendings', 500)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
@@ -433,14 +441,14 @@ describe('events.js unit test', function () {
         },
         tags: '1q2qswedasdasdad,123'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskError)
+        expect(err).to.be.an.instanceof(WorkerError)
         sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         sinon.assert.notCalled(WeaveWrapper.attach)
         done()
       })
     })
 
-    it('should cb TaskFatalError if dock does not exist', function (done) {
+    it('should cb WorkerStopError if dock does not exist', function (done) {
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
 
@@ -459,13 +467,13 @@ describe('events.js unit test', function () {
         },
         tags: '1q2qswedasdasdad,123'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskError)
+        expect(err).to.be.an.instanceof(WorkerError)
         done()
       })
     })
 
-    it('should cb TaskError if attach 500', function (done) {
-      var testErr = new BaseError('Dunlendings', 500)
+    it('should cb WorkerError if attach FailedAttach', function (done) {
+      var testErr = new FailedAttach(new Error('booz'), 'alan')
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
 
@@ -485,13 +493,14 @@ describe('events.js unit test', function () {
         },
         tags: '1q2qswedasdasdad,123'
       }, function (err) {
-        expect(err).to.be.an.instanceof(TaskError)
+        expect(err).to.be.an.instanceof(WorkerError)
         done()
       })
     })
 
-    it('should TaskFatalError if error 409', function (done) {
-      var testErr = new BaseError('Dunlendings', 409)
+    it('should WorkerStopError if error WeaveError isIgnorable', function (done) {
+      var testErr = new WeaveError(new Error('Dunlendings'), '', '', '')
+      sinon.stub(testErr, 'isIgnorable').returns(true)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
       var orgId = '868976908769078'
@@ -513,16 +522,16 @@ describe('events.js unit test', function () {
         tags: orgId + ',1q2qswedasdasdad,123'
       }
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.be.an.instanceof(TaskFatalError)
-        expect(err.report).to.be.false()
+        expect(err).to.be.an.instanceof(WorkerStopError)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
         done()
       })
     })
 
-    it('should TaskFatalError if error 400', function (done) {
-      var testErr = new BaseError('Dunlendings', 400)
+    it('should WorkerError if error WeaveError !isIgnorable', function (done) {
+      var testErr = new WeaveError(new Error('Dunlendings'), '', '', '')
+      sinon.stub(testErr, 'isIgnorable').returns(false)
       var testHost = '172.123.12.3'
       var testId = '23984765893264'
       var orgId = '868976908769078'
@@ -544,7 +553,37 @@ describe('events.js unit test', function () {
         tags: orgId + ',1q2qswedasdasdad,123'
       }
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.be.an.instanceof(TaskFatalError)
+        expect(err).to.be.an.instanceof(WorkerError)
+        sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
+        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        done()
+      })
+    })
+
+    it('should WorkerStopError if error InvalidArgument', function (done) {
+      var testErr = new InvalidArgument('abra', 'kadabra', 'alakazam')
+      var testHost = '172.123.12.3'
+      var testId = '23984765893264'
+      var orgId = '868976908769078'
+
+      Events._isNetworkNeeded.returns(true)
+      WeaveWrapper.attach.yields(testErr)
+      Docker.doesDockExist.resolves(true)
+      var jobData = {
+        id: testId,
+        host: testHost,
+        inspectData: {
+          Config: {
+            Labels: {
+              instanceId: '5633e9273e2b5b0c0077fd41',
+              contextVersionId: '563a808f9359ef0c00df34e6'
+            }
+          }
+        },
+        tags: orgId + ',1q2qswedasdasdad,123'
+      }
+      Events.handleStarted(jobData, function (err) {
+        expect(err).to.be.an.instanceof(WorkerStopError)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
         expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
         done()
