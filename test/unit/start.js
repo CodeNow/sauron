@@ -9,6 +9,7 @@ var beforeEach = lab.beforeEach
 var Code = require('code')
 var expect = Code.expect
 
+var Promise = require('bluebird')
 var sinon = require('sinon')
 
 var Docker = require('../../lib/models/docker.js')
@@ -20,6 +21,7 @@ describe('start.js unit test', function () {
   describe('startup', function () {
     beforeEach(function (done) {
       sinon.stub(WorkerServer, 'listen')
+      sinon.stub(RabbitMQ, 'create')
       sinon.stub(RabbitMQ, 'publishWeaveStart')
       sinon.stub(Docker, 'info')
       done()
@@ -28,6 +30,7 @@ describe('start.js unit test', function () {
     afterEach(function (done) {
       WorkerServer.listen.restore()
       RabbitMQ.publishWeaveStart.restore()
+      RabbitMQ.create.restore()
       Docker.info.restore()
       done()
     })
@@ -47,7 +50,8 @@ describe('start.js unit test', function () {
         }
       }]
       RabbitMQ.publishWeaveStart.returns()
-      WorkerServer.listen.yieldsAsync()
+      WorkerServer.listen.returns(Promise.resolve())
+      RabbitMQ.create.returns(Promise.resolve())
       Docker.info.yieldsAsync(null, peers)
 
       Start.startup(function (err) {
@@ -68,8 +72,9 @@ describe('start.js unit test', function () {
     })
 
     it('should throw an error if `Docker.info` throws an error', function (done) {
+      RabbitMQ.create.returns(Promise.resolve())
       RabbitMQ.publishWeaveStart.returns()
-      WorkerServer.listen.yieldsAsync()
+      WorkerServer.listen.returns(Promise.resolve())
       Docker.info.yieldsAsync('err')
 
       Start.startup(function (err) {
@@ -80,7 +85,8 @@ describe('start.js unit test', function () {
     })
 
     it('should throw an error if `WorkerServer.listen` throws an error', function (done) {
-      WorkerServer.listen.yieldsAsync('err')
+      RabbitMQ.create.returns(Promise.resolve())
+      WorkerServer.listen.returns(Promise.reject('err'))
 
       Start.startup(function (err) {
         expect(err).to.exist()
@@ -97,8 +103,9 @@ describe('start.js unit test', function () {
         dockerHost: '10.0.0.2:4242',
         Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'other' }]
       }]
+      RabbitMQ.create.returns(Promise.resolve())
       RabbitMQ.publishWeaveStart.throws()
-      WorkerServer.listen.yieldsAsync()
+      WorkerServer.listen.returns(Promise.resolve())
       Docker.info.yieldsAsync(null, peers)
 
       Start.startup(function (err) {
@@ -114,31 +121,31 @@ describe('start.js unit test', function () {
   describe('shutdown', function () {
     beforeEach(function (done) {
       sinon.stub(WorkerServer, 'stop')
-      sinon.stub(RabbitMQ, 'disconnectPublisher')
+      sinon.stub(RabbitMQ, 'disconnect')
       done()
     })
 
     afterEach(function (done) {
       WorkerServer.stop.restore()
-      RabbitMQ.disconnectPublisher.restore()
+      RabbitMQ.disconnect.restore()
       done()
     })
 
     it('should shutdown all services', function (done) {
-      WorkerServer.stop.yieldsAsync()
-      RabbitMQ.disconnectPublisher.yieldsAsync()
+      WorkerServer.stop.returns(Promise.resolve())
+      RabbitMQ.disconnect.returns(Promise.resolve())
 
       Start.shutdown(function (err) {
         expect(err).to.not.exist()
         expect(WorkerServer.stop.calledOnce).to.be.true()
-        expect(RabbitMQ.disconnectPublisher.calledOnce).to.be.true()
+        expect(RabbitMQ.disconnect.calledOnce).to.be.true()
         done()
       })
     })
 
     it('should throw an error if `WorkerServer` failed', function (done) {
       var errMessage = 'WorkerServer error'
-      WorkerServer.stop.yieldsAsync(new Error(errMessage))
+      WorkerServer.stop.returns(Promise.reject(new Error(errMessage)))
 
       Start.shutdown(function (err) {
         expect(err).to.exist()
@@ -148,10 +155,10 @@ describe('start.js unit test', function () {
       })
     })
 
-    it('should throw an error if `RabbitMQ.disconnectPublisher` failed', function (done) {
-      var errMessage = 'RabbitMQ.disconnectPublisher error'
-      WorkerServer.stop.yieldsAsync()
-      RabbitMQ.disconnectPublisher.yieldsAsync(new Error(errMessage))
+    it('should throw an error if `RabbitMQ.disconnect` failed', function (done) {
+      var errMessage = 'RabbitMQ.disconnect error'
+      WorkerServer.stop.returns(Promise.resolve())
+      RabbitMQ.disconnect.returns(Promise.reject(new Error(errMessage)))
 
       Start.shutdown(function (err) {
         expect(err).to.be.an.instanceof(Error)

@@ -1,60 +1,73 @@
 'use strict'
 require('loadenv')()
 
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var Code = require('code')
-var expect = Code.expect
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const Code = require('code')
+const expect = Code.expect
 
-var sinon = require('sinon')
-var ponos = require('ponos')
+const sinon = require('sinon')
+const ponos = require('ponos')
+const Promise = require('bluebird')
 
-var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var WorkerServer = require('../../../lib/models/worker-server.js')
+const WorkerServer = require('../../../lib/models/worker-server.js')
 
 describe('WorkerServer unit test', function () {
   describe('listen', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, 'getSubscriber')
       sinon.stub(ponos, 'Server')
       done()
     })
 
     afterEach(function (done) {
       ponos.Server.restore()
-      RabbitMQ.getSubscriber.restore()
       done()
     })
 
     it('should start worker server', function (done) {
-      RabbitMQ.getSubscriber.returns()
       ponos.Server.returns({
-        setAllTasks: sinon.stub().returns(),
-        start: sinon.stub().returnsThis(),
-        then: sinon.stub().returnsThis().yieldsAsync(),
-        catch: sinon.stub().returns()
+        start: () => { return Promise.resolve() }
       })
-      WorkerServer.listen(function (err) {
-        expect(WorkerServer._server.setAllTasks.calledOnce).to.be.true()
-        expect(err).to.not.exist()
+      WorkerServer.listen().asCallback(function (err) {
+        if (err) { return done(err) }
+        sinon.assert.calledOnce(ponos.Server)
+        sinon.assert.calledWith(ponos.Server, sinon.match({
+          name: process.env.APP_NAME,
+          rabbitmq: {
+            hostname: process.env.RABBITMQ_HOSTNAME,
+            port: process.env.RABBITMQ_PORT,
+            username: process.env.RABBITMQ_USERNAME,
+            password: process.env.RABBITMQ_PASSWORD
+          },
+          log: sinon.match.object,
+          tasks: {
+            'weave.health.check': sinon.match.any,
+            'weave.kill': sinon.match.any,
+            'weave.start': sinon.match.any,
+            'weave.peer.forget': sinon.match.any,
+            'weave.peer.remove': sinon.match.any
+          },
+          events: {
+            'container.life-cycle.died': sinon.match.any,
+            'container.life-cycle.started': sinon.match.any,
+            'docker.events-stream.connected': sinon.match.any,
+            'docker.events-stream.disconnected': sinon.match.any
+          }
+        }))
         done()
       })
     })
 
     it('should cb err if server failed', function (done) {
-      RabbitMQ.getSubscriber.returns()
       ponos.Server.returns({
-        setAllTasks: sinon.stub().returns(),
-        start: sinon.stub().returnsThis(),
-        then: sinon.stub().returnsThis(),
-        catch: sinon.stub().returns().yieldsAsync('err')
+        start: sinon.stub().returns(Promise.reject(new Error('err')))
       })
-      WorkerServer.listen(function (err) {
-        expect(err).to.exist()
+      WorkerServer.listen().catch(function (err) {
+        expect(err.message).to.equal('err')
         done()
       })
     })
@@ -63,9 +76,7 @@ describe('WorkerServer unit test', function () {
   describe('stop', function () {
     beforeEach(function (done) {
       WorkerServer._server = {
-        stop: sinon.stub(),
-        then: sinon.stub(),
-        catch: sinon.stub()
+        stop: sinon.stub()
       }
       done()
     })
@@ -76,23 +87,19 @@ describe('WorkerServer unit test', function () {
     })
 
     it('should start worker server', function (done) {
-      WorkerServer._server.stop.returnsThis()
-      WorkerServer._server.then.returnsThis().yieldsAsync()
-      WorkerServer._server.catch.returnsThis()
+      WorkerServer._server.stop.returns(Promise.resolve())
 
-      WorkerServer.stop(function (err) {
-        expect(err).to.not.exist()
+      WorkerServer.stop().asCallback(function (err) {
+        if (err) { return done(err) }
         done()
       })
     })
 
     it('should cb err if server failed', function (done) {
-      WorkerServer._server.stop.returnsThis()
-      WorkerServer._server.then.returnsThis()
-      WorkerServer._server.catch.returnsThis().yieldsAsync('err')
+      WorkerServer._server.stop.returns(Promise.reject(new Error('error')))
 
-      WorkerServer.stop(function (err) {
-        expect(err).to.exist()
+      WorkerServer.stop().catch(function (err) {
+        expect(err.message).to.equal('error')
         done()
       })
     })

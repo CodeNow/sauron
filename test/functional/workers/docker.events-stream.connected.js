@@ -8,15 +8,19 @@ var dockerEventsStreamConnected = require('../../../lib/workers/docker.events-st
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
 var lab = exports.lab = Lab.script()
+var afterEach = lab.afterEach
 var beforeEach = lab.beforeEach
 var describe = lab.describe
 var it = lab.it
 
 describe('docker.events-stream.connected functional test', function () {
   beforeEach(function (done) {
-    RabbitMQ._publisher = {
-      publish: sinon.stub()
-    }
+    sinon.stub(RabbitMQ._publisher, 'publishTask')
+    done()
+  })
+
+  afterEach(function (done) {
+    RabbitMQ._publisher.publishTask.restore()
     done()
   })
 
@@ -32,8 +36,8 @@ describe('docker.events-stream.connected functional test', function () {
       dockerEventsStreamConnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.called(RabbitMQ._publisher.publish)
-        sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.start', {
+        sinon.assert.called(RabbitMQ._publisher.publishTask)
+        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.start', {
           dockerUri: testHost,
           orgId: testOrg
         })
