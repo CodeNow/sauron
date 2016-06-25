@@ -36,13 +36,6 @@ describe('WorkerServer unit test', function () {
         if (err) { return done(err) }
         sinon.assert.calledOnce(ponos.Server)
         sinon.assert.calledWith(ponos.Server, sinon.match({
-          name: process.env.APP_NAME,
-          rabbitmq: {
-            hostname: process.env.RABBITMQ_HOSTNAME,
-            port: process.env.RABBITMQ_PORT,
-            username: process.env.RABBITMQ_USERNAME,
-            password: process.env.RABBITMQ_PASSWORD
-          },
           log: sinon.match.object,
           tasks: {
             'weave.health.check': sinon.match.any,
