@@ -12,9 +12,12 @@ var expect = Code.expect
 var sinon = require('sinon')
 var childProcess = require('child_process')
 
+var FailedAttach = require('../../../lib/errors/failed-attach.js')
+var InvalidArgument = require('../../../lib/errors/invalid-argument.js')
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
-var WeaveWrapper = require('../../../lib/models/weave-wrapper.js')
 var reportFixture = require('../../fixtures/report')
+var WeaveError = require('../../../lib/errors/weave-error.js')
+var WeaveWrapper = require('../../../lib/models/weave-wrapper.js')
 
 describe('weave-wrapper.js unit test', function () {
   describe('_runCmd', function () {
@@ -121,20 +124,22 @@ describe('weave-wrapper.js unit test', function () {
     })
 
     it('should fail if invalid peers', function (done) {
-      WeaveWrapper._runCmd.yieldsAsync()
-      WeaveWrapper._handleCmdResult.returnsArg(0)
       var peers = 'no valid'
       WeaveWrapper.launch(peers, testDockerHost, testDockerOrgId, function (err) {
-        expect(err.output.statusCode).to.equal(400)
+        expect(err).to.be.instanceof(InvalidArgument)
+        expect(err.data.argName).to.equal('peers')
+        expect(err.data.expected).to.equal('Array')
+        expect(err.data.actual).to.equal(peers)
         done()
       })
     })
 
     it('should fail if missing peers', function (done) {
-      WeaveWrapper._runCmd.yieldsAsync()
-      WeaveWrapper._handleCmdResult.returnsArg(0)
       WeaveWrapper.launch(null, testDockerHost, testDockerOrgId, function (err) {
-        expect(err.output.statusCode).to.equal(400)
+        expect(err).to.be.instanceof(InvalidArgument)
+        expect(err.data.argName).to.equal('peers')
+        expect(err.data.expected).to.equal('Array')
+        expect(err.data.actual).to.equal(null)
         done()
       })
     })
@@ -287,7 +292,8 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult.returnsArg(0)
 
       WeaveWrapper.attach(testContainerId, testDockerHost, testDockerOrgId, function (err) {
-        expect(err).to.exist()
+        expect(err).to.be.instanceof(FailedAttach)
+        expect(err.data.containerId).to.equal(testContainerId)
         done()
       })
     })
@@ -295,7 +301,10 @@ describe('weave-wrapper.js unit test', function () {
     it('should fail if missing containerId', function (done) {
       WeaveWrapper._runCmd.yieldsAsync()
       WeaveWrapper.attach(null, testDockerHost, testDockerOrgId, function (err) {
-        expect(err.output.statusCode).to.equal(400)
+        expect(err).to.be.instanceof(InvalidArgument)
+        expect(err.data.argName).to.equal('containerId')
+        expect(err.data.expected).to.equal('String')
+        expect(err.data.actual).to.equal(null)
         done()
       })
     })
@@ -312,13 +321,11 @@ describe('weave-wrapper.js unit test', function () {
 
   describe('_handleCmdResult', function () {
     beforeEach(function (done) {
-      sinon.stub(WeaveWrapper, '_isIgnorable')
       sinon.stub(RabbitMQ, 'publishOnDockUnhealthy')
       done()
     })
 
     afterEach(function (done) {
-      WeaveWrapper._isIgnorable.restore()
       RabbitMQ.publishOnDockUnhealthy.restore()
       done()
     })
@@ -327,7 +334,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.not.exist()
         done()
-      }, 'test', {})(null)
+      }, 'test', {}, '')(null)
     })
 
     it('should cb with no error for already running', function (done) {
@@ -335,7 +342,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.not.exist()
         done()
-      }, 'test', {})(testErr)
+      }, 'test', {}, '')(testErr)
     })
 
     it('should cb with no error for already running', function (done) {
@@ -343,7 +350,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.not.exist()
         done()
-      }, 'test', {})(testErr)
+      }, 'test', {}, '')(testErr)
     })
 
     it('should cb with error and publish dock unhealthy on Out Of Memory', function (done) {
@@ -353,76 +360,34 @@ describe('weave-wrapper.js unit test', function () {
         host: 'asdasdasasdasadsgasdgdsg'
       }
       WeaveWrapper._handleCmdResult(function (err) {
-        expect(err.output.statusCode).to.equal(500)
+        expect(err).to.be.instanceof(WeaveError)
         sinon.assert.calledOnce(RabbitMQ.publishOnDockUnhealthy)
         sinon.assert.calledWith(RabbitMQ.publishOnDockUnhealthy, debug)
         done()
-      }, 'test', debug)(testErr)
+      }, 'test', '', debug)(testErr)
     })
 
-    it('should cb 500 for unknown err', function (done) {
-      WeaveWrapper._isIgnorable.returns(false)
-      var testErr = { message: 'mine of moria' }
-      WeaveWrapper._handleCmdResult(function (err) {
-        expect(err.output.statusCode).to.equal(500)
-        done()
-      }, 'it never ends', {})(testErr)
-    })
+    it('should cb err without other side effects ', function (done) {
+      const testErr = new Error('random error')
+      const testStdout = 'stdout'
+      const testStderr = 'stderr'
+      const testCmd = 'echo love'
+      const testDebug = {
+        data: 'is',
+        nice: '.'
+      }
 
-    it('should cb 409 for ignorable err', function (done) {
-      WeaveWrapper._isIgnorable.returns(true)
-      var testErr = { message: 'mine of moria' }
+      testErr.stderr = testStderr
       WeaveWrapper._handleCmdResult(function (err) {
-        expect(err.output.statusCode).to.equal(409)
+        expect(err).to.be.instanceof(WeaveError)
+        expect(err.data.err).to.deep.equal(testErr)
+        expect(err.data.stdout).to.equal(testStdout)
+        expect(err.data.stderr).to.equal(testStderr)
+        expect(err.data.command).to.equal(testCmd)
+        expect(err.data.extra).to.deep.equal(testDebug)
+        sinon.assert.notCalled(RabbitMQ.publishOnDockUnhealthy)
         done()
-      }, 'it never ends', {})(testErr)
-    })
-
-    it('should append error if error has message', function (done) {
-      WeaveWrapper._isIgnorable.returns(true)
-      var testErr = new Error('keep it safe')
-      WeaveWrapper._handleCmdResult(function (err) {
-        expect(err.message).to.equal('keep it secret:keep it safe')
-        done()
-      }, 'keep it secret', {})(testErr)
-    })
-
-    it('should use passed message err does not have message', function (done) {
-      WeaveWrapper._isIgnorable.returns(true)
-      var testErr = 'false'
-      WeaveWrapper._handleCmdResult(function (err) {
-        expect(err.message).to.equal('keep it secret')
-        done()
-      }, 'keep it secret', {})(testErr)
+      }, '', testCmd, testDebug)(testErr, testStdout)
     })
   }) // end _handleCmdResult
-
-  describe('_isIgnorable', function () {
-    it('should return true', function (done) {
-      [
-        'container is not running.',
-        'container had died',
-        'Error: No such container 189237590128375'
-      ].forEach(function (m) {
-        var testErr = { message: m }
-        expect(WeaveWrapper._isIgnorable(testErr), m)
-          .to.be.true()
-      })
-      done()
-    })
-
-    it('should return false', function (done) {
-      [
-        'is running.',
-        'alive',
-        'such container 189237590128375',
-        'Error response from daemon: Untar error on re-exec cmd: fork/exec /proc/self/exe: cannot allocate memory'
-      ].forEach(function (m) {
-        var testErr = { message: m }
-        expect(WeaveWrapper._isIgnorable(testErr), m)
-          .to.be.false()
-      })
-      done()
-    })
-  }) // end _isIgnorable
 })

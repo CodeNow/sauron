@@ -23,10 +23,9 @@ var it = lab.it
 describe('container-life-cycle-started functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
-    RabbitMQ._publisher = {
-      publish: sinon.stub()
-    }
     sinon.stub(Docker, 'doesDockExist')
+    sinon.stub(RabbitMQ, 'publishContainerNetworkAttached')
+    sinon.stub(RabbitMQ, 'publishWeaveHealthCheck')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done()
@@ -36,6 +35,8 @@ describe('container-life-cycle-started functional test', function () {
 
   afterEach(function (done) {
     Docker.doesDockExist.restore()
+    RabbitMQ.publishContainerNetworkAttached.restore()
+    RabbitMQ.publishWeaveHealthCheck.restore()
     delete process.env.WEAVE_PATH
     done()
   })
@@ -58,7 +59,7 @@ describe('container-life-cycle-started functional test', function () {
       containerLifeCycleStarted(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.notCalled(RabbitMQ._publisher.publish)
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         sinon.assert.notCalled(Docker.doesDockExist)
 
         try {
@@ -95,7 +96,7 @@ describe('container-life-cycle-started functional test', function () {
         containerLifeCycleStarted(testJob).asCallback(function () {
           sinon.assert.calledOnce(Docker.doesDockExist)
           sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.2:4242')
-          sinon.assert.notCalled(RabbitMQ._publisher.publish)
+          sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
 
           try {
             fs.readFileSync('./weaveMockArgs')
@@ -130,8 +131,8 @@ describe('container-life-cycle-started functional test', function () {
         containerLifeCycleStarted(testJob).asCallback(function (err) {
           if (err) { return done(err) }
 
-          sinon.assert.calledOnce(RabbitMQ._publisher.publish)
-          sinon.assert.calledWith(RabbitMQ._publisher.publish, 'container.network.attached', testJob)
+          sinon.assert.calledOnce(RabbitMQ.publishContainerNetworkAttached)
+          sinon.assert.calledWith(RabbitMQ.publishContainerNetworkAttached, testJob)
           done()
         })
       })

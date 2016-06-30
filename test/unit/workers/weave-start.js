@@ -11,7 +11,7 @@ var Code = require('code')
 var expect = Code.expect
 
 var sinon = require('sinon')
-var TaskFatalError = require('ponos').TaskFatalError
+const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
 var Events = require('../../../lib/models/events.js')
 var weaveStart = require('../../../lib/workers/weave-start.js')
@@ -46,7 +46,7 @@ describe('weave-start.js unit test', function () {
           throw new Error('should have thrown')
         })
         .catch(function (err) {
-          expect(err).to.be.instanceOf(TaskFatalError)
+          expect(err).to.be.instanceOf(WorkerStopError)
           done()
         })
     })
@@ -59,7 +59,7 @@ describe('weave-start.js unit test', function () {
         throw new Error('should have thrown')
       })
       .catch(function (err) {
-        expect(err).to.be.instanceOf(TaskFatalError)
+        expect(err).to.be.instanceOf(WorkerStopError)
         done()
       })
     })

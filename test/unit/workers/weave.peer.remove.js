@@ -12,7 +12,7 @@ var Code = require('code')
 var expect = Code.expect
 
 var sinon = require('sinon')
-var TaskFatalError = require('ponos').TaskFatalError
+const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
 var Docker = require('../../../lib/models/docker')
 var WeaveWrapper = require('../../../lib/models/weave-wrapper')
@@ -35,7 +35,7 @@ describe('weave.peer.remove.js unit test', function () {
     it('should throw missing dockerHost', function (done) {
       weavePeerRemove({})
       .asCallback(function (err) {
-        expect(err).to.be.instanceOf(TaskFatalError)
+        expect(err).to.be.instanceOf(WorkerStopError)
         done()
       })
     })
@@ -45,7 +45,7 @@ describe('weave.peer.remove.js unit test', function () {
         dockerHost: '10.0.0.1:4224'
       })
       .asCallback(function (err) {
-        expect(err).to.be.instanceOf(TaskFatalError)
+        expect(err).to.be.instanceOf(WorkerStopError)
         done()
       })
     })
@@ -55,7 +55,7 @@ describe('weave.peer.remove.js unit test', function () {
         hostname: '10.0.0.2'
       })
       .asCallback(function (err) {
-        expect(err).to.be.instanceOf(TaskFatalError)
+        expect(err).to.be.instanceOf(WorkerStopError)
         done()
       })
     })
@@ -86,8 +86,8 @@ describe('weave.peer.remove.js unit test', function () {
         orgId: '123567'
       })
       .asCallback(function (err) {
-        expect(err).to.be.instanceOf(TaskFatalError)
-        expect(err.message).to.equal('weave.peer.remove: Dock was removed')
+        expect(err).to.be.instanceOf(WorkerStopError)
+        expect(err.message).to.equal('Dock was removed')
         sinon.assert.calledOnce(Docker.doesDockExist)
         sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4224')
         sinon.assert.notCalled(WeaveWrapper.rmpeerAsync)

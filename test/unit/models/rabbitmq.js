@@ -11,7 +11,6 @@ var Code = require('code')
 var expect = Code.expect
 
 var sinon = require('sinon')
-var Hermes = require('runnable-hermes')
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
@@ -21,6 +20,8 @@ describe('rabbitmq.js unit test', function () {
     process.env.RABBITMQ_PASSWORD = 'Orcs'
     process.env.RABBITMQ_PORT = '1738'
     process.env.RABBITMQ_USERNAME = 'Azog'
+    sinon.stub(RabbitMQ._publisher, 'publishTask')
+    sinon.stub(RabbitMQ._publisher, 'publishEvent')
     done()
   })
 
@@ -29,78 +30,50 @@ describe('rabbitmq.js unit test', function () {
     delete process.env.RABBITMQ_PASSWORD
     delete process.env.RABBITMQ_PORT
     delete process.env.RABBITMQ_USERNAME
+    RabbitMQ._publisher.publishTask.restore()
+    RabbitMQ._publisher.publishEvent.restore()
     done()
   })
 
   describe('create', function () {
     beforeEach(function (done) {
-      sinon.stub(Hermes.prototype, 'connect')
+      sinon.stub(RabbitMQ._publisher, 'connect')
       done()
     })
 
     afterEach(function (done) {
-      Hermes.prototype.connect.restore()
+      RabbitMQ._publisher.connect.restore()
       done()
     })
 
     it('should set both client', function (done) {
-      var testClient = 'Bolg'
-      Hermes.prototype.connect.returns({
-        on: sinon.stub().returns(testClient)
-      })
-
+      RabbitMQ._publisher.connect.returns()
       RabbitMQ.create()
-
-      expect(RabbitMQ._publisher).to.exist()
-      expect(RabbitMQ._subscriber).to.exist()
+      sinon.assert.calledOnce(RabbitMQ._publisher.connect)
       done()
     })
   }) // end create
 
-  describe('getSubscriber', function () {
-    it('should return subscriber clietn', function (done) {
-      RabbitMQ._subscriber = 'test'
-      expect(RabbitMQ.getSubscriber()).to.equal('test')
-      done()
-    })
-  }) // end getSubscriber
-
-  describe('disconnectPublisher', function () {
+  describe('disconnect', function () {
     beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        close: sinon.stub()
-      }
+      sinon.stub(RabbitMQ._publisher, 'disconnect')
       done()
     })
 
     afterEach(function (done) {
-      RabbitMQ._publisher = null
+      RabbitMQ._publisher.disconnect.restore()
       done()
     })
 
     it('should close _publisher', function (done) {
-      RabbitMQ._publisher.close.yieldsAsync()
-
-      RabbitMQ.disconnectPublisher(function () {
-        expect(RabbitMQ._publisher.close.called).to.be.true()
-        done()
-      })
+      RabbitMQ._publisher.disconnect.returns()
+      RabbitMQ.disconnect()
+      sinon.assert.calledOnce(RabbitMQ._publisher.disconnect)
+      done()
     })
-  }) // end disconnectPublisher
+  }) // end disconnect
 
   describe('publishContainerNetworkAttached', function () {
-    beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      }
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher = null
-      done()
-    })
-
     it('should throw if missing data', function (done) {
       expect(function () {
         RabbitMQ.publishContainerNetworkAttached()
@@ -110,7 +83,7 @@ describe('rabbitmq.js unit test', function () {
     })
 
     it('should call publish with correct key and data', function (done) {
-      RabbitMQ._publisher.publish.returns()
+      RabbitMQ._publisher.publishEvent.returns()
 
       var data = {
         containerIp: '10.0.0.2',
@@ -127,27 +100,15 @@ describe('rabbitmq.js unit test', function () {
         }
       }
       RabbitMQ.publishContainerNetworkAttached(data)
-      expect(RabbitMQ._publisher.publish.withArgs('container.network.attached')
+      expect(RabbitMQ._publisher.publishEvent.withArgs('container.network.attached')
         .calledOnce).to.be.true()
-      expect(Object.keys(RabbitMQ._publisher.publish.args[0][1]))
+      expect(Object.keys(RabbitMQ._publisher.publishEvent.args[0][1]))
         .to.contain(['id', 'inspectData', 'containerIp'])
       done()
     })
   }) // end publishContainerNetworkAttached
 
   describe('publishWeaveStart', function () {
-    beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      }
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher = null
-      done()
-    })
-
     it('should throw if missing data', function (done) {
       expect(function () {
         RabbitMQ.publishWeaveStart({})
@@ -157,32 +118,20 @@ describe('rabbitmq.js unit test', function () {
     })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns()
+      RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
         dockerUri: 'http://10.0.0.1:4242',
         orgId: 'runnable'
       }
       RabbitMQ.publishWeaveStart(testArgs)
 
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .withArgs('weave.start', testArgs).called).to.be.true()
       done()
     })
   }) // end publishWeaveStart
 
   describe('publishWeaveKill', function () {
-    beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      }
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher = null
-      done()
-    })
-
     it('should throw if missing data', function (done) {
       expect(function () {
         RabbitMQ.publishWeaveKill({})
@@ -192,31 +141,19 @@ describe('rabbitmq.js unit test', function () {
     })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns()
+      RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
         containerId: 'id-1'
       }
       RabbitMQ.publishWeaveKill(testArgs)
 
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .withArgs('weave.kill', testArgs).called).to.be.true()
       done()
     })
   }) // end publishWeaveKill
 
   describe('publishWeaveHealthCheck', function () {
-    beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      }
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher = null
-      done()
-    })
-
     it('should throw if missing data', function (done) {
       expect(function () {
         RabbitMQ.publishWeaveHealthCheck({})
@@ -226,32 +163,20 @@ describe('rabbitmq.js unit test', function () {
     })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns()
+      RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
         containerId: 'id-1',
         delay: 5000
       }
       RabbitMQ.publishWeaveHealthCheck(testArgs)
 
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .withArgs('weave.health.check', testArgs).called).to.be.true()
       done()
     })
   }) // end publishWeaveHealthCheck
 
   describe('publishWeavePeerForget', function () {
-    beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      }
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher = null
-      done()
-    })
-
     it('should throw if missing data', function (done) {
       expect(function () {
         RabbitMQ.publishWeavePeerForget()
@@ -261,32 +186,20 @@ describe('rabbitmq.js unit test', function () {
     })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns()
+      RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
         hostname: '10.0.0.99'
       }
       RabbitMQ.publishWeavePeerForget(testArgs)
 
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .withArgs('weave.peer.forget', testArgs).called).to.be.true()
       done()
     })
   }) // end publishWeavePeerForget
 
   describe('publishWeavePeerRemove', function () {
-    beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      }
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher = null
-      done()
-    })
-
     it('should throw if missing data', function (done) {
       expect(function () {
         RabbitMQ.publishWeavePeerRemove()
@@ -296,7 +209,7 @@ describe('rabbitmq.js unit test', function () {
     })
 
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publish.returns()
+      RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
         hostname: '10.0.0.99',
@@ -304,7 +217,7 @@ describe('rabbitmq.js unit test', function () {
       }
       RabbitMQ.publishWeavePeerRemove(testArgs)
 
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .withArgs('weave.peer.remove', testArgs).called).to.be.true()
       done()
     })
@@ -345,31 +258,24 @@ describe('rabbitmq.js unit test', function () {
   }) // end _dataCheck
 
   describe('publishOnDockUnhealthy', function () {
-    beforeEach(function (done) {
-      RabbitMQ._publisher = {
-        publish: sinon.stub()
-      }
-      done()
-    })
-
     it('should publish on-dock-unhealthy', function (done) {
       var testData = {
         host: 'testHost',
         githubId: 1253543
       }
-      RabbitMQ._publisher.publish.returns()
+      RabbitMQ._publisher.publishTask.returns()
 
       RabbitMQ.publishOnDockUnhealthy(testData)
 
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .withArgs('on-dock-unhealthy').called).to.be.true()
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .args[0][1].timestamp).to.exist()
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .args[0][1].dockerHealthCheckId).to.exist()
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .args[0][1].host).to.equal(testData.host)
-      expect(RabbitMQ._publisher.publish
+      expect(RabbitMQ._publisher.publishTask
         .args[0][1].githubId).to.equal(testData.githubId)
 
       done()

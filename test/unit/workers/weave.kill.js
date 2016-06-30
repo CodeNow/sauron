@@ -14,7 +14,7 @@ const expect = Code.expect
 const BaseDockerClient = require('@runnable/loki')._BaseClient
 const sinon = require('sinon')
 require('sinon-as-promised')(Promise)
-const TaskFatalError = require('ponos').TaskFatalError
+const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
 const weaveKill = require('../../../lib/workers/weave.kill')
 
@@ -32,7 +32,7 @@ describe('weave.kill.js unit test', function () {
   it('should throw missing containerId', function (done) {
     weaveKill({})
     .asCallback(function (err) {
-      expect(err).to.be.instanceOf(TaskFatalError)
+      expect(err).to.be.instanceOf(WorkerStopError)
       done()
     })
   })
@@ -70,8 +70,8 @@ describe('weave.kill.js unit test', function () {
       containerId: 'container-id-1'
     })
     .asCallback(function (err) {
-      expect(err).to.be.instanceOf(TaskFatalError)
-      expect(err.message).to.equal('weave.kill: Container was not found')
+      expect(err).to.be.instanceOf(WorkerStopError)
+      expect(err.message).to.equal('Container was not found')
       sinon.assert.calledOnce(BaseDockerClient.prototype.killContainerAsync)
       sinon.assert.calledWith(BaseDockerClient.prototype.killContainerAsync, 'container-id-1')
       done()

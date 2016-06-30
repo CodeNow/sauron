@@ -9,14 +9,18 @@ var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
 var lab = exports.lab = Lab.script()
 var beforeEach = lab.beforeEach
+var afterEach = lab.afterEach
 var describe = lab.describe
 var it = lab.it
 
 describe('container-life-cycle-died functional test', function () {
   beforeEach(function (done) {
-    RabbitMQ._publisher = {
-      publish: sinon.stub()
-    }
+    sinon.stub(RabbitMQ._publisher, 'publishTask')
+    done()
+  })
+
+  afterEach(function (done) {
+    RabbitMQ._publisher.publishTask.restore()
     done()
   })
 
@@ -38,8 +42,8 @@ describe('container-life-cycle-died functional test', function () {
       containerLifeCycleDied(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(RabbitMQ._publisher.publish)
-        sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.start', {
+        sinon.assert.calledOnce(RabbitMQ._publisher.publishTask)
+        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.start', {
           dockerUri: testDockerUri,
           orgId: testOrgId
         })
@@ -66,7 +70,7 @@ describe('container-life-cycle-died functional test', function () {
       containerLifeCycleDied(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.notCalled(RabbitMQ._publisher.publish)
+        sinon.assert.notCalled(RabbitMQ._publisher.publishTask)
         done()
       })
     })

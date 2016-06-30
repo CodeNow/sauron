@@ -11,8 +11,7 @@ var Code = require('code')
 var expect = Code.expect
 
 var sinon = require('sinon')
-var ponos = require('ponos')
-var TaskFatalError = ponos.TaskFatalError
+const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
 var Events = require('../../../lib/models/events.js')
 var containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js')
@@ -38,7 +37,7 @@ describe('container-life-cycle-died.js unit test', function () {
           throw new Error('should have thrown')
         })
         .catch(function (err) {
-          expect(err).to.be.instanceOf(TaskFatalError)
+          expect(err).to.be.instanceOf(WorkerStopError)
           done()
         })
     })

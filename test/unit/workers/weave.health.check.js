@@ -13,7 +13,7 @@ var expect = Code.expect
 
 var sinon = require('sinon')
 require('sinon-as-promised')(Promise)
-var TaskFatalError = require('ponos').TaskFatalError
+const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
 var Docker = require('../../../lib/models/docker')
 var rabbitmq = require('../../../lib/models/rabbitmq')
@@ -35,7 +35,7 @@ describe('weave.health.check.js unit test', function () {
   it('should throw missing containerId', function (done) {
     weaveHealthCheck({})
     .asCallback(function (err) {
-      expect(err).to.be.instanceOf(TaskFatalError)
+      expect(err).to.be.instanceOf(WorkerStopError)
       done()
     })
   })
@@ -43,7 +43,7 @@ describe('weave.health.check.js unit test', function () {
   it('should throw missing delay', function (done) {
     weaveHealthCheck({ containerId: 'cont-1' })
     .asCallback(function (err) {
-      expect(err).to.be.instanceOf(TaskFatalError)
+      expect(err).to.be.instanceOf(WorkerStopError)
       done()
     })
   })
@@ -102,8 +102,8 @@ describe('weave.health.check.js unit test', function () {
       delay: 10
     })
     .asCallback(function (err) {
-      expect(err).to.be.instanceOf(TaskFatalError)
-      expect(err.message).to.equal('weave.health.check: Container was not found')
+      expect(err).to.be.instanceOf(WorkerStopError)
+      expect(err.message).to.equal('Container was not found')
       sinon.assert.calledOnce(Docker.getLogsAsync)
       sinon.assert.calledWith(Docker.getLogsAsync, 'container-id-1')
       done()

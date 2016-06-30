@@ -17,9 +17,7 @@ var it = lab.it
 
 describe('docker.events-stream.disconnected functional test', function () {
   beforeEach(function (done) {
-    RabbitMQ._publisher = {
-      publish: sinon.stub()
-    }
+    sinon.stub(RabbitMQ._publisher, 'publishTask')
     sinon.stub(Docker, 'doesDockExist')
     sinon.stub(Docker, 'findLightestOrgDock')
     sinon.stub(Docker, 'findDocksByOrgId')
@@ -27,6 +25,7 @@ describe('docker.events-stream.disconnected functional test', function () {
   })
 
   afterEach(function (done) {
+    RabbitMQ._publisher.publishTask.restore()
     Docker.doesDockExist.restore()
     Docker.findLightestOrgDock.restore()
     Docker.findDocksByOrgId.restore()
@@ -63,17 +62,17 @@ describe('docker.events-stream.disconnected functional test', function () {
         sinon.assert.called(Docker.doesDockExist)
         sinon.assert.calledWith(Docker.doesDockExist)
 
-        sinon.assert.called(RabbitMQ._publisher.publish)
-        sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.peer.remove', {
+        sinon.assert.called(RabbitMQ._publisher.publishTask)
+        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.peer.remove', {
           dockerHost: lightestDock,
           hostname: testHost,
           orgId: testGithibId
         })
-        sinon.assert.neverCalledWith(RabbitMQ._publisher.publish, 'weave.peer.remove', {
+        sinon.assert.neverCalledWith(RabbitMQ._publisher.publishTask, 'weave.peer.remove', {
           dockerHost: secondDock,
           hostname: testHost
         })
-        sinon.assert.neverCalledWith(RabbitMQ._publisher.publish, 'weave.peer.remove', {
+        sinon.assert.neverCalledWith(RabbitMQ._publisher.publishTask, 'weave.peer.remove', {
           dockerHost: randomDock,
           hostname: testHost
         })
@@ -95,16 +94,16 @@ describe('docker.events-stream.disconnected functional test', function () {
         sinon.assert.called(Docker.doesDockExist)
         sinon.assert.calledWith(Docker.doesDockExist, dockerHost)
 
-        sinon.assert.called(RabbitMQ._publisher.publish)
-        sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.peer.forget', {
+        sinon.assert.called(RabbitMQ._publisher.publishTask)
+        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.peer.forget', {
           dockerHost: lightestDock,
           hostname: testHost
         })
-        sinon.assert.calledWith(RabbitMQ._publisher.publish, 'weave.peer.forget', {
+        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.peer.forget', {
           dockerHost: secondDock,
           hostname: testHost
         })
-        sinon.assert.neverCalledWith(RabbitMQ._publisher.publish, 'weave.peer.forget', {
+        sinon.assert.neverCalledWith(RabbitMQ._publisher.publishTask, 'weave.peer.forget', {
           dockerHost: randomDock,
           hostname: testHost
         })

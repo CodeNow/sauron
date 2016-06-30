@@ -2,8 +2,9 @@
 require('loadenv')()
 
 var Code = require('code')
-var Hermes = require('runnable-hermes')
 var Lab = require('lab')
+var ponos = require('ponos')
+var Promise = require('bluebird')
 
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
@@ -14,41 +15,40 @@ var afterEach = lab.afterEach
 var beforeEach = lab.beforeEach
 var expect = Code.expect
 
-var subscribedEvents = [
-  'container.network.attached'
-]
+var testWorker
 
-var subscribeQueues = [
-  'weave.start',
-  'weave.peer.forget'
-]
-
-var testSubscriber = new Hermes({
-  hostname: process.env.RABBITMQ_HOSTNAME,
-  password: process.env.RABBITMQ_PASSWORD,
-  port: process.env.RABBITMQ_PORT,
-  username: process.env.RABBITMQ_USERNAME,
-  subscribedEvents: subscribedEvents,
-  queues: subscribeQueues,
-  name: 'testSubscriber'
+const testServer = new ponos.Server({
+  name: process.env.APP_NAME,
+  rabbitmq: {
+    hostname: process.env.RABBITMQ_HOSTNAME,
+    port: process.env.RABBITMQ_PORT,
+    username: process.env.RABBITMQ_USERNAME,
+    password: process.env.RABBITMQ_PASSWORD
+  },
+  events: {
+    'container.network.attached': function (data) {
+      return Promise.try(() => {
+        return testWorker(data)
+      })
+    }
+  }
 })
 
 describe('rabbitmq integration test', function () {
   beforeEach(function (done) {
-    RabbitMQ.create()
-    RabbitMQ._publisher.on('ready', done)
+    RabbitMQ.create().asCallback(done)
   })
 
   beforeEach(function (done) {
-    testSubscriber.connect(done)
+    testServer.start().asCallback(done)
   })
 
   afterEach(function (done) {
-    RabbitMQ.disconnectPublisher(done)
+    RabbitMQ.disconnect().asCallback(done)
   })
 
   afterEach(function (done) {
-    testSubscriber.close(done)
+    testServer.stop().asCallback(done)
   })
 
   describe('check publishing', function () {
@@ -59,11 +59,12 @@ describe('rabbitmq integration test', function () {
         containerIp: 'two'
       }
 
-      testSubscriber.subscribe('container.network.attached', function (data, cb) {
-        expect(data).to.deep.equal(testJob)
-        cb()
-        done()
-      })
+      testWorker = (data) => {
+        return Promise.try(() => {
+          expect(data).to.deep.equal(testJob)
+          done()
+        })
+      }
 
       RabbitMQ.publishContainerNetworkAttached(testJob)
     })
