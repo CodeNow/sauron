@@ -165,7 +165,7 @@ describe('lib/models/docker unit test', function () {
       Docker.findDocksByOrgId(testOrgId, function (err, docks) {
         if (err) { return done(err) }
 
-        expect(docks).to.deep.equal(testDocks)
+        expect(docks).to.equal(testDocks)
 
         sinon.assert.calledOnce(Docker.info)
         sinon.assert.calledWith(Docker.info, sinon.match.func)

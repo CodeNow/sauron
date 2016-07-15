@@ -192,15 +192,15 @@ describe('events.js unit test', function () {
       Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.not.exist()
         expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3)
-        expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.deep.equal({
+        expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.equal({
           dockerHost: '10.0.0.1:4242',
           hostname: '10.0.0.4'
         })
-        expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.deep.equal({
+        expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.equal({
           dockerHost: '10.0.0.2:4242',
           hostname: '10.0.0.4'
         })
-        expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.deep.equal({
+        expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.equal({
           dockerHost: '10.0.0.3:4242',
           hostname: '10.0.0.4'
         })
@@ -712,7 +712,7 @@ describe('events.js unit test', function () {
       }
 
       Events.handleStarted(jobData, function (err) {
-        expect(err).to.deep.equals(testErr)
+        expect(err).to.equals(testErr)
         jobData.containerIp = testIp
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true()

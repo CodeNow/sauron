@@ -240,7 +240,7 @@ describe('weave-wrapper.js unit test', function () {
       WeaveWrapper.report(testDockerHost, function (err, data) {
         expect(err).to.not.exist()
         sinon.assert.calledWith(WeaveWrapper._runCmd, '/usr/bin/weave report', testDockerHost)
-        expect(data).to.deep.equal(reportFixture)
+        expect(data).to.equal(reportFixture)
         done()
       })
     })
@@ -380,11 +380,11 @@ describe('weave-wrapper.js unit test', function () {
       testErr.stderr = testStderr
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.be.instanceof(WeaveError)
-        expect(err.data.err).to.deep.equal(testErr)
+        expect(err.data.err).to.equal(testErr)
         expect(err.data.stdout).to.equal(testStdout)
         expect(err.data.stderr).to.equal(testStderr)
         expect(err.data.command).to.equal(testCmd)
-        expect(err.data.extra).to.deep.equal(testDebug)
+        expect(err.data.extra).to.equal(testDebug)
         sinon.assert.notCalled(RabbitMQ.publishOnDockUnhealthy)
         done()
       }, '', testCmd, testDebug)(testErr, testStdout)
