@@ -1,0 +1,18 @@
+{
+  "maxReviewers": 2, // Maximum  number of people to ping in the PR message, default is 3
+  "numFilesToCheck": 10, // Number of files to check against, default is 5
+  "message": "@reviewers, please review this.",
+  "findPotentialReviewers": true, // mention-bot will try to find potential reviewers based on files history, if disabled, `alwaysNotifyForPaths` is used instead
+  "fileBlacklist": ["*.md"], // mention-bot will ignore any files that match these file globs
+  "userBlacklist": [], // users in this list will never be mentioned by mention-bot
+  "userBlacklistForPR": [], // PR made by users in this list will be ignored
+  "requiredOrgs": ["CodeNow", "Runnable"], // mention-bot will only mention user who are a member of one of these organizations
+  "actions": ["labeled"], // List of PR actions that mention-bot will listen to, default is "opened"
+  "skipAlreadyAssignedPR": false, // mention-bot will ignore already assigned PR's
+  "skipAlreadyMentionedPR": false, // mention-bot will ignore if there is already existing an exact mention
+  "assignToReviewer": true, // mention-bot assigns the most appropriate reviewer for PR
+  "skipTitle": "", // mention-bot will ignore PR that includes text in the title,
+  "withLabel": "review", // mention-bot will only consider PR's with this label. Must set actions to ["labeled"].
+  "delayed": false, // mention-bot will wait to comment until specified time in `delayedUntil` value
+  "skipCollaboratorPR": false, // mention-bot will ignore if PR is made by collaborator
+}
