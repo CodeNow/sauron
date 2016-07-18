@@ -61,7 +61,7 @@ describe('rabbitmq integration test', function () {
 
       testWorker = (data) => {
         return Promise.try(() => {
-          expect(data).to.deep.equal(testJob)
+          expect(data).to.equal(testJob)
           done()
         })
       }
