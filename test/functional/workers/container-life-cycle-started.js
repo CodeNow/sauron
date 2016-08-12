@@ -25,7 +25,6 @@ describe('container-life-cycle-started functional test', function () {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
     sinon.stub(Docker, 'doesDockExist')
     sinon.stub(RabbitMQ, 'publishContainerNetworkAttached')
-    sinon.stub(RabbitMQ, 'publishWeaveHealthCheck')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done()
@@ -36,7 +35,6 @@ describe('container-life-cycle-started functional test', function () {
   afterEach(function (done) {
     Docker.doesDockExist.restore()
     RabbitMQ.publishContainerNetworkAttached.restore()
-    RabbitMQ.publishWeaveHealthCheck.restore()
     delete process.env.WEAVE_PATH
     done()
   })

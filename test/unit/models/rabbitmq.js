@@ -153,29 +153,6 @@ describe('rabbitmq.js unit test', function () {
     })
   }) // end publishWeaveKill
 
-  describe('publishWeaveHealthCheck', function () {
-    it('should throw if missing data', function (done) {
-      expect(function () {
-        RabbitMQ.publishWeaveHealthCheck({})
-      }).to.throw()
-
-      done()
-    })
-
-    it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publishTask.returns()
-      var testArgs = {
-        containerId: 'id-1',
-        delay: 5000
-      }
-      RabbitMQ.publishWeaveHealthCheck(testArgs)
-
-      expect(RabbitMQ._publisher.publishTask
-        .withArgs('weave.health.check', testArgs).called).to.be.true()
-      done()
-    })
-  }) // end publishWeaveHealthCheck
-
   describe('publishWeavePeerForget', function () {
     it('should throw if missing data', function (done) {
       expect(function () {
