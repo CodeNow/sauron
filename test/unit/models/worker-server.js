@@ -38,7 +38,6 @@ describe('WorkerServer unit test', function () {
         sinon.assert.calledWith(ponos.Server, sinon.match({
           log: sinon.match.object,
           tasks: {
-            'weave.health.check': sinon.match.any,
             'weave.kill': sinon.match.any,
             'weave.start': sinon.match.any,
             'weave.peer.forget': sinon.match.any,

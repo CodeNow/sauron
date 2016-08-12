@@ -359,7 +359,6 @@ describe('events.js unit test', function () {
   describe('handleStarted', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached')
-      sinon.stub(RabbitMQ, 'publishWeaveHealthCheck')
       sinon.stub(Events, '_isNetworkNeeded')
       sinon.stub(Events, '_isWeaveContainer')
       sinon.stub(WeaveWrapper, 'attach')
@@ -369,46 +368,11 @@ describe('events.js unit test', function () {
 
     afterEach(function (done) {
       RabbitMQ.publishContainerNetworkAttached.restore()
-      RabbitMQ.publishWeaveHealthCheck.restore()
       Events._isNetworkNeeded.restore()
       Events._isWeaveContainer.restore()
       WeaveWrapper.attach.restore()
       Docker.doesDockExist.restore()
       done()
-    })
-
-    it('should publish weave health check if weave started', function (done) {
-      Events._isWeaveContainer.returns(true)
-
-      Events.handleStarted({ id: 'container-id' }, function (err) {
-        expect(err).to.not.exist()
-        sinon.assert.callCount(RabbitMQ.publishWeaveHealthCheck, 6)
-        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
-          containerId: 'container-id',
-          delay: 5000
-        })
-        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
-          containerId: 'container-id',
-          delay: 60000
-        })
-        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
-          containerId: 'container-id',
-          delay: 120000
-        })
-        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
-          containerId: 'container-id',
-          delay: 300000
-        })
-        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
-          containerId: 'container-id',
-          delay: 900000
-        })
-        sinon.assert.calledWith(RabbitMQ.publishWeaveHealthCheck, {
-          containerId: 'container-id',
-          delay: 1800000
-        })
-        done()
-      })
     })
 
     it('should not attach if network not needed', function (done) {
