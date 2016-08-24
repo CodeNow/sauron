@@ -321,12 +321,12 @@ describe('weave-wrapper.js unit test', function () {
 
   describe('_handleCmdResult', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, 'publishOnDockUnhealthy')
+      sinon.stub(RabbitMQ, 'publishDockLost')
       done()
     })
 
     afterEach(function (done) {
-      RabbitMQ.publishOnDockUnhealthy.restore()
+      RabbitMQ.publishDockLost.restore()
       done()
     })
 
@@ -361,8 +361,8 @@ describe('weave-wrapper.js unit test', function () {
       }
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.be.instanceof(WeaveError)
-        sinon.assert.calledOnce(RabbitMQ.publishOnDockUnhealthy)
-        sinon.assert.calledWith(RabbitMQ.publishOnDockUnhealthy, debug)
+        sinon.assert.calledOnce(RabbitMQ.publishDockLost)
+        sinon.assert.calledWith(RabbitMQ.publishDockLost, debug)
         done()
       }, 'test', '', debug)(testErr)
     })
@@ -385,7 +385,7 @@ describe('weave-wrapper.js unit test', function () {
         expect(err.data.stderr).to.equal(testStderr)
         expect(err.data.command).to.equal(testCmd)
         expect(err.data.extra).to.equal(testDebug)
-        sinon.assert.notCalled(RabbitMQ.publishOnDockUnhealthy)
+        sinon.assert.notCalled(RabbitMQ.publishDockLost)
         done()
       }, '', testCmd, testDebug)(testErr, testStdout)
     })

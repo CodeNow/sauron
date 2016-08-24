@@ -234,48 +234,43 @@ describe('rabbitmq.js unit test', function () {
     })
   }) // end _dataCheck
 
-  describe('publishOnDockUnhealthy', function () {
-    it('should publish on-dock-unhealthy', function (done) {
+  describe('publishDockLost', function () {
+    it('should publish dock.lost', function (done) {
       var testData = {
-        host: 'testHost',
-        githubId: 1253543
+        host: 'testHost'
       }
       RabbitMQ._publisher.publishTask.returns()
 
-      RabbitMQ.publishOnDockUnhealthy(testData)
+      RabbitMQ.publishDockLost(testData)
 
       expect(RabbitMQ._publisher.publishTask
-        .withArgs('on-dock-unhealthy').called).to.be.true()
+        .withArgs('dock.lost').called).to.be.true()
       expect(RabbitMQ._publisher.publishTask
         .args[0][1].timestamp).to.exist()
       expect(RabbitMQ._publisher.publishTask
         .args[0][1].dockerHealthCheckId).to.exist()
       expect(RabbitMQ._publisher.publishTask
         .args[0][1].host).to.equal(testData.host)
-      expect(RabbitMQ._publisher.publishTask
-        .args[0][1].githubId).to.equal(testData.githubId)
 
       done()
     })
 
     it('should throw if missing keys', function (done) {
       var testData = {
-        host: 'testHost',
-        githubId: 1253543
+        host: 'testHost'
       }
 
       Object.keys(testData).forEach(function (key) {
         var test = {
-          host: 'testHost',
-          githubId: 1253543
+          host: 'testHost'
         }
         delete test[key]
         expect(function () {
-          RabbitMQ.publishOnDockUnhealthy(test)
+          RabbitMQ.publishDockLost(test)
         }).to.throw()
       })
 
       done()
     })
-  }) // end publishOnDockUnhealthy
+  }) // end publishDockLost
 }) // end rabbitmq.js unit test
