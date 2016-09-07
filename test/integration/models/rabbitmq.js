@@ -53,8 +53,8 @@ describe('rabbitmq integration test', function () {
 
   describe('check publishing', function () {
     it('should publish container.network.attached job', function (done) {
-      var testJob = {
-        id: 1234,
+      const testJob = {
+        id: '1234',
         inspectData: 'one',
         containerIp: 'two'
       }
