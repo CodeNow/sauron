@@ -11,7 +11,7 @@ const Code = require('code')
 const expect = Code.expect
 
 const sinon = require('sinon')
-
+require('sinon-as-promised')(require('bluebird'))
 const Events = require('../../../lib/models/events.js')
 const containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js').task
 

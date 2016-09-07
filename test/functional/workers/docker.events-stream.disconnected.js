@@ -1,19 +1,19 @@
 'use strict'
 require('loadenv')()
 
-var Lab = require('lab')
-var sinon = require('sinon')
-var Promise = require('bluebird')
+const Lab = require('lab')
+const sinon = require('sinon')
+const Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
-var dockerEventStreamDisconnected = require('../../../lib/workers/docker.events-stream.disconnected.js')
-var Docker = require('../../../lib/models/docker')
-var RabbitMQ = require('../../../lib/models/rabbitmq')
+const dockerEventStreamDisconnected = require('../../../lib/workers/docker.events-stream.disconnected.js').task
+const Docker = require('../../../lib/models/docker')
+const RabbitMQ = require('../../../lib/models/rabbitmq')
 
-var lab = exports.lab = Lab.script()
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var describe = lab.describe
-var it = lab.it
+const lab = exports.lab = Lab.script()
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const describe = lab.describe
+const it = lab.it
 
 describe('docker.events-stream.disconnected functional test', function () {
   beforeEach(function (done) {

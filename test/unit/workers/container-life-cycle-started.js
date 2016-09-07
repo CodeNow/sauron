@@ -11,6 +11,7 @@ const Code = require('code')
 const expect = Code.expect
 
 const sinon = require('sinon')
+require('sinon-as-promised')(require('bluebird'))
 
 const Events = require('../../../lib/models/events.js')
 const containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js').task
@@ -18,7 +19,7 @@ const containerLifeCycleStarted = require('../../../lib/workers/container-life-c
 describe('container-life-cycle-started.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleStartedAsync')
+      sinon.stub(Events, 'handleStartedAsync').resolves()
       done()
     })
 
@@ -28,7 +29,7 @@ describe('container-life-cycle-started.js unit test', function () {
     })
 
     it('should throw error if handleStartedAsync failed', function (done) {
-      Events.handleStartedAsync.throws(new Error('test'))
+      Events.handleStartedAsync.rejects(new Error('test'))
       containerLifeCycleStarted({})
         .then(function () {
           throw new Error('should have thrown')
@@ -40,7 +41,6 @@ describe('container-life-cycle-started.js unit test', function () {
     })
 
     it('should be fine if no errors', function (done) {
-      Events.handleStartedAsync.returns()
       containerLifeCycleStarted({})
         .then(function () {
           done()
