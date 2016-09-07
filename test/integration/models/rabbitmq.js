@@ -55,7 +55,7 @@ describe('rabbitmq integration test', function () {
     it('should publish container.network.attached job', function (done) {
       const testJob = {
         id: '1234',
-        inspectData: 'one',
+        inspectData: {},
         containerIp: 'two'
       }
 
