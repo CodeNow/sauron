@@ -20,8 +20,8 @@ describe('rabbitmq.js unit test', function () {
     process.env.RABBITMQ_PASSWORD = 'Orcs'
     process.env.RABBITMQ_PORT = '1738'
     process.env.RABBITMQ_USERNAME = 'Azog'
-    sinon.stub(RabbitMQ._publisher, 'publishTask')
-    sinon.stub(RabbitMQ._publisher, 'publishEvent')
+    sinon.stub(RabbitMQ, 'publishTask')
+    sinon.stub(RabbitMQ, 'publishEvent')
     done()
   })
 
@@ -30,52 +30,14 @@ describe('rabbitmq.js unit test', function () {
     delete process.env.RABBITMQ_PASSWORD
     delete process.env.RABBITMQ_PORT
     delete process.env.RABBITMQ_USERNAME
-    RabbitMQ._publisher.publishTask.restore()
-    RabbitMQ._publisher.publishEvent.restore()
+    RabbitMQ.publishTask.restore()
+    RabbitMQ.publishEvent.restore()
     done()
   })
 
-  describe('create', function () {
-    beforeEach(function (done) {
-      sinon.stub(RabbitMQ._publisher, 'connect')
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher.connect.restore()
-      done()
-    })
-
-    it('should set both client', function (done) {
-      RabbitMQ._publisher.connect.returns()
-      RabbitMQ.create()
-      sinon.assert.calledOnce(RabbitMQ._publisher.connect)
-      done()
-    })
-  }) // end create
-
-  describe('disconnect', function () {
-    beforeEach(function (done) {
-      sinon.stub(RabbitMQ._publisher, 'disconnect')
-      done()
-    })
-
-    afterEach(function (done) {
-      RabbitMQ._publisher.disconnect.restore()
-      done()
-    })
-
-    it('should close _publisher', function (done) {
-      RabbitMQ._publisher.disconnect.returns()
-      RabbitMQ.disconnect()
-      sinon.assert.calledOnce(RabbitMQ._publisher.disconnect)
-      done()
-    })
-  }) // end disconnect
-
   describe('publishContainerNetworkAttached', function () {
     it('should call publish with correct key and data', function (done) {
-      RabbitMQ._publisher.publishEvent.returns()
+      RabbitMQ.publishEvent.returns()
 
       var data = {
         containerIp: '10.0.0.2',
@@ -92,9 +54,9 @@ describe('rabbitmq.js unit test', function () {
         }
       }
       RabbitMQ.publishContainerNetworkAttached(data)
-      expect(RabbitMQ._publisher.publishEvent.withArgs('container.network.attached')
+      expect(RabbitMQ.publishEvent.withArgs('container.network.attached')
         .calledOnce).to.be.true()
-      expect(Object.keys(RabbitMQ._publisher.publishEvent.args[0][1]))
+      expect(Object.keys(RabbitMQ.publishEvent.args[0][1]))
         .to.contain(['id', 'inspectData', 'containerIp'])
       done()
     })
@@ -102,14 +64,14 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeaveStart', function () {
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publishTask.returns()
+      RabbitMQ.publishTask.returns()
       var testArgs = {
         dockerUri: 'http://10.0.0.1:4242',
         orgId: 'runnable'
       }
       RabbitMQ.publishWeaveStart(testArgs)
 
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .withArgs('weave.start', testArgs).called).to.be.true()
       done()
     })
@@ -117,13 +79,13 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeaveKill', function () {
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publishTask.returns()
+      RabbitMQ.publishTask.returns()
       var testArgs = {
         containerId: 'id-1'
       }
       RabbitMQ.publishWeaveKill(testArgs)
 
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .withArgs('weave.kill', testArgs).called).to.be.true()
       done()
     })
@@ -131,14 +93,14 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeavePeerForget', function () {
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publishTask.returns()
+      RabbitMQ.publishTask.returns()
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
         hostname: '10.0.0.99'
       }
       RabbitMQ.publishWeavePeerForget(testArgs)
 
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .withArgs('weave.peer.forget', testArgs).called).to.be.true()
       done()
     })
@@ -146,7 +108,7 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishWeavePeerRemove', function () {
     it('should publish _publisher', function (done) {
-      RabbitMQ._publisher.publishTask.returns()
+      RabbitMQ.publishTask.returns()
       var testArgs = {
         dockerHost: '10.0.0.1:4242',
         hostname: '10.0.0.99',
@@ -154,7 +116,7 @@ describe('rabbitmq.js unit test', function () {
       }
       RabbitMQ.publishWeavePeerRemove(testArgs)
 
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .withArgs('weave.peer.remove', testArgs).called).to.be.true()
       done()
     })
@@ -165,17 +127,17 @@ describe('rabbitmq.js unit test', function () {
       var testData = {
         host: 'testHost'
       }
-      RabbitMQ._publisher.publishTask.returns()
+      RabbitMQ.publishTask.returns()
 
       RabbitMQ.publishDockLost(testData)
 
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .withArgs('dock.lost').called).to.be.true()
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .args[0][1].timestamp).to.exist()
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .args[0][1].dockerHealthCheckId).to.exist()
-      expect(RabbitMQ._publisher.publishTask
+      expect(RabbitMQ.publishTask
         .args[0][1].host).to.equal(testData.host)
 
       done()

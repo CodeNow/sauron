@@ -15,12 +15,12 @@ var it = lab.it
 
 describe('docker.events-stream.connected functional test', function () {
   beforeEach(function (done) {
-    sinon.stub(RabbitMQ._publisher, 'publishTask')
+    sinon.stub(RabbitMQ, 'publishTask')
     done()
   })
 
   afterEach(function (done) {
-    RabbitMQ._publisher.publishTask.restore()
+    RabbitMQ.publishTask.restore()
     done()
   })
 
@@ -36,8 +36,8 @@ describe('docker.events-stream.connected functional test', function () {
       dockerEventsStreamConnected(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.called(RabbitMQ._publisher.publishTask)
-        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.start', {
+        sinon.assert.called(RabbitMQ.publishTask)
+        sinon.assert.calledWith(RabbitMQ.publishTask, 'weave.start', {
           dockerUri: testHost,
           orgId: testOrg
         })

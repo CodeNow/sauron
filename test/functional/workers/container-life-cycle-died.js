@@ -15,12 +15,12 @@ const it = lab.it
 
 describe('container-life-cycle-died functional test', function () {
   beforeEach(function (done) {
-    sinon.stub(RabbitMQ._publisher, 'publishTask')
+    sinon.stub(RabbitMQ, 'publishTask')
     done()
   })
 
   afterEach(function (done) {
-    RabbitMQ._publisher.publishTask.restore()
+    RabbitMQ.publishTask.restore()
     done()
   })
 
@@ -42,8 +42,8 @@ describe('container-life-cycle-died functional test', function () {
       containerLifeCycleDied(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(RabbitMQ._publisher.publishTask)
-        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.start', {
+        sinon.assert.calledOnce(RabbitMQ.publishTask)
+        sinon.assert.calledWith(RabbitMQ.publishTask, 'weave.start', {
           dockerUri: testDockerUri,
           orgId: testOrgId
         })
@@ -70,7 +70,7 @@ describe('container-life-cycle-died functional test', function () {
       containerLifeCycleDied(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.notCalled(RabbitMQ._publisher.publishTask)
+        sinon.assert.notCalled(RabbitMQ.publishTask)
         done()
       })
     })
