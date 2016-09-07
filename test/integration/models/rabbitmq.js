@@ -36,7 +36,7 @@ const testServer = new ponos.Server({
 
 describe('rabbitmq integration test', function () {
   beforeEach(function (done) {
-    RabbitMQ.create().asCallback(done)
+    RabbitMQ.connect().asCallback(done)
   })
 
   beforeEach(function (done) {

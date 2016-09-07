@@ -74,14 +74,6 @@ describe('rabbitmq.js unit test', function () {
   }) // end disconnect
 
   describe('publishContainerNetworkAttached', function () {
-    it('should throw if missing data', function (done) {
-      expect(function () {
-        RabbitMQ.publishContainerNetworkAttached()
-      }).to.throw()
-
-      done()
-    })
-
     it('should call publish with correct key and data', function (done) {
       RabbitMQ._publisher.publishEvent.returns()
 
@@ -109,14 +101,6 @@ describe('rabbitmq.js unit test', function () {
   }) // end publishContainerNetworkAttached
 
   describe('publishWeaveStart', function () {
-    it('should throw if missing data', function (done) {
-      expect(function () {
-        RabbitMQ.publishWeaveStart({})
-      }).to.throw()
-
-      done()
-    })
-
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
@@ -132,14 +116,6 @@ describe('rabbitmq.js unit test', function () {
   }) // end publishWeaveStart
 
   describe('publishWeaveKill', function () {
-    it('should throw if missing data', function (done) {
-      expect(function () {
-        RabbitMQ.publishWeaveKill({})
-      }).to.throw()
-
-      done()
-    })
-
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
@@ -154,14 +130,6 @@ describe('rabbitmq.js unit test', function () {
   }) // end publishWeaveKill
 
   describe('publishWeavePeerForget', function () {
-    it('should throw if missing data', function (done) {
-      expect(function () {
-        RabbitMQ.publishWeavePeerForget()
-      }).to.throw()
-
-      done()
-    })
-
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
@@ -177,14 +145,6 @@ describe('rabbitmq.js unit test', function () {
   }) // end publishWeavePeerForget
 
   describe('publishWeavePeerRemove', function () {
-    it('should throw if missing data', function (done) {
-      expect(function () {
-        RabbitMQ.publishWeavePeerRemove()
-      }).to.throw()
-
-      done()
-    })
-
     it('should publish _publisher', function (done) {
       RabbitMQ._publisher.publishTask.returns()
       var testArgs = {
@@ -199,40 +159,6 @@ describe('rabbitmq.js unit test', function () {
       done()
     })
   }) // end publishWeavePeerRemove
-
-  describe('_dataCheck', function () {
-    it('should throw if missing keys', function (done) {
-      var testData = {
-        Goblins: 'Azog'
-      }
-
-      expect(function () {
-        RabbitMQ._dataCheck(testData, ['Goblins', 'Hobgoblins'])
-      }).to.throw()
-
-      done()
-    })
-
-    it('should return if keys present', function (done) {
-      var testData = {
-        Goblins: 'Azog'
-      }
-
-      RabbitMQ._dataCheck(testData, ['Goblins'])
-
-      done()
-    })
-  }) // end _dataCheck
-
-  describe('_dataCheck', function () {
-    it('should throw if missing keys', function (done) {
-      expect(function () {
-        RabbitMQ._handleFatalError(new Error('Gothmog'))
-      }).to.throw()
-
-      done()
-    })
-  }) // end _dataCheck
 
   describe('publishDockLost', function () {
     it('should publish dock.lost', function (done) {
@@ -251,24 +177,6 @@ describe('rabbitmq.js unit test', function () {
         .args[0][1].dockerHealthCheckId).to.exist()
       expect(RabbitMQ._publisher.publishTask
         .args[0][1].host).to.equal(testData.host)
-
-      done()
-    })
-
-    it('should throw if missing keys', function (done) {
-      var testData = {
-        host: 'testHost'
-      }
-
-      Object.keys(testData).forEach(function (key) {
-        var test = {
-          host: 'testHost'
-        }
-        delete test[key]
-        expect(function () {
-          RabbitMQ.publishDockLost(test)
-        }).to.throw()
-      })
 
       done()
     })

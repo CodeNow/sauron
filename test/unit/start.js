@@ -21,7 +21,7 @@ describe('start.js unit test', function () {
   describe('startup', function () {
     beforeEach(function (done) {
       sinon.stub(WorkerServer, 'listen')
-      sinon.stub(RabbitMQ, 'create')
+      sinon.stub(RabbitMQ, 'connect')
       sinon.stub(RabbitMQ, 'publishWeaveStart')
       sinon.stub(Docker, 'info')
       done()
@@ -30,7 +30,7 @@ describe('start.js unit test', function () {
     afterEach(function (done) {
       WorkerServer.listen.restore()
       RabbitMQ.publishWeaveStart.restore()
-      RabbitMQ.create.restore()
+      RabbitMQ.connect.restore()
       Docker.info.restore()
       done()
     })
@@ -51,7 +51,7 @@ describe('start.js unit test', function () {
       }]
       RabbitMQ.publishWeaveStart.returns()
       WorkerServer.listen.returns(Promise.resolve())
-      RabbitMQ.create.returns(Promise.resolve())
+      RabbitMQ.connect.returns(Promise.resolve())
       Docker.info.yieldsAsync(null, peers)
 
       Start.startup(function (err) {
@@ -72,7 +72,7 @@ describe('start.js unit test', function () {
     })
 
     it('should throw an error if `Docker.info` throws an error', function (done) {
-      RabbitMQ.create.returns(Promise.resolve())
+      RabbitMQ.connect.returns(Promise.resolve())
       RabbitMQ.publishWeaveStart.returns()
       WorkerServer.listen.returns(Promise.resolve())
       Docker.info.yieldsAsync('err')
@@ -85,7 +85,7 @@ describe('start.js unit test', function () {
     })
 
     it('should throw an error if `WorkerServer.listen` throws an error', function (done) {
-      RabbitMQ.create.returns(Promise.resolve())
+      RabbitMQ.connect.returns(Promise.resolve())
       WorkerServer.listen.returns(Promise.reject('err'))
 
       Start.startup(function (err) {
@@ -103,7 +103,7 @@ describe('start.js unit test', function () {
         dockerHost: '10.0.0.2:4242',
         Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'other' }]
       }]
-      RabbitMQ.create.returns(Promise.resolve())
+      RabbitMQ.connect.returns(Promise.resolve())
       RabbitMQ.publishWeaveStart.throws()
       WorkerServer.listen.returns(Promise.resolve())
       Docker.info.yieldsAsync(null, peers)
