@@ -4,7 +4,7 @@ require('loadenv')()
 var Lab = require('lab')
 var sinon = require('sinon')
 
-var dockerEventsStreamConnected = require('../../../lib/workers/docker.events-stream.connected.js')
+var dockerEventsStreamConnected = require('../../../lib/workers/docker.events-stream.connected.js').task
 var RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
 var lab = exports.lab = Lab.script()

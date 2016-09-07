@@ -1,19 +1,19 @@
 'use strict'
 require('loadenv')()
 
-var Code = require('code')
-var Lab = require('lab')
-var ponos = require('ponos')
-var Promise = require('bluebird')
+const Code = require('code')
+const Lab = require('lab')
+const ponos = require('ponos')
+const Promise = require('bluebird')
 
-var RabbitMQ = require('../../../lib/models/rabbitmq.js')
+const RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var expect = Code.expect
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const expect = Code.expect
 
 var testWorker
 

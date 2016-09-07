@@ -1,24 +1,24 @@
 'use strict'
 require('loadenv')()
 
-var Code = require('code')
-var Lab = require('lab')
-var nock = require('nock')
-var pluck = require('101/pluck')
+const Code = require('code')
+const Lab = require('lab')
+const nock = require('nock')
+const pluck = require('101/pluck')
 
-var Docker = require('../../../lib/models/docker.js')
-var swarmInfo = require('../../fixtures/swarm-info-dynamic')
+const Docker = require('../../../lib/models/docker.js')
+const swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var beforeEach = lab.beforeEach
-var expect = Code.expect
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const beforeEach = lab.beforeEach
+const expect = Code.expect
 
 describe('docker integration test', function () {
   describe('info', function () {
-    var dockerIp1 = '10.1.1.1'
-    var dockerIp2 = '10.1.1.2'
+    const dockerIp1 = '10.1.1.1'
+    const dockerIp2 = '10.1.1.2'
     beforeEach(function (done) {
       nock('https://' + process.env.SWARM_HOSTNAME + ':' + process.env.SWARM_PORT,
       { 'encodedQueryParams': true })
@@ -33,7 +33,7 @@ describe('docker integration test', function () {
     it('should get nodes', function (done) {
       Docker.info(function (err, infoData) {
         if (err) { return done(err) }
-        var hosts = infoData.map(pluck('Host'))
+        const hosts = infoData.map(pluck('Host'))
         expect(hosts).to.include(dockerIp1 + ':4242')
         expect(hosts).to.include(dockerIp2 + ':4242')
         done()
