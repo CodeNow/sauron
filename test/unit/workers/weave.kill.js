@@ -16,25 +16,17 @@ const sinon = require('sinon')
 require('sinon-as-promised')(Promise)
 const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
-const weaveKill = require('../../../lib/workers/weave.kill')
+const weaveKill = require('../../../lib/workers/weave.kill').task
 
 describe('weave.kill.js unit test', function () {
   beforeEach(function (done) {
-    sinon.stub(BaseDockerClient.prototype, 'killContainerAsync').returns()
+    sinon.stub(BaseDockerClient.prototype, 'killContainerAsync').resolves()
     done()
   })
 
   afterEach(function (done) {
     BaseDockerClient.prototype.killContainerAsync.restore()
     done()
-  })
-
-  it('should throw missing containerId', function (done) {
-    weaveKill({})
-    .asCallback(function (err) {
-      expect(err).to.be.instanceOf(WorkerStopError)
-      done()
-    })
   })
 
   it('should be fine if no errors', function (done) {

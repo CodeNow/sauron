@@ -10,7 +10,7 @@ var Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 
 var Docker = require('../../../lib/models/docker')
-var weavePeerRemove = require('../../../lib/workers/weave.peer.remove.js')
+var weavePeerRemove = require('../../../lib/workers/weave.peer.remove.js').task
 
 var lab = exports.lab = Lab.script()
 var afterEach = lab.afterEach
