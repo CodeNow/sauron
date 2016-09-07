@@ -1,20 +1,19 @@
 'use strict'
 require('loadenv')()
 
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var Code = require('code')
-var expect = Code.expect
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const Code = require('code')
+const expect = Code.expect
 
-var sinon = require('sinon')
-const WorkerStopError = require('error-cat/errors/worker-stop-error')
+const sinon = require('sinon')
 
-var Events = require('../../../lib/models/events.js')
-var containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js')
+const Events = require('../../../lib/models/events.js')
+const containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js').task
 
 describe('container-life-cycle-started.js unit test', function () {
   describe('run', function () {
