@@ -53,7 +53,7 @@
     "keypather": "^2.0.0",
     "loadenv": "^2.1.0",
     "mississippi": "^1.2.0",
-    "ponos": "^4.2.1",
+    "ponos": "^5.1.1",
     "underscore": "^1.8.3",
     "uuid": "^2.0.1"
   },

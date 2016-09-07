@@ -20,30 +20,15 @@ describe('container-life-cycle-died.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
       sinon.stub(Events, 'handleDied')
-      sinon.stub(Events, 'validateContainerJob')
       done()
     })
 
     afterEach(function (done) {
       Events.handleDied.restore()
-      Events.validateContainerJob.restore()
       done()
     })
 
-    it('should throw error if invalid job', function (done) {
-      Events.validateContainerJob.returns(false)
-      containerLifeCycleDied({})
-        .then(function () {
-          throw new Error('should have thrown')
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(WorkerStopError)
-          done()
-        })
-    })
-
     it('should throw error if handleDied throws', function (done) {
-      Events.validateContainerJob.returns(true)
       Events.handleDied.throws(new Error('test'))
       containerLifeCycleDied({})
         .then(function () {
@@ -56,7 +41,6 @@ describe('container-life-cycle-died.js unit test', function () {
     })
 
     it('should be fine if no errors', function (done) {
-      Events.validateContainerJob.returns(true)
       Events.handleDied.returns()
       containerLifeCycleDied({})
         .then(function () {

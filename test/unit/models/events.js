@@ -751,57 +751,6 @@ describe('events.js unit test', function () {
     })
   }) // end _isNetworkNeeded
 
-  describe('validateContainerJob', function () {
-    it('should return false if no id', function (done) {
-      var testData = {}
-      expect(Events.validateContainerJob(testData))
-        .to.be.false()
-      done()
-    })
-
-    it('should return false if missing host', function (done) {
-      var testData = {
-        id: '12352524'
-      }
-      expect(Events.validateContainerJob(testData))
-        .to.be.false()
-      done()
-    })
-
-    it('should return false if no from', function (done) {
-      var testData = {
-        id: '12352524',
-        host: 'http://localhost:4242'
-      }
-      expect(Events.validateContainerJob(testData))
-        .to.be.false()
-      done()
-    })
-
-    it('should return false if no tag', function (done) {
-      var testData = {
-        id: '12352524',
-        host: 'http://localhost:4242',
-        from: 'something'
-      }
-      expect(Events.validateContainerJob(testData))
-        .to.be.false()
-      done()
-    })
-
-    it('should return true', function (done) {
-      var testData = {
-        id: '12352524',
-        host: 'http://localhost:4242',
-        from: 'something',
-        tags: 'me,you,myDogBlue'
-      }
-      expect(Events.validateContainerJob(testData))
-        .to.be.true()
-      done()
-    })
-  }) // end validateContainerJob
-
   describe('validateDockerJob', function () {
     it('should return false if no tag or host', function (done) {
       var testData = {}
