@@ -142,12 +142,12 @@ describe('lib/models/docker unit test', function () {
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee')
-      Docker.info.yieldsAsync(testError)
+      Docker.info.rejects(testError)
 
       Docker.findDocksByOrgId('4643352', function (err) {
         expect(err).to.equal(testError)
         sinon.assert.calledOnce(Docker.info)
-        sinon.assert.calledWith(Docker.info, sinon.match.func)
+        sinon.assert.calledWith(Docker.info)
         done()
       })
     })
@@ -157,7 +157,7 @@ describe('lib/models/docker unit test', function () {
       var testInfo = ['a', 'b']
       var testOrgId = '4643352'
 
-      Docker.info.yieldsAsync(null, testInfo)
+      Docker.info.resolves(testInfo)
       Docker._findDocksByOrgId.returns(testDocks)
 
       Docker.findDocksByOrgId(testOrgId, function (err, docks) {
@@ -166,7 +166,7 @@ describe('lib/models/docker unit test', function () {
         expect(docks).to.equal(testDocks)
 
         sinon.assert.calledOnce(Docker.info)
-        sinon.assert.calledWith(Docker.info, sinon.match.func)
+        sinon.assert.calledWith(Docker.info)
 
         sinon.assert.calledOnce(Docker._findDocksByOrgId)
         sinon.assert.calledWith(Docker._findDocksByOrgId, testInfo, testOrgId)
@@ -248,7 +248,11 @@ describe('lib/models/docker unit test', function () {
       var testError = new Error('bee')
       Swarm.prototype.swarmInfoAsync.rejects(testError)
 
-      Docker.info(function (err) {
+      Docker.info()
+      .tap(() => {
+        done(new Error('Should never happen'))
+      })
+      .catch((err) => {
         expect(err).to.equal(testError)
         sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
         done()
@@ -269,12 +273,13 @@ describe('lib/models/docker unit test', function () {
       swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
       Swarm.prototype.swarmInfoAsync.resolves(swarmInfoData)
 
-      Docker.info(function (err, docks) {
-        expect(err).to.not.exist()
+      Docker.info()
+      .then((docks) => {
         expect(docks.length).to.equal(3)
         sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
         done()
       })
+      .catch(done)
     })
   })
 })
