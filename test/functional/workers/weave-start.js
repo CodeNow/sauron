@@ -12,7 +12,7 @@ require('sinon-as-promised')(Promise)
 const Swarmerode = require('swarmerode')._Swarmerode
 
 const swarmInfo = require('../../fixtures/swarm-info-dynamic')
-const weaveStart = require('../../../lib/workers/weave-start.js').task
+const weaveStart = require('../../../lib/workers/weave.start.js').task
 
 const lab = exports.lab = Lab.script()
 const afterEach = lab.afterEach
@@ -21,7 +21,7 @@ const describe = lab.describe
 const expect = Code.expect
 const it = lab.it
 
-describe('weave-start functional test', function () {
+describe('weave.start functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
     sinon.stub(Swarm.prototype, 'swarmInfoAsync')
@@ -82,4 +82,4 @@ describe('weave-start functional test', function () {
       })
     })
   }) // end should launch weave
-}) // end weave-start functional test
+}) // end weave.start functional test

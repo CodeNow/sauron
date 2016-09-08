@@ -14,9 +14,9 @@ const sinon = require('sinon')
 require('sinon-as-promised')(require('bluebird'))
 
 const Events = require('../../../lib/models/events.js')
-const weaveStart = require('../../../lib/workers/weave-start.js').task
+const weaveStart = require('../../../lib/workers/weave.start.js').task
 
-describe('weave-start.js unit test', function () {
+describe('weave.start.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
       sinon.stub(Events, 'handleStartAsync').resolves()
@@ -48,4 +48,4 @@ describe('weave-start.js unit test', function () {
       .asCallback(done)
     })
   }) // end run
-}) // end weave-start
+}) // end weave.start
