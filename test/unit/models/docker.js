@@ -3,25 +3,23 @@
 
 require('loadenv')()
 
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var Code = require('code')
-var miss = require('mississippi')
-var expect = Code.expect
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const Code = require('code')
+const expect = Code.expect
 
 const Swarmerode = require('swarmerode')._Swarmerode
-const BaseDockerClient = require('@runnable/loki')._BaseClient
 const Swarm = require('@runnable/loki').Swarm
-var sinon = require('sinon')
-var Promise = require('bluebird')
+const sinon = require('sinon')
+const Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 
-var Docker = require('../../../lib/models/docker')
-var swarmInfo = require('../../fixtures/swarm-info-dynamic')
+const Docker = require('../../../lib/models/docker')
+const swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
 describe('lib/models/docker unit test', function () {
   describe('doesDockExist', function () {
@@ -275,79 +273,6 @@ describe('lib/models/docker unit test', function () {
         expect(err).to.not.exist()
         expect(docks.length).to.equal(3)
         sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
-        done()
-      })
-    })
-  })
-
-  describe('getLogs', function () {
-    beforeEach(function (done) {
-      var logsStream = function (string) {
-        return miss.from(function (size, next) {
-          // if there's no more content
-          // left in the string, close the stream.
-          if (string.length <= 0) return next(null, null)
-
-          // Pull in a new chunk of text,
-          // removing it from the string.
-          var chunk = string.slice(0, size)
-          string = string.slice(size)
-
-          // Emit "chunk" from the stream.
-          next(null, chunk)
-        })
-      }
-      sinon.stub(BaseDockerClient.prototype, 'logsContainerAsync').resolves(logsStream('some weave logs'))
-      done()
-    })
-    afterEach(function (done) {
-      BaseDockerClient.prototype.logsContainerAsync.restore()
-      done()
-    })
-    it('should call getLogs with correct options', function (done) {
-      Docker.getLogs('container-id', function (err) {
-        expect(err).to.not.exist()
-        sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
-          'container-id', {
-            stdout: true,
-            stderr: true
-          })
-        done()
-      })
-    })
-
-    it('should fail if logs call failed', function (done) {
-      var dockerError = new Error('Docker error')
-      BaseDockerClient.prototype.logsContainerAsync.rejects(dockerError)
-      Docker.getLogs('container-id', function (err) {
-        expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
-          'container-id', {
-            stdout: true,
-            stderr: true
-          })
-        done()
-      })
-    })
-
-    it('should fail if logs stream failed', function (done) {
-      var dockerError = new Error('Docker error')
-      var logsStream = function (string) {
-        return miss.from(function (size, next) {
-          next(dockerError)
-        })
-      }
-      BaseDockerClient.prototype.logsContainerAsync.resolves(logsStream('some weave logs'))
-      Docker.getLogs('container-id', function (err) {
-        expect(err).to.equal(dockerError)
-        sinon.assert.calledOnce(BaseDockerClient.prototype.logsContainerAsync)
-        sinon.assert.calledWith(BaseDockerClient.prototype.logsContainerAsync,
-          'container-id', {
-            stdout: true,
-            stderr: true
-          })
         done()
       })
     })
