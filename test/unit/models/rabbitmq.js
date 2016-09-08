@@ -124,22 +124,13 @@ describe('rabbitmq.js unit test', function () {
 
   describe('publishDockLost', function () {
     it('should publish dock.lost', function (done) {
-      var testData = {
+      const testData = {
         host: 'testHost'
       }
       RabbitMQ.publishTask.returns()
-
       RabbitMQ.publishDockLost(testData)
-
-      expect(RabbitMQ.publishTask
-        .withArgs('dock.lost').called).to.be.true()
-      expect(RabbitMQ.publishTask
-        .args[0][1].timestamp).to.exist()
-      expect(RabbitMQ.publishTask
-        .args[0][1].dockerHealthCheckId).to.exist()
-      expect(RabbitMQ.publishTask
-        .args[0][1].host).to.equal(testData.host)
-
+      expect(RabbitMQ.publishTask.withArgs('dock.lost').called).to.be.true()
+      expect(RabbitMQ.publishTask.args[0][1].host).to.equal(testData.host)
       done()
     })
   }) // end publishDockLost
