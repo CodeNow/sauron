@@ -12,40 +12,73 @@ const expect = Code.expect
 
 const sinon = require('sinon')
 require('sinon-as-promised')(require('bluebird'))
-const Events = require('../../../lib/models/events.js')
-const containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js').task
+const RabbitMQ = require('../../../lib/models/rabbitmq.js')
+const ContainerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js')
+const containerLifeCycleDied = ContainerLifeCycleDied.task
 
 describe('container-life-cycle-died.js unit test', function () {
-  describe('run', function () {
+  describe('#task', () => {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleDied')
+      sinon.stub(ContainerLifeCycleDied, '_isWeaveContainer')
+      sinon.stub(RabbitMQ, 'publishWeaveStart')
       done()
     })
 
     afterEach(function (done) {
-      Events.handleDied.restore()
+      ContainerLifeCycleDied._isWeaveContainer.restore()
+      RabbitMQ.publishWeaveStart.restore()
       done()
     })
 
-    it('should throw error if handleDied throws', function (done) {
-      Events.handleDied.throws(new Error('test'))
-      containerLifeCycleDied({})
-        .then(function () {
-          throw new Error('should have thrown')
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(Error)
-          done()
-        })
+    it('should publish start if weave container', function (done) {
+      ContainerLifeCycleDied._isWeaveContainer.returns(true)
+      RabbitMQ.publishWeaveStart.returns()
+
+      containerLifeCycleDied({
+        host: 'ras',
+        tags: 'tag,me',
+        from: 'weaveworks/weave'
+      })
+      .tap(() => {
+        expect(RabbitMQ.publishWeaveStart.calledOnce).to.be.true()
+      })
+      .asCallback(done)
     })
 
-    it('should be fine if no errors', function (done) {
-      Events.handleDied.returns()
+    it('should not publish start', function (done) {
+      ContainerLifeCycleDied._isWeaveContainer.returns(false)
+
       containerLifeCycleDied({})
-        .then(function () {
-          done()
-        })
-        .catch(done)
+      .tap(() => {
+        expect(RabbitMQ.publishWeaveStart.calledOnce).to.be.false()
+      })
+      .asCallback(done)
     })
-  }) // end run
+  })
+
+  describe('_isWeaveContainer', function () {
+    it('should return true if correct container', function (done) {
+      const testData = {
+        from: 'weaveworks/weave'
+      }
+      expect(ContainerLifeCycleDied._isWeaveContainer(testData)).to.be.true()
+      done()
+    })
+
+    it('should return false if wrong container', function (done) {
+      const testData = {
+        from: 'wrong'
+      }
+      expect(ContainerLifeCycleDied._isWeaveContainer(testData)).to.be.false()
+      done()
+    })
+
+    it('should return false if from is null', function (done) {
+      const testData = {
+        from: null
+      }
+      expect(ContainerLifeCycleDied._isWeaveContainer(testData)).to.be.false()
+      done()
+    })
+  }) // end _isWeaveContainer
 }) // end container-life-cycle-died unit test

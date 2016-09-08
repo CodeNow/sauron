@@ -27,16 +27,6 @@ const WeaveWrapper = require('../../../lib/models/weave-wrapper.js')
 require('sinon-as-promised')(Promise)
 
 describe('events.js unit test', function () {
-  beforeEach(function (done) {
-    process.env.WEAVE_IMAGE_NAME = 'weaveworks/weave'
-    done()
-  })
-
-  afterEach(function (done) {
-    delete process.env.WEAVE_IMAGE_NAME
-    done()
-  })
-
   describe('handleStart', function () {
     beforeEach(function (done) {
       sinon.stub(Docker, 'findDocksByOrgId')
@@ -318,49 +308,10 @@ describe('events.js unit test', function () {
     })
   })
 
-  describe('handleDied', function () {
-    beforeEach(function (done) {
-      sinon.stub(Events, '_isWeaveContainer')
-      sinon.stub(RabbitMQ, 'publishWeaveStart')
-      done()
-    })
-
-    afterEach(function (done) {
-      Events._isWeaveContainer.restore()
-      RabbitMQ.publishWeaveStart.restore()
-      done()
-    })
-
-    it('should publish start if weave container', function (done) {
-      Events._isWeaveContainer.returns(true)
-      RabbitMQ.publishWeaveStart.returns()
-
-      Events.handleDied({
-        host: 'ras',
-        tags: 'tag,me'
-      })
-
-      expect(RabbitMQ.publishWeaveStart.calledOnce)
-        .to.be.true()
-      done()
-    })
-
-    it('should not publish start', function (done) {
-      Events._isWeaveContainer.returns(false)
-
-      Events.handleDied()
-
-      expect(RabbitMQ.publishWeaveStart.calledOnce)
-        .to.be.false()
-      done()
-    })
-  }) // end handleDied
-
   describe('handleStarted', function () {
     beforeEach(function (done) {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached')
       sinon.stub(Events, '_isNetworkNeeded')
-      sinon.stub(Events, '_isWeaveContainer')
       sinon.stub(WeaveWrapper, 'attach')
       sinon.stub(Docker, 'doesDockExist')
       done()
@@ -369,7 +320,6 @@ describe('events.js unit test', function () {
     afterEach(function (done) {
       RabbitMQ.publishContainerNetworkAttached.restore()
       Events._isNetworkNeeded.restore()
-      Events._isWeaveContainer.restore()
       WeaveWrapper.attach.restore()
       Docker.doesDockExist.restore()
       done()
@@ -687,36 +637,6 @@ describe('events.js unit test', function () {
       })
     })
   }) // end handleStarted
-
-  describe('_isWeaveContainer', function () {
-    it('should return true if correct container', function (done) {
-      var testData = {
-        from: process.env.WEAVE_IMAGE_NAME
-      }
-
-      expect(Events._isWeaveContainer(testData))
-        .to.be.true()
-      done()
-    })
-
-    it('should return false if wrong container', function (done) {
-      var testData = {
-        from: 'wrong'
-      }
-      expect(Events._isWeaveContainer(testData))
-        .to.be.false()
-      done()
-    })
-
-    it('should return false if from is null', function (done) {
-      var testData = {
-        from: null
-      }
-      expect(Events._isWeaveContainer(testData))
-        .to.be.false()
-      done()
-    })
-  }) // end _isWeaveContainer
 
   describe('_isNetworkNeeded', function () {
     beforeEach(function (done) {
