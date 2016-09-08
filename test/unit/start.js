@@ -1,26 +1,26 @@
 'use strict'
 
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var Code = require('code')
-var expect = Code.expect
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const Code = require('code')
+const expect = Code.expect
 
-var Promise = require('bluebird')
-var sinon = require('sinon')
+const Promise = require('bluebird')
+const sinon = require('sinon')
 
-var Docker = require('../../lib/models/docker.js')
-var RabbitMQ = require('../../lib/models/rabbitmq.js')
-var Start = require('../../lib/start.js')
-var WorkerServer = require('../../lib/models/worker-server.js')
+const Docker = require('../../lib/models/docker.js')
+const RabbitMQ = require('../../lib/models/rabbitmq.js')
+const Start = require('../../lib/start.js')
+const WorkerServer = require('../../lib/models/worker-server.js')
 
 describe('start.js unit test', function () {
   describe('startup', function () {
     beforeEach(function (done) {
-      sinon.stub(WorkerServer, 'listen')
+      sinon.stub(WorkerServer, 'start')
       sinon.stub(RabbitMQ, 'connect')
       sinon.stub(RabbitMQ, 'publishWeaveStart')
       sinon.stub(Docker, 'info')
@@ -28,7 +28,7 @@ describe('start.js unit test', function () {
     })
 
     afterEach(function (done) {
-      WorkerServer.listen.restore()
+      WorkerServer.start.restore()
       RabbitMQ.publishWeaveStart.restore()
       RabbitMQ.connect.restore()
       Docker.info.restore()
@@ -50,7 +50,7 @@ describe('start.js unit test', function () {
         }
       }]
       RabbitMQ.publishWeaveStart.returns()
-      WorkerServer.listen.returns(Promise.resolve())
+      WorkerServer.start.returns(Promise.resolve())
       RabbitMQ.connect.returns(Promise.resolve())
       Docker.info.yieldsAsync(null, peers)
 
@@ -66,7 +66,7 @@ describe('start.js unit test', function () {
           dockerUri: 'http://10.0.0.1:4242',
           orgId: 'codenow'
         })
-        expect(WorkerServer.listen.calledOnce).to.be.true()
+        expect(WorkerServer.start.calledOnce).to.be.true()
         done()
       })
     })
@@ -74,7 +74,7 @@ describe('start.js unit test', function () {
     it('should throw an error if `Docker.info` throws an error', function (done) {
       RabbitMQ.connect.returns(Promise.resolve())
       RabbitMQ.publishWeaveStart.returns()
-      WorkerServer.listen.returns(Promise.resolve())
+      WorkerServer.start.returns(Promise.resolve())
       Docker.info.yieldsAsync('err')
 
       Start.startup(function (err) {
@@ -84,9 +84,9 @@ describe('start.js unit test', function () {
       })
     })
 
-    it('should throw an error if `WorkerServer.listen` throws an error', function (done) {
+    it('should throw an error if `WorkerServer.start` throws an error', function (done) {
       RabbitMQ.connect.returns(Promise.resolve())
-      WorkerServer.listen.returns(Promise.reject('err'))
+      WorkerServer.start.returns(Promise.reject('err'))
 
       Start.startup(function (err) {
         expect(err).to.exist()
@@ -105,12 +105,12 @@ describe('start.js unit test', function () {
       }]
       RabbitMQ.connect.returns(Promise.resolve())
       RabbitMQ.publishWeaveStart.throws()
-      WorkerServer.listen.returns(Promise.resolve())
+      WorkerServer.start.returns(Promise.resolve())
       Docker.info.yieldsAsync(null, peers)
 
       Start.startup(function (err) {
         expect(err).to.exist()
-        sinon.assert.calledOnce(WorkerServer.listen)
+        sinon.assert.calledOnce(WorkerServer.start)
         sinon.assert.calledOnce(Docker.info)
         sinon.assert.calledOnce(RabbitMQ.publishWeaveStart)
         done()
