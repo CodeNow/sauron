@@ -12,24 +12,25 @@ const expect = Code.expect
 
 const sinon = require('sinon')
 require('sinon-as-promised')(require('bluebird'))
-const Events = require('../../../lib/models/events.js')
-const containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js').task
 
-describe('container-life-cycle-died.js unit test', function () {
+const Events = require('../../../lib/models/events.js')
+const weaveStart = require('../../../lib/workers/weave.start.js').task
+
+describe('weave.start.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleDied')
+      sinon.stub(Events, 'handleStartAsync').resolves()
       done()
     })
 
     afterEach(function (done) {
-      Events.handleDied.restore()
+      Events.handleStartAsync.restore()
       done()
     })
 
-    it('should throw error if handleDied throws', function (done) {
-      Events.handleDied.throws(new Error('test'))
-      containerLifeCycleDied({})
+    it('should throw error if setup failed', function (done) {
+      Events.handleStartAsync.rejects(new Error('test'))
+      weaveStart({})
         .then(function () {
           throw new Error('should have thrown')
         })
@@ -40,12 +41,11 @@ describe('container-life-cycle-died.js unit test', function () {
     })
 
     it('should be fine if no errors', function (done) {
-      Events.handleDied.returns()
-      containerLifeCycleDied({})
-        .then(function () {
-          done()
-        })
-        .catch(done)
+      weaveStart({
+        dockerUri: '10.0.0.1:4224',
+        orgId: 'runnable'
+      })
+      .asCallback(done)
     })
   }) // end run
-}) // end container-life-cycle-died unit test
+}) // end weave.start

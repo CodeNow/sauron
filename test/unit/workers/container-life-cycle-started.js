@@ -1,50 +1,35 @@
 'use strict'
 require('loadenv')()
 
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var Code = require('code')
-var expect = Code.expect
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const Code = require('code')
+const expect = Code.expect
 
-var sinon = require('sinon')
-const WorkerStopError = require('error-cat/errors/worker-stop-error')
+const sinon = require('sinon')
+require('sinon-as-promised')(require('bluebird'))
 
-var Events = require('../../../lib/models/events.js')
-var containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js')
+const Events = require('../../../lib/models/events.js')
+const containerLifeCycleStarted = require('../../../lib/workers/container-life-cycle-started.js').task
 
 describe('container-life-cycle-started.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(Events, 'handleStartedAsync')
-      sinon.stub(Events, 'validateContainerJob')
+      sinon.stub(Events, 'handleStartedAsync').resolves()
       done()
     })
 
     afterEach(function (done) {
       Events.handleStartedAsync.restore()
-      Events.validateContainerJob.restore()
       done()
     })
 
-    it('should throw error if invalid job', function (done) {
-      Events.validateContainerJob.returns(false)
-      containerLifeCycleStarted({})
-        .then(function () {
-          throw new Error('should have thrown')
-        })
-        .catch(function (err) {
-          expect(err).to.be.instanceOf(WorkerStopError)
-          done()
-        })
-    })
-
     it('should throw error if handleStartedAsync failed', function (done) {
-      Events.validateContainerJob.returns(true)
-      Events.handleStartedAsync.throws(new Error('test'))
+      Events.handleStartedAsync.rejects(new Error('test'))
       containerLifeCycleStarted({})
         .then(function () {
           throw new Error('should have thrown')
@@ -56,8 +41,6 @@ describe('container-life-cycle-started.js unit test', function () {
     })
 
     it('should be fine if no errors', function (done) {
-      Events.validateContainerJob.returns(true)
-      Events.handleStartedAsync.returns()
       containerLifeCycleStarted({})
         .then(function () {
           done()

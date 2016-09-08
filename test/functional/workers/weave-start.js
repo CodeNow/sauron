@@ -1,27 +1,27 @@
 'use strict'
 require('loadenv')()
 
-var Code = require('code')
-var Swarm = require('@runnable/loki').Swarm
-var fs = require('fs')
-var Lab = require('lab')
-var path = require('path')
-var sinon = require('sinon')
-var Promise = require('bluebird')
+const Code = require('code')
+const Swarm = require('@runnable/loki').Swarm
+const fs = require('fs')
+const Lab = require('lab')
+const path = require('path')
+const sinon = require('sinon')
+const Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 const Swarmerode = require('swarmerode')._Swarmerode
 
-var swarmInfo = require('../../fixtures/swarm-info-dynamic')
-var weaveStart = require('../../../lib/workers/weave-start.js')
+const swarmInfo = require('../../fixtures/swarm-info-dynamic')
+const weaveStart = require('../../../lib/workers/weave.start.js').task
 
-var lab = exports.lab = Lab.script()
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var describe = lab.describe
-var expect = Code.expect
-var it = lab.it
+const lab = exports.lab = Lab.script()
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const describe = lab.describe
+const expect = Code.expect
+const it = lab.it
 
-describe('weave-start functional test', function () {
+describe('weave.start functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
     sinon.stub(Swarm.prototype, 'swarmInfoAsync')
@@ -82,4 +82,4 @@ describe('weave-start functional test', function () {
       })
     })
   }) // end should launch weave
-}) // end weave-start functional test
+}) // end weave.start functional test

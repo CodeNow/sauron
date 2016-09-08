@@ -1,28 +1,28 @@
 'use strict'
 require('loadenv')()
 
-var Promise = require('bluebird')
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var describe = lab.describe
-var it = lab.it
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var Code = require('code')
-var expect = Code.expect
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const describe = lab.describe
+const it = lab.it
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const Code = require('code')
+const expect = Code.expect
 
-var sinon = require('sinon')
+const sinon = require('sinon')
+require('sinon-as-promised')(require('bluebird'))
 const WorkerStopError = require('error-cat/errors/worker-stop-error')
 
-var Docker = require('../../../lib/models/docker')
-var WeaveWrapper = require('../../../lib/models/weave-wrapper')
-var weaveForget = require('../../../lib/workers/weave.peer.forget')
+const Docker = require('../../../lib/models/docker')
+const WeaveWrapper = require('../../../lib/models/weave-wrapper')
+const weaveForget = require('../../../lib/workers/weave.peer.forget').task
 
 describe('weave.peer.forget.js unit test', function () {
   describe('run', function () {
     beforeEach(function (done) {
-      sinon.stub(WeaveWrapper, 'forgetAsync').returns(null)
-      sinon.stub(Docker, 'doesDockExist').returns(true)
+      sinon.stub(WeaveWrapper, 'forgetAsync').resolves(null)
+      sinon.stub(Docker, 'doesDockExist').resolves(true)
       done()
     })
 
@@ -30,24 +30,6 @@ describe('weave.peer.forget.js unit test', function () {
       WeaveWrapper.forgetAsync.restore()
       Docker.doesDockExist.restore()
       done()
-    })
-
-    it('should throw missing dockerHost', function (done) {
-      weaveForget({})
-      .asCallback(function (err) {
-        expect(err).to.be.instanceOf(WorkerStopError)
-        done()
-      })
-    })
-
-    it('should throw missing hostname', function (done) {
-      weaveForget({
-        dockerHost: '10.0.0.1:4224'
-      })
-      .asCallback(function (err) {
-        expect(err).to.be.instanceOf(WorkerStopError)
-        done()
-      })
     })
 
     it('should be fine if no errors', function (done) {
@@ -65,10 +47,8 @@ describe('weave.peer.forget.js unit test', function () {
       })
     })
     it('should throw error if dock check failed', function (done) {
-      var rejectError = new Error('test')
-      var rejectionPromise = Promise.reject(rejectError)
-      rejectionPromise.suppressUnhandledRejections()
-      Docker.doesDockExist.returns(rejectionPromise)
+      const rejectError = new Error('test')
+      Docker.doesDockExist.rejects(rejectError)
       weaveForget({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
@@ -83,7 +63,7 @@ describe('weave.peer.forget.js unit test', function () {
       })
     })
     it('should throw fatal error if dock does not exist', function (done) {
-      Docker.doesDockExist.returns(false)
+      Docker.doesDockExist.resolves(false)
       weaveForget({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'
@@ -98,10 +78,8 @@ describe('weave.peer.forget.js unit test', function () {
       })
     })
     it('should throw error if weave command failed', function (done) {
-      var rejectError = new Error('test')
-      var rejectionPromise = Promise.reject(rejectError)
-      rejectionPromise.suppressUnhandledRejections()
-      WeaveWrapper.forgetAsync.returns(rejectionPromise)
+      const rejectError = new Error('test')
+      WeaveWrapper.forgetAsync.rejects(rejectError)
       weaveForget({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99'

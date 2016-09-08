@@ -1,23 +1,23 @@
 'use strict'
 require('loadenv')()
 
-var Code = require('code')
-var fs = require('fs')
-var Lab = require('lab')
-var path = require('path')
-var sinon = require('sinon')
-var Promise = require('bluebird')
+const Code = require('code')
+const fs = require('fs')
+const Lab = require('lab')
+const path = require('path')
+const sinon = require('sinon')
+const Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 
-var Docker = require('../../../lib/models/docker')
-var weavePeerForget = require('../../../lib/workers/weave.peer.forget.js')
+const Docker = require('../../../lib/models/docker')
+const weavePeerForget = require('../../../lib/workers/weave.peer.forget.js').task
 
-var lab = exports.lab = Lab.script()
-var afterEach = lab.afterEach
-var beforeEach = lab.beforeEach
-var describe = lab.describe
-var expect = Code.expect
-var it = lab.it
+const lab = exports.lab = Lab.script()
+const afterEach = lab.afterEach
+const beforeEach = lab.beforeEach
+const describe = lab.describe
+const expect = Code.expect
+const it = lab.it
 
 describe('weave.peer.forget functional test', function () {
   beforeEach(function (done) {

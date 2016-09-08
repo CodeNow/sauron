@@ -1,34 +1,34 @@
 'use strict'
 require('loadenv')()
 
-var Lab = require('lab')
-var sinon = require('sinon')
+const Lab = require('lab')
+const sinon = require('sinon')
 
-var containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js')
-var RabbitMQ = require('../../../lib/models/rabbitmq.js')
+const containerLifeCycleDied = require('../../../lib/workers/container-life-cycle-died.js').task
+const RabbitMQ = require('../../../lib/models/rabbitmq.js')
 
-var lab = exports.lab = Lab.script()
-var beforeEach = lab.beforeEach
-var afterEach = lab.afterEach
-var describe = lab.describe
-var it = lab.it
+const lab = exports.lab = Lab.script()
+const beforeEach = lab.beforeEach
+const afterEach = lab.afterEach
+const describe = lab.describe
+const it = lab.it
 
 describe('container-life-cycle-died functional test', function () {
   beforeEach(function (done) {
-    sinon.stub(RabbitMQ._publisher, 'publishTask')
+    sinon.stub(RabbitMQ, 'publishTask')
     done()
   })
 
   afterEach(function (done) {
-    RabbitMQ._publisher.publishTask.restore()
+    RabbitMQ.publishTask.restore()
     done()
   })
 
   describe('weave container death', function () {
     it('should publish weave start', function (done) {
-      var testDockerUri = 'http://10.0.0.2:4242'
-      var testOrgId = '12312312'
-      var testJob = {
+      const testDockerUri = 'http://10.0.0.2:4242'
+      const testOrgId = '12312312'
+      const testJob = {
         id: 123,
         host: testDockerUri,
         from: process.env.WEAVE_IMAGE_NAME,
@@ -42,8 +42,8 @@ describe('container-life-cycle-died functional test', function () {
       containerLifeCycleDied(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(RabbitMQ._publisher.publishTask)
-        sinon.assert.calledWith(RabbitMQ._publisher.publishTask, 'weave.start', {
+        sinon.assert.calledOnce(RabbitMQ.publishTask)
+        sinon.assert.calledWith(RabbitMQ.publishTask, 'weave.start', {
           dockerUri: testDockerUri,
           orgId: testOrgId
         })
@@ -54,9 +54,9 @@ describe('container-life-cycle-died functional test', function () {
 
   describe('non-weave container death', function () {
     it('should not publish weave start for non weave container', function (done) {
-      var testDockerUri = 'http://10.0.0.2:4242'
-      var testOrgId = '12312312'
-      var testJob = {
+      const testDockerUri = 'http://10.0.0.2:4242'
+      const testOrgId = '12312312'
+      const testJob = {
         id: 123,
         host: testDockerUri,
         from: 'ubuntu',
@@ -70,7 +70,7 @@ describe('container-life-cycle-died functional test', function () {
       containerLifeCycleDied(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.notCalled(RabbitMQ._publisher.publishTask)
+        sinon.assert.notCalled(RabbitMQ.publishTask)
         done()
       })
     })

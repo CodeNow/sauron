@@ -321,7 +321,7 @@ describe('weave-wrapper.js unit test', function () {
 
   describe('_handleCmdResult', function () {
     beforeEach(function (done) {
-      sinon.stub(RabbitMQ, 'publishDockLost')
+      sinon.stub(RabbitMQ, 'publishDockLost').returns()
       done()
     })
 
