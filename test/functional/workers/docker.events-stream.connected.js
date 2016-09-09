@@ -30,7 +30,7 @@ describe('docker.events-stream.connected functional test', function () {
       var testOrg = '12345125'
       var testJob = {
         host: testHost,
-        tags: testOrg + ',run,build'
+        org: testOrg
       }
 
       dockerEventsStreamConnected(testJob).asCallback(function (err) {

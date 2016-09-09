@@ -32,7 +32,7 @@ describe('container-life-cycle-died functional test', function () {
         id: 123,
         host: testDockerUri,
         from: process.env.WEAVE_IMAGE_NAME,
-        tags: testOrgId + ',build,run',
+        org: testOrgId,
         inspectData: {
           Config: {
             ExposedPorts: [123]
@@ -60,7 +60,7 @@ describe('container-life-cycle-died functional test', function () {
         id: 123,
         host: testDockerUri,
         from: 'ubuntu',
-        tags: testOrgId + ',build,run',
+        org: testOrgId,
         inspectData: {
           Config: {
             ExposedPorts: [123]

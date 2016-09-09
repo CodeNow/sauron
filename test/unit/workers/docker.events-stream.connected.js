@@ -43,7 +43,7 @@ describe('docker.events-stream.connected.js unit test', function () {
       RabbitMQ.publishWeaveStart.returns()
       dockerEventsStreamConnected({
         host: 'testHost',
-        tags: 'projectx,projecty,projectz'
+        org: 'projectx'
       })
       .asCallback(done)
     })

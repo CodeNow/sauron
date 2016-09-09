@@ -353,7 +353,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: '1q2qswedasdasdad,123'
+        org: '1q2qswedasdasdad'
       }, function (err) {
         expect(err).to.be.an.instanceof(WorkerError)
         sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
@@ -379,7 +379,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: '1q2qswedasdasdad,123'
+        org: '1q2qswedasdasdad'
       }, function (err) {
         expect(err).to.be.an.instanceof(WorkerError)
         done()
@@ -405,7 +405,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: '1q2qswedasdasdad,123'
+        org: '1q2qswedasdasdad'
       }, function (err) {
         expect(err).to.be.an.instanceof(WorkerError)
         done()
@@ -433,7 +433,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: orgId + ',1q2qswedasdasdad,123'
+        org: orgId
       }
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(WorkerStopError)
@@ -464,7 +464,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: orgId + ',1q2qswedasdasdad,123'
+        org: orgId
       }
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(WorkerError)
@@ -494,7 +494,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: orgId + ',1q2qswedasdasdad,123'
+        org: orgId
       }
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(WorkerStopError)
@@ -524,7 +524,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: orgId + ',1q2qswedasdasdad,123'
+        org: orgId
       }
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist()
@@ -548,7 +548,7 @@ describe('events.js unit test', function () {
       var jobData = {
         id: testId,
         host: testUri,
-        tags: orgId + ',1q2qswedasdasdad,123'
+        org: orgId
       }
 
       Events.handleStarted(jobData, function (err) {
@@ -584,7 +584,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: orgId + ',1q2qswedasdasdad,123'
+        org: orgId
       }
 
       Events.handleStarted(jobData, function (err) {
@@ -622,7 +622,7 @@ describe('events.js unit test', function () {
             }
           }
         },
-        tags: orgId + ',1q2qswedasdasdad,123'
+        org: orgId
       }
 
       Events.handleStarted(jobData, function (err) {
