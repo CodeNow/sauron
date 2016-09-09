@@ -11,6 +11,7 @@ const expect = Code.expect
 
 const Promise = require('bluebird')
 const sinon = require('sinon')
+require('sinon-as-promised')(Promise)
 
 const Docker = require('../../lib/models/docker.js')
 const RabbitMQ = require('../../lib/models/rabbitmq.js')
@@ -50,9 +51,9 @@ describe('start.js unit test', function () {
         }
       }]
       RabbitMQ.publishWeaveStart.returns()
-      WorkerServer.start.returns(Promise.resolve())
-      RabbitMQ.connect.returns(Promise.resolve())
-      Docker.info.yieldsAsync(null, peers)
+      WorkerServer.start.resolves()
+      RabbitMQ.connect.resolves()
+      Docker.info.resolves(peers)
 
       Start.startup(function (err) {
         if (err) { return done(err) }
@@ -72,10 +73,10 @@ describe('start.js unit test', function () {
     })
 
     it('should throw an error if `Docker.info` throws an error', function (done) {
-      RabbitMQ.connect.returns(Promise.resolve())
+      RabbitMQ.connect.resolves()
       RabbitMQ.publishWeaveStart.returns()
-      WorkerServer.start.returns(Promise.resolve())
-      Docker.info.yieldsAsync('err')
+      WorkerServer.start.resolves()
+      Docker.info.rejects('err')
 
       Start.startup(function (err) {
         expect(err).to.exist()
@@ -85,8 +86,8 @@ describe('start.js unit test', function () {
     })
 
     it('should throw an error if `WorkerServer.start` throws an error', function (done) {
-      RabbitMQ.connect.returns(Promise.resolve())
-      WorkerServer.start.returns(Promise.reject('err'))
+      RabbitMQ.connect.resolves()
+      WorkerServer.start.rejects('err')
 
       Start.startup(function (err) {
         expect(err).to.exist()
@@ -103,10 +104,10 @@ describe('start.js unit test', function () {
         dockerHost: '10.0.0.2:4242',
         Labels: [{ name: 'size', value: 'large' }, { name: 'org', value: 'other' }]
       }]
-      RabbitMQ.connect.returns(Promise.resolve())
+      RabbitMQ.connect.resolves()
       RabbitMQ.publishWeaveStart.throws()
-      WorkerServer.start.returns(Promise.resolve())
-      Docker.info.yieldsAsync(null, peers)
+      WorkerServer.start.resolves()
+      Docker.info.resolves(peers)
 
       Start.startup(function (err) {
         expect(err).to.exist()
