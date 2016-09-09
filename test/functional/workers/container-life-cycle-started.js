@@ -47,7 +47,7 @@ describe('container-life-cycle-started functional test', function () {
         id: '123',
         host: testDockerUri,
         from: process.env.NETWORK_BLACKLIST.split(',')[0],
-        tags: testOrgId + ',build,run',
+        org: testOrgId,
         inspectData: {
           Config: {
             ExposedPorts: [123]
@@ -84,7 +84,7 @@ describe('container-life-cycle-started functional test', function () {
           id: '123',
           host: testDockerUri,
           from: 'ubuntu',
-          tags: '223412,build,run',
+          org: '223412',
           inspectData: {
             Config: {
               ExposedPorts: [123]
@@ -119,7 +119,7 @@ describe('container-life-cycle-started functional test', function () {
           id: '123',
           host: testDockerUri,
           from: 'ubuntu',
-          tags: '1231,build,run',
+          org: '1231',
           inspectData: {
             Config: {
               ExposedPorts: [123]
@@ -143,7 +143,7 @@ describe('container-life-cycle-started functional test', function () {
           id: testContainerId,
           host: testDockerUri,
           from: 'ubuntu',
-          tags: testOrgId + ',build,run',
+          org: testOrgId,
           inspectData: {
             Config: {
               ExposedPorts: [123]
