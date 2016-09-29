@@ -184,15 +184,18 @@ describe('events.js unit test', function () {
         expect(RabbitMQ.publishWeavePeerForget.callCount).to.equal(3)
         expect(RabbitMQ.publishWeavePeerForget.getCall(0).args[0]).to.equal({
           dockerHost: '10.0.0.1:4242',
-          hostname: '10.0.0.4'
+          hostname: '10.0.0.4',
+          orgId: '12981'
         })
         expect(RabbitMQ.publishWeavePeerForget.getCall(1).args[0]).to.equal({
           dockerHost: '10.0.0.2:4242',
-          hostname: '10.0.0.4'
+          hostname: '10.0.0.4',
+          orgId: '12981'
         })
         expect(RabbitMQ.publishWeavePeerForget.getCall(2).args[0]).to.equal({
           dockerHost: '10.0.0.3:4242',
-          hostname: '10.0.0.4'
+          hostname: '10.0.0.4',
+          orgId: '12981'
         })
         done()
       })
