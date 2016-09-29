@@ -97,15 +97,18 @@ describe('docker.events-stream.disconnected functional test', function () {
         sinon.assert.called(RabbitMQ.publishTask)
         sinon.assert.calledWith(RabbitMQ.publishTask, 'weave.peer.forget', {
           dockerHost: lightestDock,
-          hostname: testHost
+          hostname: testHost,
+          orgId: testGithibId
         })
         sinon.assert.calledWith(RabbitMQ.publishTask, 'weave.peer.forget', {
           dockerHost: secondDock,
-          hostname: testHost
+          hostname: testHost,
+          orgId: testGithibId
         })
         sinon.assert.neverCalledWith(RabbitMQ.publishTask, 'weave.peer.forget', {
           dockerHost: randomDock,
-          hostname: testHost
+          hostname: testHost,
+          orgId: testGithibId
         })
         done()
       })
