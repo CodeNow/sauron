@@ -92,7 +92,7 @@ describe('docker.events-stream.disconnected functional test', function () {
         if (err) { return done(err) }
 
         sinon.assert.called(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, dockerHost)
+        sinon.assert.calledWith(Docker.doesDockExist, dockerHost, testGithibId)
 
         sinon.assert.called(RabbitMQ.publishTask)
         sinon.assert.calledWith(RabbitMQ.publishTask, 'weave.peer.forget', {

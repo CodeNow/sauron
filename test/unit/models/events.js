@@ -231,13 +231,14 @@ describe('events.js unit test', function () {
       done()
     })
     it('should not fail if nothing failed', function (done) {
+      const orgGitHubId = '11213123'
       Events.handleDockerEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
-        org: '11213123'
+        org: orgGitHubId
       }, function (err) {
         expect(err).to.not.exist()
         sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242', orgGitHubId)
         sinon.assert.calledOnce(Events._removeWeavePeer)
         sinon.assert.calledWith(Events._removeWeavePeer, '10.0.0.1', '11213123')
         sinon.assert.calledOnce(Events._forgetWeavePeer)
@@ -557,7 +558,7 @@ describe('events.js unit test', function () {
         sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         sinon.assert.calledOnce(WeaveWrapper.attach)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
-        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        sinon.assert.calledWith(Docker.doesDockExist, testHost, orgId)
         done()
       })
     })
@@ -594,7 +595,7 @@ describe('events.js unit test', function () {
           .withArgs(jobData).called).to.be.true()
         sinon.assert.calledOnce(WeaveWrapper.attach)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
-        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        sinon.assert.calledWith(Docker.doesDockExist, testHost, orgId)
         done()
       })
     })
@@ -632,7 +633,7 @@ describe('events.js unit test', function () {
           .withArgs(jobData).called).to.be.true()
         sinon.assert.calledOnce(WeaveWrapper.attach)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
-        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        sinon.assert.calledWith(Docker.doesDockExist, testHost, orgId)
         done()
       })
     })
