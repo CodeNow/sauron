@@ -16,7 +16,7 @@ const sinon = require('sinon')
 const WorkerStopError = require('error-cat/errors/worker-stop-error')
 const WorkerError = require('error-cat/errors/worker-error')
 
-const Docker = require('../../../lib/models/docker.js')
+const Swarm = require('../../../lib/models/swarm.js')
 const Events = require('../../../lib/models/events.js')
 const FailedAttach = require('../../../lib/errors/failed-attach.js')
 const InvalidArgument = require('../../../lib/errors/invalid-argument.js')
@@ -29,19 +29,19 @@ require('sinon-as-promised')(Promise)
 describe('events.js unit test', function () {
   describe('handleStart', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'findDocksByOrgId')
+      sinon.stub(Swarm, 'findDocksByOrgId')
       sinon.stub(WeaveWrapper, 'launch')
       done()
     })
 
     afterEach(function (done) {
-      Docker.findDocksByOrgId.restore()
+      Swarm.findDocksByOrgId.restore()
       WeaveWrapper.launch.restore()
       done()
     })
 
     it('should cb err if findDocksByOrgId err', function (done) {
-      Docker.findDocksByOrgId.yieldsAsync('err')
+      Swarm.findDocksByOrgId.yieldsAsync('err')
 
       Events.handleStart({}, function (err) {
         expect(err).to.exist()
@@ -50,7 +50,7 @@ describe('events.js unit test', function () {
     })
 
     it('should launch with no peers', function (done) {
-      Docker.findDocksByOrgId.yieldsAsync(null, [{
+      Swarm.findDocksByOrgId.yieldsAsync(null, [{
         Host: '10.0.0.1:4242'
       }])
       WeaveWrapper.launch.yieldsAsync()
@@ -66,7 +66,7 @@ describe('events.js unit test', function () {
     })
 
     it('should cb WorkerStopError if target no in peers', function (done) {
-      Docker.findDocksByOrgId.yieldsAsync(null, [])
+      Swarm.findDocksByOrgId.yieldsAsync(null, [])
 
       Events.handleStart({
         dockerUri: 'http://10.0.0.1:4242'
@@ -77,7 +77,7 @@ describe('events.js unit test', function () {
     })
 
     it('should launch with peers but not self', function (done) {
-      Docker.findDocksByOrgId.yieldsAsync(null, [{
+      Swarm.findDocksByOrgId.yieldsAsync(null, [{
         Host: '10.0.0.1:4242'
       }, {
         Host: '10.0.0.2:4242'
@@ -99,7 +99,7 @@ describe('events.js unit test', function () {
 
   describe('_removeWeavePeer', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'findLightestOrgDock').yieldsAsync(null, {
+      sinon.stub(Swarm, 'findLightestOrgDock').yieldsAsync(null, {
         Host: '10.0.0.1:4242'
       })
       sinon.stub(RabbitMQ, 'publishWeavePeerRemove').returns()
@@ -107,7 +107,7 @@ describe('events.js unit test', function () {
     })
 
     afterEach(function (done) {
-      Docker.findLightestOrgDock.restore()
+      Swarm.findLightestOrgDock.restore()
       RabbitMQ.publishWeavePeerRemove.restore()
       done()
     })
@@ -126,7 +126,7 @@ describe('events.js unit test', function () {
     })
 
     it('should cb with fatal error if no dock was found', function (done) {
-      Docker.findLightestOrgDock.yieldsAsync(null, null)
+      Swarm.findLightestOrgDock.yieldsAsync(null, null)
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
         expect(err).to.be.an.instanceof(WorkerStopError)
@@ -137,7 +137,7 @@ describe('events.js unit test', function () {
     })
 
     it('should cb with fatal error if dockHost was not found', function (done) {
-      Docker.findLightestOrgDock.yieldsAsync(null, {
+      Swarm.findLightestOrgDock.yieldsAsync(null, {
         Host: null
       })
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
@@ -151,7 +151,7 @@ describe('events.js unit test', function () {
 
     it('should cb with error if finding dock failed', function (done) {
       var swarmError = new Error('Swarm error')
-      Docker.findLightestOrgDock.yieldsAsync(swarmError)
+      Swarm.findLightestOrgDock.yieldsAsync(swarmError)
       Events._removeWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
         expect(err).to.equal(swarmError)
@@ -163,7 +163,7 @@ describe('events.js unit test', function () {
 
   describe('_forgetWeavePeer', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'findDocksByOrgId').yieldsAsync(null, [{
+      sinon.stub(Swarm, 'findDocksByOrgId').yieldsAsync(null, [{
         Host: '10.0.0.1:4242'
       }, {
         Host: '10.0.0.2:4242'
@@ -174,7 +174,7 @@ describe('events.js unit test', function () {
       done()
     })
     afterEach(function (done) {
-      Docker.findDocksByOrgId.restore()
+      Swarm.findDocksByOrgId.restore()
       RabbitMQ.publishWeavePeerForget.restore()
       done()
     })
@@ -198,7 +198,7 @@ describe('events.js unit test', function () {
       })
     })
     it('should publish nothing if no peers were found', function (done) {
-      Docker.findDocksByOrgId.yieldsAsync(null, [])
+      Swarm.findDocksByOrgId.yieldsAsync(null, [])
       Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.not.exist()
         sinon.assert.notCalled(RabbitMQ.publishWeavePeerForget)
@@ -207,7 +207,7 @@ describe('events.js unit test', function () {
     })
     it('should cb with error if getting peers failed', function (done) {
       var swarmError = new Error('Swarm error')
-      Docker.findDocksByOrgId.yieldsAsync(swarmError)
+      Swarm.findDocksByOrgId.yieldsAsync(swarmError)
       Events._forgetWeavePeer('10.0.0.4', '12981', function (err) {
         expect(err).to.exist()
         expect(err).to.equal(swarmError)
@@ -217,27 +217,27 @@ describe('events.js unit test', function () {
     })
   })
 
-  describe('handleDockerEventStreamDisconnected', function () {
+  describe('handleSwarmEventStreamDisconnected', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'doesDockExist').resolves(false)
+      sinon.stub(Swarm, 'doesDockExist').resolves(false)
       sinon.stub(Events, '_removeWeavePeer').yieldsAsync()
       sinon.stub(Events, '_forgetWeavePeer').yieldsAsync()
       done()
     })
     afterEach(function (done) {
-      Docker.doesDockExist.restore()
+      Swarm.doesDockExist.restore()
       Events._removeWeavePeer.restore()
       Events._forgetWeavePeer.restore()
       done()
     })
     it('should not fail if nothing failed', function (done) {
-      Events.handleDockerEventStreamDisconnected({
+      Events.handleSwarmEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
         org: '11213123'
       }, function (err) {
         expect(err).to.not.exist()
-        sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
+        sinon.assert.calledOnce(Swarm.doesDockExist)
+        sinon.assert.calledWith(Swarm.doesDockExist, '10.0.0.1:4242')
         sinon.assert.calledOnce(Events._removeWeavePeer)
         sinon.assert.calledWith(Events._removeWeavePeer, '10.0.0.1', '11213123')
         sinon.assert.calledOnce(Events._forgetWeavePeer)
@@ -246,14 +246,14 @@ describe('events.js unit test', function () {
       })
     })
     it('should do nothing if dock exist', function (done) {
-      Docker.doesDockExist.resolves(true)
-      Events.handleDockerEventStreamDisconnected({
+      Swarm.doesDockExist.resolves(true)
+      Events.handleSwarmEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
         org: '11213123'
       }, function (err) {
         expect(err).to.not.exist()
-        sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
+        sinon.assert.calledOnce(Swarm.doesDockExist)
+        sinon.assert.calledWith(Swarm.doesDockExist, '10.0.0.1:4242')
         sinon.assert.notCalled(Events._removeWeavePeer)
         sinon.assert.notCalled(Events._forgetWeavePeer)
         done()
@@ -261,14 +261,14 @@ describe('events.js unit test', function () {
     })
     it('should fail if dock check failed', function (done) {
       var error = new Error('Swarm error')
-      Docker.doesDockExist.rejects(error)
-      Events.handleDockerEventStreamDisconnected({
+      Swarm.doesDockExist.rejects(error)
+      Events.handleSwarmEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
         org: '11213123'
       }, function (err) {
         expect(err).to.be.an.instanceof(WorkerError)
-        sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4242')
+        sinon.assert.calledOnce(Swarm.doesDockExist)
+        sinon.assert.calledWith(Swarm.doesDockExist, '10.0.0.1:4242')
         sinon.assert.notCalled(Events._removeWeavePeer)
         sinon.assert.notCalled(Events._forgetWeavePeer)
         done()
@@ -277,7 +277,7 @@ describe('events.js unit test', function () {
     it('should fail if remove peer failed', function (done) {
       var error = new Error('Weave error')
       Events._removeWeavePeer.yieldsAsync(error)
-      Events.handleDockerEventStreamDisconnected({
+      Events.handleSwarmEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
         org: '11213123'
       }, function (err) {
@@ -293,7 +293,7 @@ describe('events.js unit test', function () {
     it('should fail if forget peer failed', function (done) {
       var error = new Error('Weave error')
       Events._forgetWeavePeer.yieldsAsync(error)
-      Events.handleDockerEventStreamDisconnected({
+      Events.handleSwarmEventStreamDisconnected({
         host: 'http://10.0.0.1:4242',
         org: '11213123'
       }, function (err) {
@@ -313,7 +313,7 @@ describe('events.js unit test', function () {
       sinon.stub(RabbitMQ, 'publishContainerNetworkAttached')
       sinon.stub(Events, '_isNetworkNeeded')
       sinon.stub(WeaveWrapper, 'attach')
-      sinon.stub(Docker, 'doesDockExist')
+      sinon.stub(Swarm, 'doesDockExist')
       done()
     })
 
@@ -321,7 +321,7 @@ describe('events.js unit test', function () {
       RabbitMQ.publishContainerNetworkAttached.restore()
       Events._isNetworkNeeded.restore()
       WeaveWrapper.attach.restore()
-      Docker.doesDockExist.restore()
+      Swarm.doesDockExist.restore()
       done()
     })
 
@@ -341,7 +341,7 @@ describe('events.js unit test', function () {
       var testId = '23984765893264'
 
       Events._isNetworkNeeded.returns(true)
-      Docker.doesDockExist.rejects(testErr)
+      Swarm.doesDockExist.rejects(testErr)
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -367,7 +367,7 @@ describe('events.js unit test', function () {
       var testId = '23984765893264'
 
       Events._isNetworkNeeded.returns(true)
-      Docker.doesDockExist.resolves(false)
+      Swarm.doesDockExist.resolves(false)
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -393,7 +393,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(testErr)
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       Events.handleStarted({
         id: testId,
         host: testHost,
@@ -421,7 +421,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(testErr)
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testHost,
@@ -452,7 +452,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(testErr)
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testHost,
@@ -482,7 +482,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(testErr)
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testHost,
@@ -512,7 +512,7 @@ describe('events.js unit test', function () {
 
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(testErr)
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testHost,
@@ -544,7 +544,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(null, testIp)
       RabbitMQ.publishContainerNetworkAttached.returns()
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testUri,
@@ -557,7 +557,7 @@ describe('events.js unit test', function () {
         sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         sinon.assert.calledOnce(WeaveWrapper.attach)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
-        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        sinon.assert.calledWith(Swarm.doesDockExist, testHost)
         done()
       })
     })
@@ -572,7 +572,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(null, testIp)
       RabbitMQ.publishContainerNetworkAttached.returns()
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testUri,
@@ -594,7 +594,7 @@ describe('events.js unit test', function () {
           .withArgs(jobData).called).to.be.true()
         sinon.assert.calledOnce(WeaveWrapper.attach)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
-        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        sinon.assert.calledWith(Swarm.doesDockExist, testHost)
         done()
       })
     })
@@ -610,7 +610,7 @@ describe('events.js unit test', function () {
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(null, testIp)
       RabbitMQ.publishContainerNetworkAttached.throws(testErr)
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       var jobData = {
         id: testId,
         host: testUri,
@@ -632,7 +632,7 @@ describe('events.js unit test', function () {
           .withArgs(jobData).called).to.be.true()
         sinon.assert.calledOnce(WeaveWrapper.attach)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, testHost, orgId, sinon.match.func)
-        sinon.assert.calledWith(Docker.doesDockExist, testHost)
+        sinon.assert.calledWith(Swarm.doesDockExist, testHost)
         done()
       })
     })
