@@ -9,7 +9,7 @@ var sinon = require('sinon')
 var Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 
-var Docker = require('../../../lib/models/docker')
+var Swarm = require('../../../lib/models/swarm')
 var weavePeerRemove = require('../../../lib/workers/weave.peer.remove.js').task
 
 var lab = exports.lab = Lab.script()
@@ -22,7 +22,7 @@ var it = lab.it
 describe('weave.peer.remove functional test', function () {
   beforeEach(function (done) {
     process.env.WEAVE_PATH = path.resolve(__dirname, '../../fixtures/weaveMock')
-    sinon.stub(Docker, 'doesDockExist')
+    sinon.stub(Swarm, 'doesDockExist')
     fs.unlink('./weaveMockArgs', function () {
       fs.unlink('./weaveEnvs', function () {
         done()
@@ -31,7 +31,7 @@ describe('weave.peer.remove functional test', function () {
   })
 
   afterEach(function (done) {
-    Docker.doesDockExist.restore()
+    Swarm.doesDockExist.restore()
     delete process.env.WEAVE_PATH
     done()
   })
@@ -40,14 +40,14 @@ describe('weave.peer.remove functional test', function () {
     var testDockIp = '10.0.0.2'
     var testRmDock = '10.0.0.3'
     beforeEach(function (done) {
-      Docker.doesDockExist.resolves(true)
+      Swarm.doesDockExist.resolves(true)
       done()
     })
 
     it('should call rmpeer', function (done) {
-      var testDockerHost = testDockIp + ':4242'
+      var testSwarmHost = testDockIp + ':4242'
       var testJob = {
-        dockerHost: testDockerHost,
+        dockerHost: testSwarmHost,
         hostname: testRmDock,
         orgId: '1235123'
       }
@@ -55,8 +55,8 @@ describe('weave.peer.remove functional test', function () {
       weavePeerRemove(testJob).asCallback(function (err) {
         if (err) { return done(err) }
 
-        sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, testDockerHost)
+        sinon.assert.calledOnce(Swarm.doesDockExist)
+        sinon.assert.calledWith(Swarm.doesDockExist, testSwarmHost)
 
         var weaveArgs = fs.readFileSync('./weaveMockArgs')
         var weaveEnvs = fs.readFileSync('./weaveEnvs')

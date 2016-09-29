@@ -6,7 +6,7 @@ const Lab = require('lab')
 const nock = require('nock')
 const pluck = require('101/pluck')
 
-const Docker = require('../../../lib/models/docker.js')
+const Swarm = require('../../../lib/models/swarm.js')
 const swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
 const lab = exports.lab = Lab.script()
@@ -31,7 +31,7 @@ describe('docker integration test', function () {
       done()
     })
     it('should get nodes', function (done) {
-      Docker.info()
+      Swarm.info()
       .then((infoData) => {
         const hosts = infoData.map(pluck('Host'))
         expect(hosts).to.include(dockerIp1 + ':4242')

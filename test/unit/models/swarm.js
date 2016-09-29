@@ -13,58 +13,58 @@ const Code = require('code')
 const expect = Code.expect
 
 const Swarmerode = require('swarmerode')._Swarmerode
-const Swarm = require('@runnable/loki').Swarm
+const SwarmClient = require('@runnable/loki').SwarmClient
 const sinon = require('sinon')
 const Promise = require('bluebird')
 require('sinon-as-promised')(Promise)
 
-const Docker = require('../../../lib/models/docker')
+const Swarm = require('../../../lib/models/swarm')
 const swarmInfo = require('../../fixtures/swarm-info-dynamic')
 
-describe('lib/models/docker unit test', function () {
+describe('lib/models/swarm unit test', function () {
   describe('doesDockExist', function () {
     beforeEach(function (done) {
-      sinon.stub(Swarm.prototype, 'swarmHostExistsAsync')
+      sinon.stub(SwarmClient.prototype, 'swarmHostExistsAsync')
       done()
     })
 
     afterEach(function (done) {
-      Swarm.prototype.swarmHostExistsAsync.restore()
+      SwarmClient.prototype.swarmHostExistsAsync.restore()
       done()
     })
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee')
-      Swarm.prototype.swarmHostExistsAsync.rejects(testError)
+      SwarmClient.prototype.swarmHostExistsAsync.rejects(testError)
 
-      Docker.doesDockExist('8.8.8.8:4242').asCallback(function (err) {
+      Swarm.doesDockExist('8.8.8.8:4242').asCallback(function (err) {
         expect(err).to.equal(testError)
-        sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
-        sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '8.8.8.8:4242')
+        sinon.assert.calledOnce(SwarmClient.prototype.swarmHostExistsAsync)
+        sinon.assert.calledWith(SwarmClient.prototype.swarmHostExistsAsync, '8.8.8.8:4242')
         done()
       })
     })
 
     it('should cb true if dock in list', function (done) {
-      Swarm.prototype.swarmHostExistsAsync.resolves(true)
+      SwarmClient.prototype.swarmHostExistsAsync.resolves(true)
 
-      Docker.doesDockExist('10.0.0.1:4242').asCallback(function (err, exists) {
+      Swarm.doesDockExist('10.0.0.1:4242').asCallback(function (err, exists) {
         expect(err).to.not.exist()
         expect(exists).to.be.true()
-        sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
-        sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '10.0.0.1:4242')
+        sinon.assert.calledOnce(SwarmClient.prototype.swarmHostExistsAsync)
+        sinon.assert.calledWith(SwarmClient.prototype.swarmHostExistsAsync, '10.0.0.1:4242')
         done()
       })
     })
 
     it('should cb with null if dock not in list', function (done) {
-      Swarm.prototype.swarmHostExistsAsync.resolves(false)
+      SwarmClient.prototype.swarmHostExistsAsync.resolves(false)
 
-      Docker.doesDockExist('10.0.0.2:4242').asCallback(function (err, exists) {
+      Swarm.doesDockExist('10.0.0.2:4242').asCallback(function (err, exists) {
         if (err) { return done(err) }
         expect(exists).to.be.false()
-        sinon.assert.calledOnce(Swarm.prototype.swarmHostExistsAsync)
-        sinon.assert.calledWith(Swarm.prototype.swarmHostExistsAsync, '10.0.0.2:4242')
+        sinon.assert.calledOnce(SwarmClient.prototype.swarmHostExistsAsync)
+        sinon.assert.calledWith(SwarmClient.prototype.swarmHostExistsAsync, '10.0.0.2:4242')
         done()
       })
     })
@@ -108,12 +108,12 @@ describe('lib/models/docker unit test', function () {
       done()
     })
     it('should find 3 docks for an org', function (done) {
-      var orgDocks = Docker._findDocksByOrgId(nodes, '4643352')
+      var orgDocks = Swarm._findDocksByOrgId(nodes, '4643352')
       expect(orgDocks.length).to.equal(3)
       done()
     })
     it('should return [] if no docks were found', function (done) {
-      var orgDocks = Docker._findDocksByOrgId(nodes, '1111111')
+      var orgDocks = Swarm._findDocksByOrgId(nodes, '1111111')
       expect(orgDocks.length).to.equal(0)
       done()
     })
@@ -121,7 +121,7 @@ describe('lib/models/docker unit test', function () {
       nodes.map(function (node) {
         delete node.Labels
       })
-      var orgDocks = Docker._findDocksByOrgId(nodes, '445457')
+      var orgDocks = Swarm._findDocksByOrgId(nodes, '445457')
       expect(orgDocks.length).to.equal(0)
       done()
     })
@@ -129,25 +129,25 @@ describe('lib/models/docker unit test', function () {
 
   describe('findDocksByOrgId', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'info')
-      sinon.stub(Docker, '_findDocksByOrgId')
+      sinon.stub(Swarm, 'info')
+      sinon.stub(Swarm, '_findDocksByOrgId')
       done()
     })
 
     afterEach(function (done) {
-      Docker.info.restore()
-      Docker._findDocksByOrgId.restore()
+      Swarm.info.restore()
+      Swarm._findDocksByOrgId.restore()
       done()
     })
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee')
-      Docker.info.rejects(testError)
+      Swarm.info.rejects(testError)
 
-      Docker.findDocksByOrgId('4643352', function (err) {
+      Swarm.findDocksByOrgId('4643352', function (err) {
         expect(err).to.equal(testError)
-        sinon.assert.calledOnce(Docker.info)
-        sinon.assert.calledWith(Docker.info)
+        sinon.assert.calledOnce(Swarm.info)
+        sinon.assert.calledWith(Swarm.info)
         done()
       })
     })
@@ -157,19 +157,19 @@ describe('lib/models/docker unit test', function () {
       var testInfo = ['a', 'b']
       var testOrgId = '4643352'
 
-      Docker.info.resolves(testInfo)
-      Docker._findDocksByOrgId.returns(testDocks)
+      Swarm.info.resolves(testInfo)
+      Swarm._findDocksByOrgId.returns(testDocks)
 
-      Docker.findDocksByOrgId(testOrgId, function (err, docks) {
+      Swarm.findDocksByOrgId(testOrgId, function (err, docks) {
         if (err) { return done(err) }
 
         expect(docks).to.equal(testDocks)
 
-        sinon.assert.calledOnce(Docker.info)
-        sinon.assert.calledWith(Docker.info)
+        sinon.assert.calledOnce(Swarm.info)
+        sinon.assert.calledWith(Swarm.info)
 
-        sinon.assert.calledOnce(Docker._findDocksByOrgId)
-        sinon.assert.calledWith(Docker._findDocksByOrgId, testInfo, testOrgId)
+        sinon.assert.calledOnce(Swarm._findDocksByOrgId)
+        sinon.assert.calledWith(Swarm._findDocksByOrgId, testInfo, testOrgId)
         done()
       })
     })
@@ -177,12 +177,12 @@ describe('lib/models/docker unit test', function () {
 
   describe('findLightestOrgDock', function () {
     beforeEach(function (done) {
-      sinon.stub(Docker, 'findDocksByOrgId')
+      sinon.stub(Swarm, 'findDocksByOrgId')
       done()
     })
 
     afterEach(function (done) {
-      Docker.findDocksByOrgId.restore()
+      Swarm.findDocksByOrgId.restore()
       done()
     })
 
@@ -190,12 +190,12 @@ describe('lib/models/docker unit test', function () {
       var testError = new Error('bee')
       var testOrgId = '4643352'
 
-      Docker.findDocksByOrgId.yieldsAsync(testError)
+      Swarm.findDocksByOrgId.yieldsAsync(testError)
 
-      Docker.findLightestOrgDock(testOrgId, function (err) {
+      Swarm.findLightestOrgDock(testOrgId, function (err) {
         expect(err).to.equal(testError)
-        sinon.assert.calledOnce(Docker.findDocksByOrgId)
-        sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.findDocksByOrgId)
+        sinon.assert.calledWith(Swarm.findDocksByOrgId, testOrgId, sinon.match.func)
         done()
       })
     })
@@ -203,17 +203,17 @@ describe('lib/models/docker unit test', function () {
     it('should with the lightest node', function (done) {
       var testOrgId = '4643352'
 
-      Docker.findDocksByOrgId.yieldsAsync(null, [{
+      Swarm.findDocksByOrgId.yieldsAsync(null, [{
         Containers: 5
       }, {
         Containers: 10
       }])
 
-      Docker.findLightestOrgDock(testOrgId, function (err, dock) {
+      Swarm.findLightestOrgDock(testOrgId, function (err, dock) {
         if (err) { return done(err) }
         expect(dock.Containers).to.equal(5)
-        sinon.assert.calledOnce(Docker.findDocksByOrgId)
-        sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.findDocksByOrgId)
+        sinon.assert.calledWith(Swarm.findDocksByOrgId, testOrgId, sinon.match.func)
         done()
       })
     })
@@ -221,13 +221,13 @@ describe('lib/models/docker unit test', function () {
     it('should cb with null if no nodes found for an org', function (done) {
       var testOrgId = '111111'
 
-      Docker.findDocksByOrgId.yieldsAsync(null, [])
+      Swarm.findDocksByOrgId.yieldsAsync(null, [])
 
-      Docker.findLightestOrgDock(testOrgId, function (err, dock) {
+      Swarm.findLightestOrgDock(testOrgId, function (err, dock) {
         if (err) { return done(err) }
         expect(dock).to.not.exist()
-        sinon.assert.calledOnce(Docker.findDocksByOrgId)
-        sinon.assert.calledWith(Docker.findDocksByOrgId, testOrgId, sinon.match.func)
+        sinon.assert.calledOnce(Swarm.findDocksByOrgId)
+        sinon.assert.calledWith(Swarm.findDocksByOrgId, testOrgId, sinon.match.func)
         done()
       })
     })
@@ -235,26 +235,26 @@ describe('lib/models/docker unit test', function () {
 
   describe('info', function () {
     beforeEach(function (done) {
-      sinon.stub(Swarm.prototype, 'swarmInfoAsync')
+      sinon.stub(SwarmClient.prototype, 'swarmInfoAsync')
       done()
     })
 
     afterEach(function (done) {
-      Swarm.prototype.swarmInfoAsync.restore()
+      SwarmClient.prototype.swarmInfoAsync.restore()
       done()
     })
 
     it('should cb swarm error', function (done) {
       var testError = new Error('bee')
-      Swarm.prototype.swarmInfoAsync.rejects(testError)
+      SwarmClient.prototype.swarmInfoAsync.rejects(testError)
 
-      Docker.info()
+      Swarm.info()
       .tap(() => {
         done(new Error('Should never happen'))
       })
       .catch((err) => {
         expect(err).to.equal(testError)
-        sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
+        sinon.assert.calledOnce(SwarmClient.prototype.swarmInfoAsync)
         done()
       })
     })
@@ -271,12 +271,12 @@ describe('lib/models/docker unit test', function () {
         org: 'fake'
       }])
       swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
-      Swarm.prototype.swarmInfoAsync.resolves(swarmInfoData)
+      SwarmClient.prototype.swarmInfoAsync.resolves(swarmInfoData)
 
-      Docker.info()
+      Swarm.info()
       .then((docks) => {
         expect(docks.length).to.equal(3)
-        sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
+        sinon.assert.calledOnce(SwarmClient.prototype.swarmInfoAsync)
         done()
       })
       .catch(done)

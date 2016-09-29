@@ -13,7 +13,7 @@ const Promise = require('bluebird')
 const sinon = require('sinon')
 require('sinon-as-promised')(Promise)
 
-const Docker = require('../../lib/models/docker.js')
+const Swarm = require('../../lib/models/swarm.js')
 const RabbitMQ = require('../../lib/models/rabbitmq.js')
 const Start = require('../../lib/start.js')
 const WorkerServer = require('../../lib/models/worker-server.js')
@@ -24,7 +24,7 @@ describe('start.js unit test', function () {
       sinon.stub(WorkerServer, 'start')
       sinon.stub(RabbitMQ, 'connect')
       sinon.stub(RabbitMQ, 'publishWeaveStart')
-      sinon.stub(Docker, 'info')
+      sinon.stub(Swarm, 'info')
       done()
     })
 
@@ -32,7 +32,7 @@ describe('start.js unit test', function () {
       WorkerServer.start.restore()
       RabbitMQ.publishWeaveStart.restore()
       RabbitMQ.connect.restore()
-      Docker.info.restore()
+      Swarm.info.restore()
       done()
     })
 
@@ -53,7 +53,7 @@ describe('start.js unit test', function () {
       RabbitMQ.publishWeaveStart.returns()
       WorkerServer.start.resolves()
       RabbitMQ.connect.resolves()
-      Docker.info.resolves(peers)
+      Swarm.info.resolves(peers)
 
       Start.startup(function (err) {
         if (err) { return done(err) }
@@ -72,11 +72,11 @@ describe('start.js unit test', function () {
       })
     })
 
-    it('should throw an error if `Docker.info` throws an error', function (done) {
+    it('should throw an error if `Swarm.info` throws an error', function (done) {
       RabbitMQ.connect.resolves()
       RabbitMQ.publishWeaveStart.returns()
       WorkerServer.start.resolves()
-      Docker.info.rejects('err')
+      Swarm.info.rejects('err')
 
       Start.startup(function (err) {
         expect(err).to.exist()
@@ -107,12 +107,12 @@ describe('start.js unit test', function () {
       RabbitMQ.connect.resolves()
       RabbitMQ.publishWeaveStart.throws()
       WorkerServer.start.resolves()
-      Docker.info.resolves(peers)
+      Swarm.info.resolves(peers)
 
       Start.startup(function (err) {
         expect(err).to.exist()
         sinon.assert.calledOnce(WorkerServer.start)
-        sinon.assert.calledOnce(Docker.info)
+        sinon.assert.calledOnce(Swarm.info)
         sinon.assert.calledOnce(RabbitMQ.publishWeaveStart)
         done()
       })
