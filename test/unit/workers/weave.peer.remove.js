@@ -32,48 +32,51 @@ describe('weave.peer.remove.js unit test', function () {
     })
 
     it('should throw error if dock check failed', function (done) {
+      const orgGitHubId = '123567'
       const rejectError = new Error('test')
       Docker.doesDockExist.rejects(rejectError)
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99',
-        orgId: '123567'
+        orgId: orgGitHubId
       })
       .asCallback(function (err) {
         expect(err).to.be.instanceOf(Error)
         expect(err).to.equal(rejectError)
         sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4224')
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4224', orgGitHubId)
         sinon.assert.notCalled(WeaveWrapper.rmpeerAsync)
         done()
       })
     })
     it('should throw error if dock does not exist', function (done) {
+      const orgGitHubId = '123567'
       Docker.doesDockExist.resolves(false)
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.0.0.99',
-        orgId: '123567'
+        orgId: orgGitHubId
       })
       .asCallback(function (err) {
         expect(err).to.be.instanceOf(WorkerStopError)
         expect(err.message).to.equal('Dock was removed')
         sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4224')
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4224', orgGitHubId)
         sinon.assert.notCalled(WeaveWrapper.rmpeerAsync)
         done()
       })
     })
     it('should work if nothing failed', function (done) {
+      const orgGitHubId = '123567'
       weavePeerRemove({
         dockerHost: '10.0.0.1:4224',
         hostname: '10.4.145.68',
-        orgId: '123567'
+        orgId: orgGitHubId
       })
       .asCallback(function (err) {
         expect(err).to.not.exist()
         sinon.assert.calledOnce(Docker.doesDockExist)
-        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4224')
+        sinon.assert.calledWith(Docker.doesDockExist, '10.0.0.1:4224', orgGitHubId)
         sinon.assert.calledOnce(WeaveWrapper.rmpeerAsync)
         sinon.assert.calledWith(WeaveWrapper.rmpeerAsync, '10.0.0.1:4224', 'ip-10-4-145-68.123567')
         done()

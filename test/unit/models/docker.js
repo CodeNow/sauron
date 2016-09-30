@@ -248,7 +248,7 @@ describe('lib/models/docker unit test', function () {
       var testError = new Error('bee')
       Swarm.prototype.swarmInfoAsync.rejects(testError)
 
-      Docker.info()
+      Docker.info(null)
       .tap(() => {
         done(new Error('Should never happen'))
       })
@@ -273,7 +273,7 @@ describe('lib/models/docker unit test', function () {
       swarmInfoData.parsedSystemStatus = Swarmerode._parseSwarmSystemStatus(swarmInfoData.SystemStatus)
       Swarm.prototype.swarmInfoAsync.resolves(swarmInfoData)
 
-      Docker.info()
+      Docker.info(null)
       .then((docks) => {
         expect(docks.length).to.equal(3)
         sinon.assert.calledOnce(Swarm.prototype.swarmInfoAsync)
