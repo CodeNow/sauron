@@ -56,7 +56,8 @@ describe('rabbitmq integration test', function () {
       const testJob = {
         id: '1234',
         inspectData: {},
-        containerIp: 'two'
+        containerIp: 'two',
+        githubOrgId: 124
       }
 
       testWorker = (data) => {
