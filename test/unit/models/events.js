@@ -442,7 +442,7 @@ describe('events.js unit test', function () {
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(WorkerStopError)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         done()
       })
     })
@@ -473,7 +473,7 @@ describe('events.js unit test', function () {
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(WorkerError)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         done()
       })
     })
@@ -503,7 +503,7 @@ describe('events.js unit test', function () {
       Events.handleStarted(jobData, function (err) {
         expect(err).to.be.an.instanceof(WorkerStopError)
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         done()
       })
     })
@@ -533,7 +533,7 @@ describe('events.js unit test', function () {
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist()
         sinon.assert.calledWith(WeaveWrapper.attach, testId, null, orgId, sinon.match.func)
-        expect(RabbitMQ.publishContainerNetworkAttached.called).to.be.false()
+        sinon.assert.notCalled(RabbitMQ.publishContainerNetworkAttached)
         done()
       })
     })
@@ -572,7 +572,7 @@ describe('events.js unit test', function () {
       var testHost = testHostname + ':4242'
       var testUri = 'http://' + testHost
       var testId = '23984765893264'
-      var orgId = '868976908769078'
+      var orgId = '868976'
       Events._isNetworkNeeded.returns(true)
       WeaveWrapper.attach.yields(null, testIp)
       RabbitMQ.publishContainerNetworkAttached.returns()
@@ -594,6 +594,7 @@ describe('events.js unit test', function () {
       Events.handleStarted(jobData, function (err) {
         expect(err).to.not.exist()
         jobData.containerIp = testIp
+        jobData.githubOrgId = parseInt(orgId, 10)
         expect(RabbitMQ.publishContainerNetworkAttached
           .withArgs(jobData).called).to.be.true()
         sinon.assert.calledOnce(WeaveWrapper.attach)
