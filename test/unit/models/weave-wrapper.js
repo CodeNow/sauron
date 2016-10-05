@@ -356,7 +356,8 @@ describe('weave-wrapper.js unit test', function () {
     it('should cb with error and publish dock lost on Out Of Memory', function (done) {
       var testErr = { message: 'Error response from daemon: Untar error on re-exec cmd: fork/exec /proc/self/exe: cannot allocate memory' }
       var debug = {
-        host: 'asdasdasasdasadsgasdgdsg'
+        host: 'asdasdasasdasadsgasdgdsg',
+        githubOrgId: 111
       }
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.be.instanceof(WeaveError)

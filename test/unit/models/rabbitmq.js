@@ -128,11 +128,10 @@ describe('rabbitmq.js unit test', function () {
         host: 'testHost',
         githubOrgId: 1111
       }
-      RabbitMQ.publishTask.returns()
+      RabbitMQ.publishEvent.returns()
       RabbitMQ.publishDockLost(testData)
-      sinon.assert.calledOnce(RabbitMQ.publishTask.withArgs('dock.lost'))
-      expect(RabbitMQ.publishTask.args[0][1].host).to.equal(testData.host)
-      expect(RabbitMQ.publishTask.args[0][1].githubOrgId).to.equal(testData.githubOrgId)
+      sinon.assert.calledOnce(RabbitMQ.publishEvent.withArgs('dock.lost'))
+      expect(RabbitMQ.publishEvent.args[0][1]).to.equal(testData)
       done()
     })
   }) // end publishDockLost
