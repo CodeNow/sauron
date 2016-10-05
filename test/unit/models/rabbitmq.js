@@ -125,12 +125,14 @@ describe('rabbitmq.js unit test', function () {
   describe('publishDockLost', function () {
     it('should publish dock.lost', function (done) {
       const testData = {
-        host: 'testHost'
+        host: 'testHost',
+        githubOrgId: 1111
       }
       RabbitMQ.publishTask.returns()
       RabbitMQ.publishDockLost(testData)
-      expect(RabbitMQ.publishTask.withArgs('dock.lost').called).to.be.true()
+      sinon.assert.calledOnce(RabbitMQ.publishTask.withArgs('dock.lost'))
       expect(RabbitMQ.publishTask.args[0][1].host).to.equal(testData.host)
+      expect(RabbitMQ.publishTask.args[0][1].githubOrgId).to.equal(testData.githubOrgId)
       done()
     })
   }) // end publishDockLost
