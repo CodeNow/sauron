@@ -43,6 +43,25 @@ describe('container-life-cycle-started.js unit test', function () {
     it('should be fine if no errors', function (done) {
       containerLifeCycleStarted({})
         .then(function () {
+          sinon.assert.calledOnce(Events.handleStartedAsync)
+          sinon.assert.calledWith(Events.handleStartedAsync, {})
+          done()
+        })
+        .catch(done)
+    })
+
+    it('should do nothing if type is layerCopy', function (done) {
+      containerLifeCycleStarted({
+        inspectData: {
+          Config: {
+            Labels: {
+              type: 'layerCopy'
+            }
+          }
+        }
+      })
+        .then(function () {
+          sinon.assert.notCalled(Events.handleStartedAsync)
           done()
         })
         .catch(done)
