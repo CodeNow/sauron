@@ -354,15 +354,18 @@ describe('weave-wrapper.js unit test', function () {
     })
 
     it('should cb with error and publish dock lost on Out Of Memory', function (done) {
-      var testErr = { message: 'Error response from daemon: Untar error on re-exec cmd: fork/exec /proc/self/exe: cannot allocate memory' }
-      var debug = {
-        host: 'asdasdasasdasadsgasdgdsg',
+      const testErr = { message: 'Error response from daemon: Untar error on re-exec cmd: fork/exec /proc/self/exe: cannot allocate memory' }
+      const debug = {
+        host: '10.0.0.1',
         githubOrgId: 111
       }
       WeaveWrapper._handleCmdResult(function (err) {
         expect(err).to.be.instanceof(WeaveError)
         sinon.assert.calledOnce(RabbitMQ.publishDockLost)
-        sinon.assert.calledWith(RabbitMQ.publishDockLost, debug)
+        sinon.assert.calledWith(RabbitMQ.publishDockLost, {
+          host: 'http://10.0.0.1',
+          githubOrgId: 111
+        })
         done()
       }, 'test', '', debug)(testErr)
     })
