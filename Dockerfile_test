@@ -1,0 +1,7 @@
+FROM node:4.6
+
+ADD [".", "/sauron"]
+WORKDIR /sauron
+RUN npm install
+
+CMD npm run test

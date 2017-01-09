@@ -1,0 +1,17 @@
+version: '2'
+services:
+  sauron-test:
+    build:
+      context: .
+      dockerfile: Dockerfile_test
+    links:
+      - 'rabbit'
+    environment:
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=5WE5wsEQmfw9sLsppJ4CEq9Auea8mPC4kgVt3xYqKxbYHPfP
+      - RABBITMQ_PASSWORD=h7n972sPLs5tWGCWe6QPSCnaxDWjvnpEFEA9c9mBqauH3f22
+      - RABBITMQ_HOSTNAME=rabbit
+  rabbit:
+    build:
+      context: ./env-config
+      dockerfile: Dockerfile_rabbitmq

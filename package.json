@@ -9,7 +9,9 @@
   "scripts": {
     "start": "node index.js",
     "lint": "standard --verbose",
-    "test": "npm run lint && NODE_ENV=test lab -v -c -t 100"
+    "test": "npm run lint && NODE_ENV=test lab -v -c -t 100",
+    "compose-test-up": "docker-compose -f docker-compose-test.yml up --build",
+    "compose-test-down": "docker-compose -f docker-compose-test.yml down"
   },
   "repository": {
     "type": "git",
