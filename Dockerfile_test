@@ -4,4 +4,4 @@ ADD [".", "/sauron"]
 WORKDIR /sauron
 RUN npm install
 
-CMD sleep 20; npm run test
+CMD npm run test
